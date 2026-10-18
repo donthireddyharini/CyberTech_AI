@@ -1,0 +1,18 @@
+{
+  "dataset_name": "google/civil_comments",
+  "huggingface_url": "https://huggingface.co/datasets/google/civil_comments",
+  "license": "CC0: Public Domain",
+  "source_split": "train (streamed first 20,000)",
+  "download_count": 20000,
+  "fields": [
+    "text",
+    "toxicity",
+    "severe_toxicity",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_attack",
+    "sexual_explicit"
+  ],
+  "file_path": "data/raw/civil_comments_raw_subset.csv"
+}

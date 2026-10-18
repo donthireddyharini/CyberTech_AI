@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment variables & local configs
+.env.local
+*.env.local
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Pytest / Coverage / Caches
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary databases (preserve main SQLite sentinel.db if needed)
+test_sentinel*.db
+test_*.db
+
+# Archives
+*.zip
+*.tar.gz

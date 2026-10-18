@@ -1,0 +1,123 @@
+{
+  "audit_version": "1.0.0-strict-verification",
+  "audit_timestamp": "2026-10-13T02:08:00Z",
+  "project_id": "CSEAIML2026-P03",
+  "audit_purpose": "Strict verification audit of pretrained model claims, empirical metrics recalculation, confusion matrix consistency, and split provenance verification.",
+  "status_taxonomy": {
+    "MEASURED": "Empirically executed and calculated directly on actual dataset splits with saved predictions and confusion matrices in the local repository.",
+    "PUBLISHED": "Reported in original peer-reviewed academic literature or author model cards on Hugging Face; not executed locally on this project's held-out split.",
+    "ESTIMATED": "Hypothetical or projected numbers. Strictly disallowed in verified reporting.",
+    "UNAVAILABLE_OR_PENDING": "Evaluation cannot be executed locally due to hardware/runtime constraints (e.g. absence of PyTorch/CUDA in local Python 3.14 environment) and requires cloud GPU execution."
+  },
+  "audit_findings_summary": {
+    "toxic_bert_metric_inconsistency": {
+      "finding": "CONFIRMED DISCREPANCY IN CHAT TEXT. The conversational summary text presented an illustrative matrix (TN=2741, FP=53, FN=48, TP=137) alongside an accuracy figure of 95.20%. Mathematically, (2741+137)/2979 equals 96.6096% (96.61%), not 95.20%. Furthermore, toxic-bert was NOT executed locally because PyTorch and Transformers are not installed in the local Python 3.14 environment.",
+      "remedy": "The values for toxic-bert in the chat response were projected estimates from published Jigsaw benchmarks. In reports/pretrained_model_comparison.json, toxic-bert was correctly labeled as 'candidate_transformer_benchmark' with published Jigsaw metrics. The actual empirical evaluation of toxic-bert on Sentinel AI's 2,979 held-out test split is marked as PENDING Colab GPU execution."
+    },
+    "production_model_metric_consistency": {
+      "finding": "VERIFIED CONSISTENT. The active production model (enhanced Word+Char FeatureUnion + LogisticRegression balanced at operating threshold 0.40) exactly yields TN=2651, FP=143, FN=75, TP=110 on the 2,979 held-out test split. The recalculation from this exact matrix matches reports/evaluation_report.json to four decimal places: Accuracy = (2651+110)/2979 = 92.6821% (92.68%), Toxic Precision = 110/(110+143) = 43.4783% (43.48%), Toxic Recall = 110/(110+75) = 59.4595% (59.46%), Toxic F1 = 50.2283% (50.23%), Macro F1 = 73.1444% (73.14%).",
+      "clarification": "The earlier initial baseline (Word-only, C=5.0 at threshold 0.50) yielded TN=2722, FP=72, FN=115, TP=70 (Accuracy: 93.72%, Recall: 37.84%, F1: 42.81%). The candidate enhanced model was adopted in the previous phase to prioritize safety recall (raising recall from 37.84% to 59.46%). Both configurations are documented in reports/evaluation_report.json under baseline_comparison."
+    },
+    "kannada_split_discrepancy": {
+      "finding": "VERIFIED. In community-datasets/offenseval_dravidian (kannada config), only train-00000-of-00001.parquet (6,217 rows) and validation-00000-of-00001.parquet (777 rows) exist on Hugging Face. The official FIRE 2020 shared task test set was evaluated via CodaLab submission and does not have publicly released ground truth labels in the Hugging Face repo. When filtering out label 5 ('not-Kannada'), the validation split contains 586 rows. There is NO held-out test split for Kannada in this dataset.",
+      "status": "EVALUATION MARKED AS SKIPPED / PENDING DATASET ANNOTATION."
+    },
+    "hinglish_split_provenance": {
+      "finding": "VERIFIED AS GENUINE HELD-OUT TEST SPLIT. In pankajbiswas6/prism-hinglish-hate-speech, the author provides three distinct partitioned files: data/train.csv (17,704 rows), data/val.csv (2,950 rows), and data/test.csv (8,852 rows). Text overlap verification between train and test texts confirmed zero (0) duplicate string leakage. The 8,852 rows constitute a true held-out test split.",
+      "status": "DATASET VALIDATED; MODEL EVALUATION PENDING COLAB GPU EXECUTION."
+    }
+  },
+  "verified_english_metrics": {
+    "test_dataset": "data/splits/test.csv",
+    "total_samples": 2979,
+    "class_support": {
+      "non_toxic_count": 2794,
+      "toxic_count": 185
+    },
+    "initial_baseline_model": {
+      "status": "MEASURED",
+      "checkpoint": "models/baseline_toxicity.joblib (Word-only, C=5.0)",
+      "operating_threshold": 0.50,
+      "confusion_matrix": {
+        "tn": 2722,
+        "fp": 72,
+        "fn": 115,
+        "tp": 70
+      },
+      "recalculated_metrics": {
+        "accuracy": 0.9372,
+        "roc_auc": 0.8532,
+        "toxic_precision": 0.4930,
+        "toxic_recall": 0.3784,
+        "toxic_f1": 0.4281,
+        "macro_precision": 0.7262,
+        "macro_recall": 0.6763,
+        "macro_f1": 0.6975
+      }
+    },
+    "active_production_model": {
+      "status": "MEASURED",
+      "checkpoint": "models/baseline_toxicity.joblib (Word+Char FeatureUnion, C=2.0)",
+      "operating_threshold": 0.40,
+      "confusion_matrix": {
+        "tn": 2651,
+        "fp": 143,
+        "fn": 75,
+        "tp": 110
+      },
+      "recalculated_metrics": {
+        "accuracy": 0.9268,
+        "roc_auc": 0.8763,
+        "pr_auc": 0.5112,
+        "toxic_precision": 0.4348,
+        "toxic_recall": 0.5946,
+        "toxic_f1": 0.5023,
+        "macro_precision": 0.7036,
+        "macro_recall": 0.7717,
+        "macro_f1": 0.7314
+      },
+      "latency_measured_cpu_ms": 1.2
+    },
+    "candidate_toxic_bert": {
+      "status": "UNAVAILABLE_OR_PENDING",
+      "model_id": "unitary/toxic-bert",
+      "execution_environment": "Requires GPU / PyTorch; pending Google Colab execution",
+      "published_jigsaw_benchmark_reference": {
+        "roc_auc": 0.9840,
+        "toxic_f1_approx": 0.7600
+      },
+      "measured_on_sentinel_test_split": null,
+      "note": "Any specific confusion matrix or precision/recall figures reported for toxic-bert prior to running ml/colab_evaluate_pretrained_models.py on Colab were projections, not locally verified measurements."
+    }
+  },
+  "verified_indic_evaluation_status": {
+    "hinglish": {
+      "model_id": "Keshav0av/HinTox-hinglish-hate-speech-abuse-detection",
+      "dataset": "pankajbiswas6/prism-hinglish-hate-speech (data/processed/indic/hinglish_test.csv)",
+      "split_type": "Genuine held-out test split (8,852 rows: 4,112 toxic / 4,740 non-toxic)",
+      "label_compatibility": "Compatible (binary offensive/hate vs non-offensive)",
+      "status": "UNAVAILABLE_OR_PENDING (Colab GPU evaluation required)"
+    },
+    "hindi": {
+      "model_id": "Hate-speech-CNERG/hindi-abusive-MuRIL",
+      "dataset": "Paul/hatecheck-hindi (data/raw/indic/hatecheck_hindi_test.csv)",
+      "split_type": "Diagnostic functional test suite (3,565 rows: 2,488 hateful / 1,077 non-hateful)",
+      "label_compatibility": "Functional test suite (abusive vs gold hateful)",
+      "status": "UNAVAILABLE_OR_PENDING (Colab GPU evaluation required)"
+    },
+    "telugu": {
+      "model_id": "ramesh070/indicbert-hatespeechdetection-telugu",
+      "dataset": "mounikaiiith/Telugu-Hatespeech (data/processed/indic/telugu_test.csv)",
+      "split_type": "Genuine held-out test split (7,033 rows: 76 toxic / 6,957 non-toxic)",
+      "label_compatibility": "Binary hate speech; severe class imbalance (1.08% positive rate)",
+      "status": "UNAVAILABLE_OR_PENDING (Colab GPU evaluation required)"
+    },
+    "kannada": {
+      "model_id": "None available",
+      "dataset": "community-datasets/offenseval_dravidian (data/processed/indic/kannada_val.csv)",
+      "split_type": "Validation split only (586 valid rows); no public held-out test split released",
+      "label_compatibility": "Incompatible (Targeted Insult vs Hate Speech)",
+      "status": "SKIPPED (No verified fine-tuned public checkpoint; lack of labeled test split)"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "telugu_processed_splits": {
+    "train": 24599,
+    "val": 3510,
+    "test": 7033
+  },
+  "kannada_processed_splits": {
+    "train": 4695,
+    "val": 586
+  },
+  "hinglish_processed_splits": {
+    "train": 17704,
+    "val": 2950,
+    "test": 8852
+  },
+  "hindi_hostility_train_rows": 5728
+}

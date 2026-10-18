@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/api/client.ts","./src/pages/contextlab.tsx","./src/pages/dashboard.tsx","./src/pages/datasetmodellab.tsx","./src/pages/fairnessevaluation.tsx","./src/pages/feedbackanalysis.tsx","./src/pages/moderationcenter.tsx","./src/pages/projectoverview.tsx","./src/types/index.ts"],"version":"5.6.3"}

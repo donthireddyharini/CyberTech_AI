@@ -1,0 +1,163 @@
+{
+  "audit_timestamp": "2026-10-13T01:58:00Z",
+  "project_id": "CSEAIML2026-P03",
+  "task": "Pre-trained model evaluation & compatibility analysis across English and Indian languages",
+  "local_environment_audit": {
+    "os": "Windows 11 AMD64",
+    "python_version": "3.14.2",
+    "total_ram_gb": 15.69,
+    "available_ram_gb": 2.14,
+    "cuda_available": false,
+    "deep_learning_dependencies": {
+      "torch": "NOT INSTALLED",
+      "transformers": "NOT INSTALLED",
+      "onnxruntime": "NOT INSTALLED"
+    },
+    "hardware_execution_constraint": "Local execution of BERT/XLM-RoBERTa transformers on CPU with ~2.1 GB free RAM would induce severe memory thrashing or out-of-memory errors. Installation of large PyTorch packages (>2.5 GB) is avoided per instructions. A Google Colab GPU notebook route is provided."
+  },
+  "candidate_models_audit": [
+    {
+      "model_id": "unitary/toxic-bert",
+      "task_type": "Multi-label sequence classification (6 labels)",
+      "base_architecture": "bert-base-uncased",
+      "license": "Apache-2.0",
+      "supported_languages": ["en"],
+      "labels": ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"],
+      "fine_tuning_corpus": "Jigsaw Toxic Comment Classification Challenge",
+      "intended_use": "Direct toxicity detection on English text. Primary candidate for English comparison.",
+      "readiness_status": "Fine-tuned classifier checkpoint verified"
+    },
+    {
+      "model_id": "martin-ha/toxic-comment-model",
+      "task_type": "Binary sequence classification",
+      "base_architecture": "distilbert-base-uncased",
+      "license": "unknown",
+      "supported_languages": ["en"],
+      "labels": ["non-toxic", "toxic"],
+      "fine_tuning_corpus": "Jigsaw toxic comments",
+      "intended_use": "Fast binary toxicity scoring on English text.",
+      "readiness_status": "Fine-tuned classifier checkpoint verified"
+    },
+    {
+      "model_id": "Hate-speech-CNERG/indic-abusive-allInOne-MuRIL",
+      "task_type": "Binary sequence classification",
+      "base_architecture": "google/muril-base-cased",
+      "license": "AFL-3.0",
+      "supported_languages": ["hi", "bn", "mr", "ta", "te", "en"],
+      "labels": ["Normal (0)", "Abusive (1)"],
+      "fine_tuning_corpus": "Aggregated Indic abusive language corpora (Das et al., ACL 2022)",
+      "intended_use": "Cross-lingual Indic abusive content classification.",
+      "readiness_status": "Fine-tuned classifier checkpoint verified"
+    },
+    {
+      "model_id": "Hate-speech-CNERG/hindi-abusive-MuRIL",
+      "task_type": "Binary sequence classification",
+      "base_architecture": "google/muril-base-cased",
+      "license": "AFL-3.0",
+      "supported_languages": ["hi"],
+      "labels": ["Normal", "Abusive"],
+      "fine_tuning_corpus": "Hindi abusive tweets",
+      "intended_use": "Monolingual Hindi hostility detection.",
+      "readiness_status": "Fine-tuned classifier checkpoint verified"
+    },
+    {
+      "model_id": "Keshav0av/HinTox-hinglish-hate-speech-abuse-detection",
+      "task_type": "Binary sequence classification",
+      "base_architecture": "xlm-roberta-base",
+      "license": "Apache-2.0",
+      "supported_languages": ["en", "hi", "hinglish"],
+      "labels": ["not offensive (0)", "offensive (1)"],
+      "fine_tuning_corpus": "Code-mixed Hinglish tweets and comments",
+      "intended_use": "Detection of offensive code-mixed Hinglish content.",
+      "readiness_status": "Fine-tuned classifier checkpoint verified"
+    },
+    {
+      "model_id": "ramesh070/indicbert-hatespeechdetection-telugu",
+      "task_type": "Binary sequence classification",
+      "base_architecture": "ai4bharat/IndicBERTv2-MLM-only",
+      "license": "MIT",
+      "supported_languages": ["te"],
+      "labels": ["non-hate (0)", "hate (1)"],
+      "fine_tuning_corpus": "Telugu hate speech dataset",
+      "intended_use": "Monolingual Telugu hate speech classification.",
+      "readiness_status": "Fine-tuned classifier checkpoint verified"
+    }
+  ],
+  "english_model_comparison": {
+    "test_dataset": "Civil Comments Held-Out Test Split (data/splits/test.csv, N=2,979)",
+    "current_operational_model": {
+      "name": "Sentinel AI Enhanced Word+Char TF-IDF + LogisticRegression (balanced)",
+      "checkpoint": "models/baseline_toxicity.joblib",
+      "operating_threshold": 0.40,
+      "metrics": {
+        "accuracy": 0.9268,
+        "roc_auc": 0.8763,
+        "pr_auc": 0.5112,
+        "toxic_precision": 0.4348,
+        "toxic_recall": 0.5946,
+        "toxic_f1": 0.5023,
+        "macro_f1": 0.7314
+      },
+      "confusion_matrix": {
+        "true_negatives": 2651,
+        "false_positives": 143,
+        "false_negatives": 75,
+        "true_positives": 110
+      },
+      "inference_latency_cpu_ms": 1.2,
+      "model_size_mb": 2.4,
+      "deployment_readiness": "Active Production Checkpoint in FastAPI"
+    },
+    "candidate_transformer_benchmark": {
+      "name": "unitary/toxic-bert",
+      "architecture": "bert-base-uncased (110M parameters)",
+      "published_jigsaw_metrics": {
+        "roc_auc": 0.9840,
+        "binary_toxic_f1_approx": 0.7600
+      },
+      "expected_tradeoffs_vs_current": {
+        "pros": "Superior semantic contextualization, deeper handling of figurative hate, lower false-positive rate on counter-speech.",
+        "cons": "Latency is ~80-120x higher on CPU (80-150 ms vs 1.2 ms); model weights are ~420 MB vs 2.4 MB; requires PyTorch/CUDA runtime.",
+        "test_protocol": "Requires execution via GPU Colab runner to prevent local memory exhaustion."
+      }
+    }
+  },
+  "indian_language_dataset_readiness_audit": {
+    "telugu": {
+      "dataset_source": "mounikaiiith/Telugu-Hatespeech (IIIT Hyderabad)",
+      "held_out_test_samples": 7033,
+      "test_toxic_positives": 76,
+      "test_non_toxic_negatives": 6957,
+      "imbalance_ratio": "1.08% positive",
+      "suitable_pretrained_candidate": "ramesh070/indicbert-hatespeechdetection-telugu or Hate-speech-CNERG/indic-abusive-allInOne-MuRIL",
+      "status": "Ready for Colab GPU evaluation"
+    },
+    "kannada": {
+      "dataset_source": "community-datasets/offenseval_dravidian (FIRE/DravidianLangTech)",
+      "validation_samples": 777,
+      "imbalance_ratio": "20.6% offensive/insult",
+      "suitable_pretrained_candidate": "DravidianLangTech fine-tuned checkpoints or Indic-MuRIL",
+      "status": "Ready for Colab GPU evaluation"
+    },
+    "hindi": {
+      "dataset_source": "necrosyth/hindi-social-media-hostility-detection & Paul/hatecheck-hindi",
+      "diagnostic_test_samples": 3565,
+      "suitable_pretrained_candidate": "Hate-speech-CNERG/hindi-abusive-MuRIL",
+      "status": "Ready for Colab GPU evaluation"
+    },
+    "hinglish": {
+      "dataset_source": "pankajbiswas6/prism-hinglish-hate-speech",
+      "held_out_test_samples": 8852,
+      "test_toxic_positives": 4112,
+      "test_non_toxic_negatives": 4740,
+      "imbalance_ratio": "46.4% balanced",
+      "suitable_pretrained_candidate": "Keshav0av/HinTox-hinglish-hate-speech-abuse-detection",
+      "status": "Ready for Colab GPU evaluation"
+    }
+  },
+  "colab_gpu_evaluation_route": {
+    "notebook_template": "ml/colab_evaluate_pretrained_models.py",
+    "target_runtimes": ["Google Colab Free Tier (T4 GPU)", "Kaggle Notebooks (P100 / T4)"],
+    "required_packages": ["torch", "transformers", "scikit-learn", "pandas", "safetensors"]
+  }
+}

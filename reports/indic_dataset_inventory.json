@@ -1,0 +1,184 @@
+{
+  "hatecheck_hindi_test.csv": {
+    "rows": 3565,
+    "columns": [
+      "mhc_case_id",
+      "functionality",
+      "test_case",
+      "label_gold",
+      "target_ident",
+      "ref_case_id",
+      "ref_templ_id",
+      "templ_id",
+      "case_templ",
+      "gender_male",
+      "gender_female",
+      "label_annotated",
+      "label_annotated_maj",
+      "disagreement_in_case",
+      "disagreement_in_template"
+    ],
+    "missing_values": 9233,
+    "duplicate_text_rows": 15,
+    "primary_label_col": "label_gold",
+    "label_distribution": {
+      "hateful": 2488,
+      "non-hateful": 1077
+    }
+  },
+  "hindi_hostility_train.parquet": {
+    "rows": 5728,
+    "columns": [
+      "Unique ID",
+      "Post",
+      "Labels Set"
+    ],
+    "missing_values": 0,
+    "duplicate_text_rows": 10,
+    "primary_label_col": "Labels Set",
+    "label_distribution": {
+      "non-hostile": 3050,
+      "fake": 1009,
+      "hate": 478,
+      "offensive": 405,
+      "defamation": 305,
+      "hate,offensive": 163,
+      "defamation,offensive": 81,
+      "defamation,hate": 74,
+      "defamation,fake": 34,
+      "defamation,hate,offensive": 28,
+      "fake,offensive": 28,
+      "fake,hate": 27,
+      "defamation,fake,offensive": 24,
+      "defamation,fake,hate": 9,
+      "defamation,fake,hate,offensive": 9,
+      "fake,hate,offensive": 4
+    }
+  },
+  "hinglish_test.csv": {
+    "rows": 8852,
+    "columns": [
+      "text",
+      "label",
+      "lang"
+    ],
+    "missing_values": 0,
+    "duplicate_text_rows": 0,
+    "primary_label_col": "label",
+    "label_distribution": {
+      "0": 4740,
+      "1": 4112
+    }
+  },
+  "hinglish_train.csv": {
+    "rows": 17704,
+    "columns": [
+      "text",
+      "label",
+      "lang"
+    ],
+    "missing_values": 0,
+    "duplicate_text_rows": 0,
+    "primary_label_col": "label",
+    "label_distribution": {
+      "0": 9479,
+      "1": 8225
+    }
+  },
+  "hinglish_val.csv": {
+    "rows": 2950,
+    "columns": [
+      "text",
+      "label",
+      "lang"
+    ],
+    "missing_values": 0,
+    "duplicate_text_rows": 0,
+    "primary_label_col": "label",
+    "label_distribution": {
+      "0": 1580,
+      "1": 1370
+    }
+  },
+  "kannada_train.parquet": {
+    "rows": 6217,
+    "columns": [
+      "text",
+      "label"
+    ],
+    "missing_values": 0,
+    "duplicate_text_rows": 316,
+    "primary_label_col": "label",
+    "label_distribution": {
+      "0": 3544,
+      "5": 1522,
+      "2": 487,
+      "3": 329,
+      "1": 212,
+      "4": 123
+    }
+  },
+  "kannada_val.parquet": {
+    "rows": 777,
+    "columns": [
+      "text",
+      "label"
+    ],
+    "missing_values": 0,
+    "duplicate_text_rows": 21,
+    "primary_label_col": "label",
+    "label_distribution": {
+      "0": 426,
+      "5": 191,
+      "2": 66,
+      "3": 45,
+      "1": 33,
+      "4": 16
+    }
+  },
+  "telugu_test.csv": {
+    "rows": 7033,
+    "columns": [
+      "Unnamed: 0",
+      "Sentence",
+      "Hate-Speech"
+    ],
+    "missing_values": 0,
+    "duplicate_text_rows": 12,
+    "primary_label_col": "Hate-Speech",
+    "label_distribution": {
+      "no": 6957,
+      "yes": 76
+    }
+  },
+  "telugu_train.csv": {
+    "rows": 24599,
+    "columns": [
+      "Unnamed: 0",
+      "Sentence",
+      "Hate-Speech"
+    ],
+    "missing_values": 0,
+    "duplicate_text_rows": 60,
+    "primary_label_col": "Hate-Speech",
+    "label_distribution": {
+      "no": 24336,
+      "yes": 263
+    }
+  },
+  "telugu_val.csv": {
+    "rows": 3510,
+    "columns": [
+      "Unnamed: 0",
+      "Sentence",
+      "Hate-Speech"
+    ],
+    "missing_values": 0,
+    "duplicate_text_rows": 1,
+    "primary_label_col": "Hate-Speech",
+    "label_distribution": {
+      "no": 3479,
+      "yes": 31
+    }
+  }
+}
