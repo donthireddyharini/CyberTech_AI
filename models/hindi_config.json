@@ -1,0 +1,20 @@
+{
+  "language": "hindi",
+  "model_version": "hindi_word_char_v1",
+  "model_type": "scikit_learn_tfidf_logreg",
+  "architecture": "FeatureUnion(Word (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
+  "dataset_source": "necrosyth/hindi-social-media-hostility-detection",
+  "train_samples": 4009,
+  "val_samples": 859,
+  "test_samples": 860,
+  "optimal_threshold": 0.5,
+  "metrics": {
+    "accuracy": 0.9663,
+    "precision": 0.9494,
+    "recall": 0.9801,
+    "f1_score": 0.9645,
+    "roc_auc": 0.9899,
+    "pr_auc": 0.9862
+  },
+  "checkpoint_path": "models\\hindi_model.joblib"
+}

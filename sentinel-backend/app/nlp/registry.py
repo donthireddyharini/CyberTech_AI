@@ -52,45 +52,45 @@ LANGUAGE_CATALOG: dict[str, ModelMetadata] = {
         task_label_type="Binary Toxicity (Toxicity >= 0.50)"
     ),
 
-    # ── Priority Indic Candidates (Evaluated in Colab GPU Suite) ──
+    # ── Priority Indic Validated Models (Locally Trained Scikit-Learn Pipelines) ──
     "hindi": ModelMetadata(
         code="hi",
         name="Hindi",
         script_family="Devanagari",
-        operational_status="evaluated_limited_model",
-        route_status="needs_review",
-        review_status="mandatory_human_review",
-        primary_checkpoint="Hate-speech-CNERG/hindi-abusive-MuRIL",
-        model_type="transformer_checkpoint_pending_gpu",
-        notice="Hindi MuRIL checkpoint pending Colab GPU execution; routed to research policy with mandatory human review.",
-        license_note="Academic Research (Hate-speech-CNERG, IIT KGP)",
-        task_label_type="Binary Abusive Speech"
+        operational_status="validated_automated_model",
+        route_status="validated_model",
+        review_status="automated_pass_or_flag",
+        primary_checkpoint="hindi_word_char_v1 (models/hindi_model.joblib)",
+        model_type="scikit_learn_tfidf_logreg",
+        notice="Validated production Hindi hostility model active (threshold=0.50, ROC-AUC=0.9899, F1=0.9645).",
+        license_note="Academic Research (necrosyth/hindi-social-media-hostility-detection)",
+        task_label_type="Social Media Hostility (Hate / Abuse / Cyberbullying)"
     ),
     "code_mixed": ModelMetadata(
         code="code_mixed",
         name="Hinglish / Code-Mixed",
         script_family="Latin / Transliterated",
-        operational_status="evaluated_limited_model",
-        route_status="needs_review",
-        review_status="mandatory_human_review",
-        primary_checkpoint="Keshav0av/HinTox-hinglish-hate-speech-abuse-detection",
-        model_type="transformer_checkpoint_pending_gpu",
-        notice="Hinglish HinTox checkpoint pending Colab GPU execution; routed to research policy with mandatory human review.",
+        operational_status="validated_automated_model",
+        route_status="validated_model",
+        review_status="automated_pass_or_flag",
+        primary_checkpoint="hinglish_word_char_v1 (models/hinglish_model.joblib)",
+        model_type="scikit_learn_tfidf_logreg",
+        notice="Validated production Hinglish model active (threshold=0.29, ROC-AUC=0.7855, F1=0.7098).",
         license_note="Apache 2.0 / Academic (PRISM Corpus)",
-        task_label_type="Binary Hate & Abusive Speech"
+        task_label_type="Binary Hate & Abusive Speech (PRISM Hinglish)"
     ),
     "telugu": ModelMetadata(
         code="te",
         name="Telugu",
         script_family="Telugu",
-        operational_status="evaluated_limited_model",
-        route_status="needs_review",
-        review_status="mandatory_human_review",
-        primary_checkpoint="ramesh070/indicbert-hatespeechdetection-telugu",
-        model_type="transformer_checkpoint_pending_gpu",
-        notice="Telugu IndicBERT checkpoint pending Colab GPU execution; routed to research policy with mandatory human review.",
+        operational_status="validated_automated_model",
+        route_status="validated_model",
+        review_status="automated_pass_or_flag",
+        primary_checkpoint="telugu_word_char_v1 (models/telugu_model.joblib)",
+        model_type="scikit_learn_tfidf_logreg",
+        notice="Validated production Telugu model active (threshold=0.29, ROC-AUC=0.8361).",
         license_note="Academic Research (IIIT Hyderabad Telugu Corpus)",
-        task_label_type="Binary Hate Speech (Severe 1.08% positive imbalance)"
+        task_label_type="Binary Hate Speech (mounikaiiith/Telugu-Hatespeech)"
     ),
     "bengali": ModelMetadata(
         code="bn",
@@ -176,14 +176,14 @@ LANGUAGE_CATALOG: dict[str, ModelMetadata] = {
         code="kn",
         name="Kannada",
         script_family="Kannada",
-        operational_status="human_review_only",
-        route_status="needs_review",
-        review_status="mandatory_human_review",
-        primary_checkpoint="none_available (OffenseVal val-only)",
-        model_type="rule_baseline_pending_model",
-        notice="No verified standalone fine-tuned Kannada checkpoint available; routed to rule policy with mandatory human review.",
-        license_note="CC BY 4.0 (Dravidian OffenseVal)",
-        task_label_type="Offensive Language (Insult vs Hate)"
+        operational_status="validated_automated_model",
+        route_status="validated_model",
+        review_status="automated_pass_or_flag",
+        primary_checkpoint="kannada_word_char_v1 (models/kannada_model.joblib)",
+        model_type="scikit_learn_tfidf_logreg",
+        notice="Validated production Kannada model active (threshold=0.55, ROC-AUC=0.8682, F1=0.6945).",
+        license_note="CC BY 4.0 (OffenseVal Dravidian)",
+        task_label_type="Offensive / Abusive Language"
     ),
     "assamese": ModelMetadata(
         code="as",

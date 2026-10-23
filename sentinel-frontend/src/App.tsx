@@ -1,8 +1,8 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, useLocation, Navigate } from 'react-router-dom';
 import {
   Shield, LayoutDashboard, FlaskConical, ShieldAlert, Scale,
-  Database, MessageSquareWarning, Info, Bell, Search, User,
+  Database, MessageSquareWarning, Bell, Search, User,
   ChevronLeft, ChevronRight, Wifi, WifiOff, AlertCircle, X, CheckCircle
 } from 'lucide-react';
 import { healthApi } from './api/client';
@@ -57,7 +57,6 @@ const navItems = [
   { path: '/fairness', label: 'Fairness & Evaluation', icon: Scale },
   { path: '/dataset-lab', label: 'Dataset & Model Lab', icon: Database },
   { path: '/feedback', label: 'Feedback & Error Analysis', icon: MessageSquareWarning },
-  { path: '/overview', label: 'Project Overview', icon: Info },
 ];
 
 interface SidebarProps {
@@ -279,7 +278,7 @@ function AppInner() {
               <Route path="/fairness" element={<FairnessEvaluation />} />
               <Route path="/dataset-lab" element={<DatasetModelLab />} />
               <Route path="/feedback" element={<FeedbackAnalysis />} />
-              <Route path="/overview" element={<ProjectOverview />} />
+              <Route path="/overview" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         </main>

@@ -1,0 +1,20 @@
+{
+  "language": "hinglish",
+  "model_version": "hinglish_word_char_v1",
+  "model_type": "scikit_learn_tfidf_logreg",
+  "architecture": "FeatureUnion(Word (1,2) + Char_wb (3,5)) -> LogisticRegression(balanced)",
+  "dataset_source": "pankajbiswas6/prism-hinglish-hate-speech",
+  "train_samples": 17704,
+  "val_samples": 2950,
+  "test_samples": 8852,
+  "optimal_threshold": 0.29,
+  "metrics": {
+    "accuracy": 0.6613,
+    "precision": 0.5896,
+    "recall": 0.8915,
+    "f1_score": 0.7098,
+    "roc_auc": 0.7855,
+    "pr_auc": 0.7616
+  },
+  "checkpoint_path": "models\\hinglish_model.joblib"
+}

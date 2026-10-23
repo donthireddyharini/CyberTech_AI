@@ -28,6 +28,7 @@ async def model_status():
     toxicity_loaded = engine.toxicity_predictor is not None and engine.toxicity_predictor.is_available()
 
     capabilities = [
+        "Trained multilingual safety models (English, Hindi, Telugu, Hinglish, Kannada) using local scikit-learn pipelines with zero external API calls.",
         "Pattern-based detection of harassment, hate speech, and cyberbullying across multi-label schemas.",
         "Script-aware language detection and model registry covering all 22 Eighth Schedule Indian languages plus Hinglish.",
         "Code-mixed marker analysis for transliterated Indian-language conversations.",
@@ -35,13 +36,13 @@ async def model_status():
         "Context window comparison (evaluating text with before/after conversational turns).",
     ]
     if toxicity_loaded:
-        capabilities.insert(0, "Trained English Toxicity Classification Baseline (TF-IDF + LogisticRegression on Civil Comments).")
+        capabilities.insert(1, "Trained English Toxicity Classification Baseline (TF-IDF + LogisticRegression on Civil Comments).")
 
     limitations = [
-        "Trained baseline is English toxicity only — not yet a multilingual transformer.",
-        "Rule-based pattern matching handles non-English and multi-label hate speech / cyberbullying.",
-        "Scores from pattern matching reflect heuristic strength, not calibrated probabilities.",
-        "Cannot fully understand complex figurative sarcasm or cultural nuances without transformer fine-tuning.",
+        "Validated automated models currently cover English, Hindi, Telugu, Hinglish, and Kannada.",
+        "Other Indic languages (Bengali, Marathi, Tamil, Malayalam, Urdu, Gujarati, etc.) route with mandatory human review pending dataset training.",
+        "Scores reflect local scikit-learn model calibrated probabilities and pattern evidence.",
+        "Cannot fully understand complex figurative sarcasm or deep cultural metaphors without larger domain datasets.",
     ]
 
     return ModelStatusSchema(

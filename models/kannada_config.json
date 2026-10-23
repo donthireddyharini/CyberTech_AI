@@ -1,0 +1,20 @@
+{
+  "language": "kannada",
+  "model_version": "kannada_word_char_v1",
+  "model_type": "scikit_learn_tfidf_logreg",
+  "architecture": "FeatureUnion(Word (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
+  "dataset_source": "community-datasets/offenseval_dravidian",
+  "train_samples": 4695,
+  "val_samples": 586,
+  "test_samples": 586,
+  "optimal_threshold": 0.55,
+  "metrics": {
+    "accuracy": 0.8379,
+    "precision": 0.7152,
+    "recall": 0.675,
+    "f1_score": 0.6945,
+    "roc_auc": 0.8682,
+    "pr_auc": 0.7439
+  },
+  "checkpoint_path": "models\\kannada_model.joblib"
+}

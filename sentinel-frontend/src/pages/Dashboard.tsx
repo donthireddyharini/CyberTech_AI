@@ -3,7 +3,7 @@ import {
   MessageSquare, Flag, Clock, AlertTriangle,
   TrendingUp, RefreshCw, CheckCircle, Eye, ChevronRight,
   Activity, Cpu, Zap, Scale, Upload, FileText, Download, CheckCircle2,
-  ShieldCheck, Database, ListFilter, Play
+  ShieldCheck, Database, ListFilter, Play, Globe
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer
@@ -803,6 +803,107 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ─── Validated Multilingual Models (Zero External APIs, Fully Local) ─── */}
+      <div className="card-glow p-5 border border-indigo-900/60 bg-gradient-to-br from-[#0c1333] via-[#080d26] to-[#05091a]">
+        <div className="flex items-center justify-between pb-3 border-b border-indigo-900/40 mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-700/50 flex items-center justify-center text-indigo-400">
+              <Globe className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                Validated Multilingual Local Model Matrix
+                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-700/50">
+                  5 Languages Active
+                </span>
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                Trained scikit-learn FeatureUnion (Word + Char n-gram) pipelines with calibrated thresholds. Zero external AI API keys.
+              </p>
+            </div>
+          </div>
+          <a href="/context-lab" className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1">
+            Test Live in Context Lab →
+          </a>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          {[
+            {
+              lang: "English",
+              version: "enhanced_word_char_v2",
+              dataset: "Civil Comments (CC0)",
+              samples: "2,979 held-out",
+              metric: "ROC-AUC 0.8784",
+              metric2: "Acc 90.9%",
+              threshold: "0.40",
+              status: "Validated Automated",
+              statusColor: "text-emerald-400 bg-emerald-950/60 border-emerald-800/40"
+            },
+            {
+              lang: "Hindi",
+              version: "hindi_word_char_v1",
+              dataset: "Hindi Social Media Hostility",
+              samples: "860 held-out",
+              metric: "ROC-AUC 0.9899",
+              metric2: "F1 96.5%",
+              threshold: "0.50",
+              status: "Validated Automated",
+              statusColor: "text-emerald-400 bg-emerald-950/60 border-emerald-800/40"
+            },
+            {
+              lang: "Hinglish / Code-Mixed",
+              version: "hinglish_word_char_v1",
+              dataset: "PRISM Hinglish (Apache 2.0)",
+              samples: "8,852 held-out",
+              metric: "ROC-AUC 0.7855",
+              metric2: "F1 71.0%",
+              threshold: "0.29",
+              status: "Validated Automated",
+              statusColor: "text-emerald-400 bg-emerald-950/60 border-emerald-800/40"
+            },
+            {
+              lang: "Telugu",
+              version: "telugu_word_char_v1",
+              dataset: "IIIT Hyderabad Telugu Corpus",
+              samples: "7,033 held-out",
+              metric: "ROC-AUC 0.8361",
+              metric2: "Acc 96.6%",
+              threshold: "0.29",
+              status: "Validated Automated",
+              statusColor: "text-emerald-400 bg-emerald-950/60 border-emerald-800/40"
+            },
+            {
+              lang: "Kannada",
+              version: "kannada_word_char_v1",
+              dataset: "OffenseVal Dravidian",
+              samples: "586 validation",
+              metric: "ROC-AUC 0.8682",
+              metric2: "F1 69.5%",
+              threshold: "0.55",
+              status: "Validated Automated",
+              statusColor: "text-emerald-400 bg-emerald-950/60 border-emerald-800/40"
+            }
+          ].map((m, idx) => (
+            <div key={idx} className="p-3 rounded-xl bg-navy-950/70 border border-indigo-900/40 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-bold text-xs text-white">{m.lang}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                </div>
+                <div className="text-[10px] text-slate-400 truncate mb-1">Source: {m.dataset}</div>
+                <div className="text-[11px] font-mono font-bold text-indigo-300">{m.metric}</div>
+                <div className="text-[10px] text-slate-300">{m.metric2} • {m.samples}</div>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-indigo-950 flex items-center justify-between text-[10px]">
+                <span className="text-slate-500 font-mono">Thresh: {m.threshold}</span>
+                <span className={`px-1.5 py-0.5 rounded border ${m.statusColor}`}>Active</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

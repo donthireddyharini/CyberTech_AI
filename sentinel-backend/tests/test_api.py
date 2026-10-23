@@ -477,8 +477,8 @@ async def test_english_route_validated_model(client):
 
 
 @pytest.mark.asyncio
-async def test_hindi_route_needs_review(client):
-    """Hindi script text routes to needs_review status with GPU execution notice."""
+async def test_hindi_route_validated_model(client):
+    """Hindi script text routes to validated_model status with active hostility model."""
     resp = await client.post("/api/analyze", json={
         "text": "यह एक हिंदी भाषा का संदेश है।"
     })
@@ -488,22 +488,20 @@ async def test_hindi_route_needs_review(client):
     assert data["detected_language"] == "hindi"
     assert data["language_route"] is not None
     route = data["language_route"]
-    assert route["status"] == "needs_review"
+    assert route["status"] == "validated_model"
     assert route["target_language"] == "hindi"
-    assert route["review_status"] == "mandatory_human_review"
-    assert route["model_type"] == "transformer_checkpoint_pending_gpu"
-    assert "MuRIL" in route["model_name"]
-    assert "GPU" in route["notice"]
+    assert route["review_status"] == "automated_pass_or_flag"
+    assert route["model_type"] == "scikit_learn_tfidf_logreg"
+    assert "hindi" in route["model_name"].lower()
     
-    # Non-English route does not fabricate English toxicity score
+    # Validated route has model_available=True
     assert data["toxicity_prediction"] is not None
-    assert data["toxicity_prediction"]["model_available"] is False
-    assert "not applicable" in data["toxicity_prediction"]["scope_notice"]
+    assert data["toxicity_prediction"]["model_available"] is True
 
 
 @pytest.mark.asyncio
-async def test_telugu_route_needs_review(client):
-    """Telugu script text routes to needs_review with Telugu checkpoint reference."""
+async def test_telugu_route_validated_model(client):
+    """Telugu script text routes to validated_model with active Telugu hate speech model."""
     resp = await client.post("/api/analyze", json={
         "text": "ఈ వార్త చాలా ఆసక్తికరంగా ఉంది మరియు ఆలోచింపజేస్తుంది."
     })
@@ -513,16 +511,18 @@ async def test_telugu_route_needs_review(client):
     assert data["detected_language"] == "telugu"
     assert data["language_route"] is not None
     route = data["language_route"]
-    assert route["status"] == "needs_review"
+    assert route["status"] == "validated_model"
     assert route["target_language"] == "telugu"
-    assert route["review_status"] == "mandatory_human_review"
-    assert route["model_type"] == "transformer_checkpoint_pending_gpu"
-    assert "indicbert" in route["model_name"].lower()
+    assert route["review_status"] == "automated_pass_or_flag"
+    assert route["model_type"] == "scikit_learn_tfidf_logreg"
+    assert "telugu" in route["model_name"].lower()
+    assert data["toxicity_prediction"] is not None
+    assert data["toxicity_prediction"]["model_available"] is True
 
 
 @pytest.mark.asyncio
-async def test_kannada_route_needs_review(client):
-    """Kannada script text routes to needs_review with honest model notice."""
+async def test_kannada_route_validated_model(client):
+    """Kannada script text routes to validated_model with active Kannada model."""
     resp = await client.post("/api/analyze", json={
         "text": "ಇದು ಕನ್ನಡ ಭಾಷೆಯ ಒಂದು ಸಾಮಾನ್ಯ ವಾಕ್ಯ."
     })
@@ -532,15 +532,18 @@ async def test_kannada_route_needs_review(client):
     assert data["detected_language"] == "kannada"
     assert data["language_route"] is not None
     route = data["language_route"]
-    assert route["status"] == "needs_review"
+    assert route["status"] == "validated_model"
     assert route["target_language"] == "kannada"
-    assert route["review_status"] == "mandatory_human_review"
-    assert route["model_type"] == "rule_baseline_pending_model"
+    assert route["review_status"] == "automated_pass_or_flag"
+    assert route["model_type"] == "scikit_learn_tfidf_logreg"
+    assert "kannada" in route["model_name"].lower()
+    assert data["toxicity_prediction"] is not None
+    assert data["toxicity_prediction"]["model_available"] is True
 
 
 @pytest.mark.asyncio
-async def test_hinglish_code_mixed_route(client):
-    """Code-mixed / Hinglish text routes to needs_review with HinTox reference."""
+async def test_hinglish_code_mixed_route_validated_model(client):
+    """Code-mixed / Hinglish text routes to validated_model with active Hinglish model."""
     resp = await client.post("/api/analyze", json={
         "text": "bhai ye kya kar raha hai, bilkul samajh nahi aa raha yaar."
     })
@@ -550,10 +553,39 @@ async def test_hinglish_code_mixed_route(client):
     assert data["is_code_mixed"] is True
     assert data["language_route"] is not None
     route = data["language_route"]
-    assert route["status"] == "needs_review"
+    assert route["status"] == "validated_model"
     assert route["target_language"] in ["hinglish", "code_mixed"]
-    assert route["review_status"] == "mandatory_human_review"
-    assert "HinTox" in route["model_name"]
+    assert route["review_status"] == "automated_pass_or_flag"
+    assert route["model_type"] == "scikit_learn_tfidf_logreg"
+    assert "hinglish" in route["model_name"].lower()
+    assert data["toxicity_prediction"] is not None
+    assert data["toxicity_prediction"]["model_available"] is True
+
+
+@pytest.mark.asyncio
+async def test_telugu_harmful_detected(client):
+    """Harmful Telugu text is classified as toxic with elevated severity."""
+    resp = await client.post("/api/analyze", json={
+        "text": "ట్విటర్‌లో విమర్శల వర్షం కురిపించారు."
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["toxicity_prediction"]["is_toxic"] is True
+    assert data["severity"] in ["high", "medium"]
+    assert data["decision"] == "flag_for_review"
+
+
+@pytest.mark.asyncio
+async def test_hinglish_harmful_detected(client):
+    """Harmful Hinglish text is classified as toxic with flag_for_review decision."""
+    resp = await client.post("/api/analyze", json={
+        "text": "tere baap ko bol saale kutte madarchod"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["toxicity_prediction"]["is_toxic"] is True
+    assert data["severity"] in ["high", "medium"]
+    assert data["decision"] == "flag_for_review" 
 
 
 @pytest.mark.asyncio
@@ -566,8 +598,18 @@ async def test_manual_language_hint_override(client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["detected_language"] == "hindi"
-    assert data["language_route"]["status"] == "needs_review"
+    assert data["language_route"]["status"] == "validated_model"
     assert data["language_route"]["target_language"] == "hindi"
+
+    # Also verify that a pending language hint routes to needs_review
+    resp_ta = await client.post("/api/analyze", json={
+        "text": "vanakkam nanba",
+        "language_hint": "tamil"
+    })
+    assert resp_ta.status_code == 200
+    data_ta = resp_ta.json()
+    assert data_ta["language_route"]["status"] == "needs_review"
+    assert data_ta["language_route"]["target_language"] == "tamil"
 
 
 @pytest.mark.asyncio

@@ -10,40 +10,64 @@ import { useToast } from '../App';
 
 const SAMPLE_EXAMPLES = [
   {
-    label: "Legitimate Disagreement (MUST NOT be flagged)",
+    label: "English: Legitimate Disagreement (Civil)",
     text: "I disagree with your opinion, and here is why — the data doesn't support your conclusion.",
     context_before: "",
     expected: "legitimate / no_action",
   },
   {
-    label: "Harassment Example",
+    label: "English: Targeted Harassment",
     text: "You should just shut up, nobody wants to hear from you.",
     context_before: "",
     expected: "harassment / flag_for_review",
   },
   {
-    label: "Hate Speech Example",
-    text: "Your kind of people don't belong here. Go back to where you came from.",
-    context_before: "",
-    expected: "hate_speech / flag_for_review",
-  },
-  {
-    label: "Telugu-English Code Mixed",
-    text: "మీ పని చాలా బాగుంది! Keep up the great work bhai.",
+    label: "Hindi: Harmless News / Civil",
+    text: "सरकार हमेशा से किसानों की कमाई को बढ़ाने के लिए काम करती है।",
     context_before: "",
     expected: "legitimate / no_action",
   },
   {
-    label: "Cyberbullying Example",
-    text: "Everyone knows you're worthless and stupid. Why do you even try?",
+    label: "Hindi: Hostile / Hate Speech",
+    text: "मेरे देश के हिन्दु बहुत निराले है। कुछ तो पक्के राम भक्त है और कुछ बाबर के साले है",
     context_before: "",
-    expected: "cyberbullying / flag_for_review",
+    expected: "hostile / flag_for_review",
   },
   {
-    label: "Ambiguous with Context",
-    text: "I hate this!",
-    context_before: "Did you see the game last night? That referee decision was awful.",
-    expected: "uncertain / human_review (context-dependent)",
+    label: "Telugu: Harmless Sports Update",
+    text: "చివర్లో జోఫ్రా ఆర్చర్‌ భారీగా షాట్లు కొట్టి జట్టును విజయతీరాలు చేర్చాడు.",
+    context_before: "",
+    expected: "legitimate / no_action",
+  },
+  {
+    label: "Telugu: Hate Speech Violation",
+    text: "ట్విటర్‌లో విమర్శల వర్షం కురిపించారు.",
+    context_before: "",
+    expected: "hate_speech / flag_for_review",
+  },
+  {
+    label: "Hinglish: Harmless Chat",
+    text: "bhai ye picture dekhne chale kya kal shaam ko",
+    context_before: "",
+    expected: "legitimate / no_action",
+  },
+  {
+    label: "Hinglish: Abusive Profanity",
+    text: "tere baap ko bol saale kutte madarchod",
+    context_before: "",
+    expected: "hate_speech / flag_for_review",
+  },
+  {
+    label: "Kannada: Harmless Compliment",
+    text: "ನಿಮ್ಮ ಕೆಲಸ ತುಂಬಾ ಚೆನ್ನಾಗಿದೆ, ಧನ್ಯವಾದಗಳು.",
+    context_before: "",
+    expected: "legitimate / no_action",
+  },
+  {
+    label: "Kannada: Offensive Insult",
+    text: "ಹೋಗೋ ಬೋಳಿಮಗನೆ ಸುಳೆಮಗನೆ",
+    context_before: "",
+    expected: "offensive / flag_for_review",
   },
 ];
 
@@ -152,26 +176,28 @@ function ResultPanel({ result, title }: { result: AnalyzeResponse; title?: strin
         </div>
       )}
 
-      {/* English Toxicity Baseline Model (Civil Comments Checkpoint) */}
+      {/* Machine Learning Model Prediction Card (Local Scikit-Learn Pipeline) */}
       {result.toxicity_prediction && result.toxicity_prediction.model_available ? (
         <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-950/40 to-indigo-950/40 border border-purple-500/30 space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-bold text-purple-200">Trained English Toxicity Baseline</span>
+              <span className="text-xs font-bold text-purple-200">
+                Trained {result.detected_language ? (result.detected_language.charAt(0).toUpperCase() + result.detected_language.slice(1)) : 'Multilingual'} Model ({result.toxicity_prediction.model_version})
+              </span>
             </div>
             <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
               result.toxicity_prediction.is_toxic
                 ? 'bg-red-950/60 text-red-400 border-red-700/50'
                 : 'bg-emerald-950/60 text-emerald-400 border-emerald-700/50'
             }`}>
-              {result.toxicity_prediction.is_toxic ? 'TOXIC' : 'NON-TOXIC'}
+              {result.toxicity_prediction.is_toxic ? 'TOXIC / HARMFUL' : 'NON-TOXIC / CIVIL'}
             </span>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-slate-400">Toxicity Probability</span>
+              <span className="text-slate-400">Prediction Probability</span>
               <span className="font-mono font-semibold text-white">
                 {(result.toxicity_prediction.toxicity_score * 100).toFixed(1)}%
               </span>
@@ -191,14 +217,14 @@ function ResultPanel({ result, title }: { result: AnalyzeResponse; title?: strin
           </div>
 
           <p className="text-[10px] text-purple-300/80 leading-relaxed bg-purple-900/20 p-2 rounded border border-purple-800/30">
-            ℹ️ {result.toxicity_prediction.scope_notice} Multi-label harassment &amp; cyberbullying categories below are evaluated via research policy rules.
+            ℹ️ {result.toxicity_prediction.scope_notice}
           </p>
         </div>
       ) : result.toxicity_prediction && (
         <div className="p-3 rounded-lg bg-navy-900/40 border border-slate-700/40 text-[11px] text-slate-400 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-slate-300">English Toxicity Baseline Standby:</span> {result.toxicity_prediction.scope_notice}
+            <span className="font-semibold text-slate-300">Model Pending:</span> {result.toxicity_prediction.scope_notice}
           </div>
         </div>
       )}

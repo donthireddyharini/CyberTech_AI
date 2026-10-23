@@ -161,13 +161,15 @@ class BaselineNLPEngine:
             sys.path.insert(0, project_root)
             
         try:
-            from ml.inference import get_toxicity_predictor
+            from ml.inference import get_toxicity_predictor, get_multilingual_predictor
             self._toxicity_predictor = get_toxicity_predictor()
+            self._multilingual_predictor = get_multilingual_predictor()
             self._toxicity_model_loaded = True
-            logger.info("Successfully loaded trained English toxicity baseline model.")
+            logger.info("Successfully loaded trained English and multilingual models.")
         except Exception as e:
-            logger.warning(f"Could not load trained English toxicity model: {e}")
+            logger.warning(f"Could not load trained models: {e}")
             self._toxicity_predictor = None
+            self._multilingual_predictor = None
             self._toxicity_model_loaded = False
 
     @property
@@ -317,25 +319,28 @@ class BaselineNLPEngine:
         meta = registry.get_route_metadata(resolved_key)
         lang = meta.name.lower() if resolved_key != "code_mixed" else "code_mixed"
 
-        if resolved_key == "english":
-            if self._toxicity_model_loaded and self._toxicity_predictor:
-                route = LanguageRouteInfo(
-                    status="validated_model",
-                    target_language="english",
-                    model_name=getattr(self._toxicity_predictor, "model_version", "enhanced_word_char_v2"),
-                    model_type="scikit_learn_tfidf_logreg",
-                    review_status="automated_pass_or_flag",
-                    notice=meta.notice
-                )
-            else:
-                route = LanguageRouteInfo(
-                    status="needs_review",
-                    target_language="english",
-                    model_name="fallback_rule_engine",
-                    model_type="rule_policy_pending_checkpoint",
-                    review_status="mandatory_human_review",
-                    notice="English toxicity model checkpoint unavailable; routed to rule fallback with mandatory human review."
-                )
+        is_model_available = False
+        if self._toxicity_model_loaded and self._multilingual_predictor:
+            is_model_available = self._multilingual_predictor.is_language_supported(resolved_key)
+            
+        if meta.route_status == "validated_model" and is_model_available:
+            route = LanguageRouteInfo(
+                status="validated_model",
+                target_language=meta.name.lower() if meta.code != "code_mixed" else "hinglish",
+                model_name=meta.primary_checkpoint,
+                model_type=meta.model_type,
+                review_status="automated_pass_or_flag",
+                notice=meta.notice
+            )
+        elif meta.route_status == "validated_model" and not is_model_available:
+            route = LanguageRouteInfo(
+                status="needs_review",
+                target_language=meta.name.lower() if meta.code != "code_mixed" else "hinglish",
+                model_name="fallback_rule_engine",
+                model_type="rule_policy_pending_checkpoint",
+                review_status="mandatory_human_review",
+                notice=f"{meta.name} model checkpoint not found locally; routed to human review fallback."
+            )
         else:
             route = LanguageRouteInfo(
                 status=meta.route_status,
@@ -358,11 +363,11 @@ class BaselineNLPEngine:
 
         elapsed_ms = (time.time() - start) * 1000
 
-        # Toxicity prediction
+        # Toxicity prediction using genuine local calibrated model
         toxicity_pred = None
         if route.status == "validated_model":
             try:
-                raw_pred = self._toxicity_predictor.predict(text)
+                raw_pred = self._multilingual_predictor.predict(text, language=resolved_key)
                 toxicity_pred = ToxicityPrediction(
                     is_toxic=raw_pred['is_toxic'],
                     toxicity_score=raw_pred['toxicity_score'],
@@ -372,8 +377,55 @@ class BaselineNLPEngine:
                     model_available=True,
                     scope_notice=raw_pred['scope_notice']
                 )
+                
+                # Propagate machine-learning toxicity signals into multi-label scores and severity
+                if raw_pred['is_toxic']:
+                    if resolved_key == "telugu":
+                        hate_score = max(hate_score, raw_pred['toxicity_score'])
+                        if not hate_evidence:
+                            hate_evidence = [f"Telugu hate speech model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
+                    elif resolved_key == "hindi":
+                        hate_score = max(hate_score, round(raw_pred['toxicity_score'] * 0.9, 3))
+                        harassment_score = max(harassment_score, round(raw_pred['toxicity_score'] * 0.9, 3))
+                        if not hate_evidence:
+                            hate_evidence = [f"Hindi hostility model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
+                    elif resolved_key in ["hinglish", "code_mixed"]:
+                        hate_score = max(hate_score, raw_pred['toxicity_score'])
+                        harassment_score = max(harassment_score, round(raw_pred['toxicity_score'] * 0.85, 3))
+                        if not hate_evidence:
+                            hate_evidence = [f"Hinglish hate model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
+                    elif resolved_key == "kannada":
+                        harassment_score = max(harassment_score, raw_pred['toxicity_score'])
+                        hate_score = max(hate_score, round(raw_pred['toxicity_score'] * 0.85, 3))
+                        if not harassment_evidence:
+                            harassment_evidence = [f"Kannada offensive model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
+                    elif resolved_key == "english" and raw_pred['toxicity_score'] >= 0.70:
+                        harassment_score = max(harassment_score, raw_pred['toxicity_score'])
+                        if not harassment_evidence:
+                            harassment_evidence = [f"English toxicity model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
+
+                    legit_score = min(legit_score, 0.20)
+                    
+                    # Rebuild labels with ML-augmented scores
+                    labels = [
+                        LabelScore("hate_speech", round(hate_score, 3), hate_evidence),
+                        LabelScore("harassment", round(harassment_score, 3), harassment_evidence),
+                        LabelScore("cyberbullying", round(cyber_score, 3), cyber_evidence),
+                        LabelScore("legitimate", round(legit_score, 3), legit_evidence),
+                    ]
+                    
+                    # Recompute severity and decision
+                    severity, severity_reason = self._compute_severity(hate_score, harassment_score, cyber_score, legit_score)
+                    max_harmful = max(hate_score, harassment_score, cyber_score)
+                    if max_harmful >= 0.6:
+                        decision = "flag_for_review"
+                        recommended_action = "Escalate to human moderator for review (harmful language detected)."
+                    elif max_harmful >= 0.35:
+                        decision = "flag_for_review"
+                        recommended_action = "Flagged by validated machine learning safety model."
+                    confidence_level = "high" if max_harmful >= 0.75 else "medium"
             except Exception as e:
-                logger.error(f"Toxicity inference failed: {e}")
+                logger.error(f"Model inference failed: {e}")
                 toxicity_pred = ToxicityPrediction(
                     is_toxic=False,
                     toxicity_score=0.0,
@@ -381,7 +433,7 @@ class BaselineNLPEngine:
                     threshold=0.40,
                     model_version="unknown",
                     model_available=False,
-                    scope_notice="Model inference failed. English toxicity model unavailable."
+                    scope_notice=f"Model inference failed: {e}"
                 )
         else:
             toxicity_pred = ToxicityPrediction(
@@ -391,7 +443,7 @@ class BaselineNLPEngine:
                 threshold=0.40,
                 model_version="unavailable",
                 model_available=False,
-                scope_notice=f"English toxicity baseline not applicable to {route.target_language}. Multilingual evaluation pending GPU execution."
+                scope_notice=f"No validated local model for {route.target_language}. Pending model training and evaluation."
             )
 
         return InferenceResult(
