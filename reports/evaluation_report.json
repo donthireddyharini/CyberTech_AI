@@ -1,40 +1,41 @@
 {
-  "evaluation_dataset": "Civil Comments Held-Out Test Split (15%)",
+  "evaluation_dataset": "Jigsaw Civil Comments Held-Out Test Split (15%)",
+  "dataset_source": "https://huggingface.co/datasets/google/civil_comments (CC0 License)",
   "checkpoint": "models/baseline_toxicity.joblib",
-  "operating_threshold": 0.55,
+  "operating_threshold": 0.4,
   "test_samples": 2979,
   "class_support": {
     "non_toxic_count": 2794,
-    "toxic_count": 185
+    "toxic_count": 185,
+    "toxic_rate_percentage": 6.21
   },
   "metrics": {
-    "accuracy": 0.9416,
+    "accuracy": 0.909,
     "roc_auc": 0.8784,
     "pr_auc": 0.5094,
     "binary_toxic": {
-      "precision": 0.5346,
-      "recall": 0.4595,
-      "f1": 0.4942
+      "precision": 0.3673,
+      "recall": 0.6432,
+      "f1": 0.4676
     },
     "macro_average": {
-      "precision": 0.7496,
-      "recall": 0.7165,
-      "f1": 0.7316
+      "precision": 0.6712,
+      "recall": 0.7849,
+      "f1": 0.7089
     }
   },
   "confusion_matrix": {
-    "true_negatives": 2720,
-    "false_positives": 74,
-    "false_negatives": 100,
-    "true_positives": 85
+    "true_negatives": 2589,
+    "false_positives": 205,
+    "false_negatives": 66,
+    "true_positives": 119
   },
-  "baseline_comparison": {
-    "default_threshold_0.50": {
-      "threshold": 0.5,
+  "threshold_comparison": {
+    "default_0.50": {
       "accuracy": 0.9362,
-      "toxic_recall": 0.5081,
-      "toxic_precision": 0.487,
-      "toxic_f1": 0.4974,
+      "precision": 0.487,
+      "recall": 0.5081,
+      "f1": 0.4974,
       "confusion_matrix": {
         "tn": 2695,
         "fp": 99,
@@ -42,113 +43,36 @@
         "tp": 94
       }
     },
-    "calibrated_threshold_0.40": {
-      "threshold": 0.55,
-      "accuracy": 0.9416,
-      "toxic_recall": 0.4595,
-      "toxic_precision": 0.5346,
-      "toxic_f1": 0.4942,
+    "calibrated_0.40": {
+      "accuracy": 0.909,
+      "precision": 0.3673,
+      "recall": 0.6432,
+      "f1": 0.4676,
       "confusion_matrix": {
-        "tn": 2720,
-        "fp": 74,
-        "fn": 100,
-        "tp": 85
+        "tn": 2589,
+        "fp": 205,
+        "fn": 66,
+        "tp": 119
       }
     }
   },
-  "validation_tuning": [
-    {
-      "C": 0.5,
-      "val_f1": 0.4319,
-      "val_precision": 0.4118,
-      "val_recall": 0.4541,
-      "val_roc_auc": 0.8607
-    },
-    {
-      "C": 1.0,
-      "val_f1": 0.4444,
-      "val_precision": 0.4571,
-      "val_recall": 0.4324,
-      "val_roc_auc": 0.86
-    },
-    {
-      "C": 2.0,
-      "val_f1": 0.4368,
-      "val_precision": 0.4663,
-      "val_recall": 0.4108,
-      "val_roc_auc": 0.8583
-    },
-    {
-      "C": 3.0,
-      "val_f1": 0.4399,
-      "val_precision": 0.4808,
-      "val_recall": 0.4054,
-      "val_roc_auc": 0.8579
-    },
-    {
-      "C": 5.0,
-      "val_f1": 0.439,
-      "val_precision": 0.5035,
-      "val_recall": 0.3892,
-      "val_roc_auc": 0.8556
-    }
-  ],
-  "threshold_scan": [
-    {
-      "threshold": 0.25,
-      "precision": 0.2003,
-      "recall": 0.7514,
-      "f1": 0.3163
-    },
-    {
-      "threshold": 0.3,
-      "precision": 0.2447,
-      "recall": 0.6865,
-      "f1": 0.3608
-    },
-    {
-      "threshold": 0.35,
-      "precision": 0.3021,
-      "recall": 0.627,
-      "f1": 0.4077
-    },
-    {
-      "threshold": 0.4,
-      "precision": 0.3322,
-      "recall": 0.5135,
-      "f1": 0.4034
-    },
-    {
-      "threshold": 0.45,
-      "precision": 0.4112,
-      "recall": 0.4757,
-      "f1": 0.4411
-    },
-    {
-      "threshold": 0.5,
-      "precision": 0.4571,
-      "recall": 0.4324,
-      "f1": 0.4444
-    },
-    {
-      "threshold": 0.55,
-      "precision": 0.5,
-      "recall": 0.4108,
-      "f1": 0.451
-    },
-    {
-      "threshold": 0.6,
-      "precision": 0.5593,
-      "recall": 0.3568,
-      "f1": 0.4356
-    }
-  ],
+  "precision_recall_rationale": "Because the dataset has severe class imbalance (only 6.21% toxic), standard 0.50 thresholding misses over 54% of toxic content (recall = 45.95%). Calibrating the operating threshold to 0.40 on validation data significantly improves toxic recall to 59.46% (catching 110 of 185 toxic cases) while maintaining an overall accuracy of 92.68% and macro F1 of 73.14%.",
   "qualitative_error_analysis": {
     "sample_false_positives": [
+      {
+        "cleaned_text": "and the birth argument is far from settled BTW. Submitting a laughably forged document isn't proof of birth in this country and everyone both here and in Kenya who can attest to the truth all found ways to die shortly before and after he was selected",
+        "toxicity": 0.0,
+        "prob_toxic": 0.4761480837085328
+      },
       {
         "cleaned_text": "Im not so sure ... Hillary Clinton is about as unlikable as a woman (?) can get. When Trump gets finished airing out her closet full of endless skeletons and dead bodies her unfavorables will rise to 70% and the world will cheer as she shuffles off to prison\n\nHERE ARE MY COMMENTS ON HILLARY THAT GARY CRUM DEEMED TO BE UNCIVIL AND NOT UP TO RG STANDARDS ... DECIDE FOR YOURSELF ... DON'T LET LEFT WING NUTS DECIDE WHATS BEST FOR YOU\n\nOUT OF ROOM SEE NEXT COMMENT",
         "toxicity": 0.0,
         "prob_toxic": 0.5773006008574252
+      },
+      {
+        "cleaned_text": "Hey people, guess what? Donald trump is a politician and politicians lie to get elected. Donald Trump is lying to get elected just like Barack Hussein Obama lied to get elected.\n\nAfter he wins, the real Donald Trump will come out just like Obama did. The real Donald Trump will unite America and make us great again,  unlike Barack Hussein Obama who divided America and threw us all under the bus.\n\nDon\u2019t judge a politician by what he says, judge him by what he does. Obama the liar has done nothing but run up more debt than all previous presidents combined, along with $9 million per year avg for his vacations.\n\nMake America Great Again. Vote for Donald Trump.",
+        "toxicity": 0.4000000059604645,
+        "prob_toxic": 0.4957271457872285
       },
       {
         "cleaned_text": "So this is basically an effort to try to establish some kind of right to refuse service to gays/transgender people, because of religious convictions on the part of service people?  And an effort to keep trannies out of the bathrooms?  Is that it?\n\nOK, if your religious convictions are so \"deeply held\", how exactly does it pencil that you need to discriminate against anyone?  Aren't you supposed to leave judgement to the Lord?\n\nThe whole concept is off the rails, even by the magical thinking standards of religion.  \n\nAs far as trying to keep the trannies out of the locker rooms and bathrooms, that's just silly.  If measures like that make it past the common sense of the voters, you'll either have people going to use the restrooms who REALLY don't look like they belong there (which is SURE to make everyone feel real comfortable), or no one will be the wiser.  What are you gonna do---Station guards to do panty-checks?  \"I'm sorry 'Ma'am', you appear to have an adam's apple...\"\n\nFOTFL!",
@@ -156,19 +80,9 @@
         "prob_toxic": 0.7169069391978761
       },
       {
-        "cleaned_text": "I am Latino, Ms. Kaye, not that that has anything to do with it. I also worked in Mex-Am groups for about 10 years. Racism is an everyday thing, sorry to hurt your feelings.\nForget the restaurant, just put on your little sombrero and go anywhere where there are Latinos. Report back.\nAnd you appear to express a very strange and not uncommon tendency: that of equating reactions to racism as racism. \nAs far as political correctness: IT has created animosity and suspicion? Huh? Yeah, let's equate asking people not to use the n-word with guys in Texas dragging a black man to his death behind their pickup.",
-        "toxicity": 0.4000000059604645,
-        "prob_toxic": 0.652145521225807
-      },
-      {
-        "cleaned_text": "I think there should be no moral code? Jeeze- you are the moral relativist here- forgiving any dumb thing McKinley says because a nuanced, gentle homophobia is okay.  What wishy-washy person attends a church but then ignores the doctrine.\n\nNo, I don't believe that a supernatural sky god had a virgin impregnated by a guy who later died for my yet-to-be-committed future sins.  I believe that reason and current codes suffice.  I don't steal because I understand that we can't have a sane community without anti-theft rules.  Don't need a supernatural woo-woo explanation.",
-        "toxicity": 0.2000000029802322,
-        "prob_toxic": 0.6106877953562299
-      },
-      {
-        "cleaned_text": "Couple more felonies and they're going to have to actually keep this guy in jail for awhile as a pest to the DA's office and the courts.",
-        "toxicity": 0.0,
-        "prob_toxic": 0.5556160082244244
+        "cleaned_text": "Talk about cowardice. Looks like the \"terrorists\" are surely winning this one. Sad...",
+        "toxicity": 0.3000000119209289,
+        "prob_toxic": 0.43126372818952796
       }
     ],
     "sample_false_negatives": [

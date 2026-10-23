@@ -1,0 +1,61 @@
+{
+  "dataset_identity": {
+    "name": "Jigsaw Civil Comments (Stratified Subset)",
+    "official_repository": "https://huggingface.co/datasets/google/civil_comments",
+    "kaggle_source": "https://www.kaggle.com/c/jigsaw-unintended-bias-in-toxicity-classification",
+    "publisher": "Civil Comments platform / Jigsaw (Alphabet Inc.) / Google Research",
+    "license": "CC0 1.0 Universal (Public Domain Dedication)",
+    "task": "Binary Toxicity Classification (Toxicity score >= 0.50 labeled as 1)",
+    "language": "English (en)"
+  },
+  "splits": {
+    "train": {
+      "file_path": "data/splits/train.csv",
+      "sha256": "40f91d1d2258fd31aa6ac5abc8a0c0658a2a6d4c4b6cd70f7198304a4105395e",
+      "file_size_bytes": 9894799,
+      "total_samples": 13898,
+      "toxic_samples": 864,
+      "non_toxic_samples": 13034,
+      "toxic_percentage": 6.22
+    },
+    "validation": {
+      "file_path": "data/splits/val.csv",
+      "sha256": "4d23e1645d20a25b0e77467c5b90d4bc9fecbb7bfc978afd095d8fd4e80d6885",
+      "file_size_bytes": 2081915,
+      "total_samples": 2978,
+      "toxic_samples": 185,
+      "non_toxic_samples": 2793,
+      "toxic_percentage": 6.21
+    },
+    "held_out_test": {
+      "file_path": "data/splits/test.csv",
+      "sha256": "dcfccb251f87895fa938ab206380b099f94c91ec6cdae83df14eb5f7bf528c88",
+      "file_size_bytes": 2097615,
+      "total_samples": 2979,
+      "toxic_samples": 185,
+      "non_toxic_samples": 2794,
+      "toxic_percentage": 6.21
+    }
+  },
+  "leakage_verification": {
+    "train_val_overlap_count": 0,
+    "train_test_overlap_count": 0,
+    "val_test_overlap_count": 0,
+    "status": "VERIFIED_ZERO_LEAKAGE"
+  },
+  "preprocessing_pipeline": {
+    "normalization": [
+      "Unicode NFKD decomposition & accent stripping",
+      "Newline and carriage return replacement with single spaces",
+      "Excessive whitespace trimming",
+      "Null and empty string elimination",
+      "Deduplication prior to stratification"
+    ],
+    "target_mapping": "toxicity >= 0.50 -> 1 (toxic), toxicity < 0.50 -> 0 (non_toxic)"
+  },
+  "reproducibility": {
+    "random_seed": 42,
+    "training_script": "python ml/train.py",
+    "evaluation_script": "python ml/evaluate.py"
+  }
+}
