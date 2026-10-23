@@ -1,0 +1,90 @@
+text,language,category,is_code_mixed,source_dataset,split,hate_speech,harassment,cyberbullying,legitimate
+tere baap ko bol saale kutte madarchod,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tu ek number ka madarchod hai,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+saale kutte teri aukaat kya hai,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+harami insaan tera pura khandan chor hai,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+chup kar be saale kutte kamine,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+bhadwe chup chaap nikal le yahan se,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+gandu tere jaise roz aate hain,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+chutiye apna ganda dimag apne paas rakh,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+teri maa ki aankh saale haramkhor,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tu aur tera khandan sab ke sab ghatiya hain,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+sharam kar be besharam kutte,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,0.0,1.0,0.0,0.0
+chal nikal bhikhmange yahan se,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+bikhari kahin ke shakal dekhi hai apni,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+kutte ki maut marega tu harami,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tu ek number ka fraud aur 420 chor hai,hinglish,direct_insult,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tu dekh tera kya haal karta hoon main raste pe,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tujhe zinda nahi chhodenge hum log,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+ghar se bahar nikal phir batata hoon tereko,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tera aakhri din hai aaj samjha na,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tere ghar aake marunga tu bas wait kar,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tujhe toh sadak pe ghasit kar marenge,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+jaan se maar dunga agar dobara bola toh,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tere haath pair tod ke bhejunga ghar,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tujhe police bhi nahi bacha payegi dekh lena,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+saamne mil phir dekhta hoon kitna dum hai tere mein,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tu raste pe mil tereko batata hoon,hinglish,threat,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+"is bikhari ko yahan se bhagao, koi izzat nahi hai iski",hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+ye bikhari log yahan kyun aa jaate hain bhagao inko,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+apne gande chehre ke saath yahan mat aaya kar,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,0.0,1.0,0.0,0.0
+teri jaisi ghatiya ladki ko sabak sikhana padega,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tu bas internet pe bhonk sakta hai samne aana dum hai toh,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,0.0,1.0,0.0,0.0
+shut up you worthless trash tu kisi kaam ka nahi hai,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,0.0,1.0,0.0,0.0
+tereko dekh ke ulti aati hai itna ghatiya insaan,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,0.0,1.0,0.0,0.0
+teri aukaat do kaudi ki nahi hai aur badi baatein kar raha hai,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+apni aukaat mein reh samjha na do takey ke aadmi,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tujhe kisne paida kiya itna ghatiya namoona,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,0.0,1.0,0.0,0.0
+teri shakal dekh ke kutte bhi bhonkna band kar dete hain,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,0.0,1.0,0.0,0.0
+tu aur tera opinion dono gutter ke kachre hain,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,0.0,1.0,0.0,0.0
+tujhe kisi ne baat karne ki tameez nahi sikhayi kya loser,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,0.0,1.0,0.0,0.0
+iski koi izzat nahi hai society mein kachra aadmi,hinglish,humiliation,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tujh jaise logo ko zinda rehne ka koi haq nahi,hinglish,dehumanization,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+desh ke gaddar tum log sabko khatam karna chahiye,hinglish,dehumanization,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tum jaise kide makode marne layak ho,hinglish,dehumanization,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+tum log iss desh par bojh ho nikal jao yahan se,hinglish,dehumanization,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+aise logon ko zinda jala dena chahiye,hinglish,dehumanization,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+gandi naali ke keede ho tum sab ke sab,hinglish,dehumanization,True,sentinel_hinglish_contextual_v2,train,1.0,1.0,0.0,0.0
+kya aap meri madad kar sakte hain?,hinglish,civil_request,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+main kisi ko gaali nahi dena chahta,hinglish,civil_negation,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+hume kisi ko gaali nahi deni chahiye shanti rakho,hinglish,civil_negation,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+kripya karke yahan gaali mat do bhai,hinglish,civil_negation,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"bhai ye kya kar raha hai, bilkul samajh nahi aa raha yaar.",hinglish,civil_colloquial,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+tu pagal hai kya itna accha kaam kaise kiya,hinglish,friendly_banter,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+bhai tu pagal hai kya itna mast surprise diya,hinglish,friendly_banter,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+ye film bilkul ghatiya thi par actors acche the,hinglish,neutral_review,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+aaj ka match bohot mast tha maza aa gaya,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+thanks bhai for your support,hinglish,civil_greeting,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+please send me the notes whenever you are free,hinglish,civil_request,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+bhai kal milte hain chai pe sham ko,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"mujhe lagta hai ye logic galat hai, doosra approach try karo",hinglish,neutral_criticism,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+yeh gana sunke sach mein dil khush ho gaya yaar,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+aapki baat se agree nahi karta lekin points interesting hain,hinglish,neutral_criticism,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+hum sab ko milkar issue solve karna chahiye,hinglish,civil_request,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"bhai congratulations for your new job, party kab de raha hai",hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+kya aap mujhe bata sakte hain office ka rasta kahan hai?,hinglish,civil_request,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"hum kisi se ladai nahi chahte, shanti se baat karo please",hinglish,civil_negation,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+aaj office mein bohot kaam tha thak gaya hoon,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"yeh project time pe complete ho gaya, thank you team",hinglish,civil_greeting,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"bhai tu toh hero nikla, maza dila diya",hinglish,friendly_banter,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"khana bohot swadist tha, mummy ko thanks bolna",hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+traffic bohot zyada hai main 15 minute late pahunchunga,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+bhai tension mat le sab theek ho jayega,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+sir please review this pull request whenever you have time,hinglish,civil_request,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"koi baat nahi dost, next time better karenge",hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+kya kal college mein holiday hai kya?,hinglish,civil_request,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+code mein thoda syntax error hai par logic perfectly fine hai,hinglish,neutral_criticism,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+yeh book sach mein padhne layak hai,hinglish,neutral_review,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+main aapke opinion ka respect karta hoon,hinglish,civil_greeting,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+dhanyawad aapka bahut bahut,hinglish,civil_greeting,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+weather aaj kaafi pleasant hai walk pe chalein?,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+mujhe lagta hai thoda aur research karna padega is topic pe,hinglish,neutral_criticism,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"aap please gussa mat hoiye, mistake ho gayi thi",hinglish,civil_negation,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+aapka presentation bahut clear and concise tha,hinglish,civil_greeting,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+chalo milkar kaam karte hain,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+safe journey bhai acche se pahuncho,hinglish,civil_greeting,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+"mere paas iska answer nahi hai, google check karlo",hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+aapki family kaisi hai sab theek hain?,hinglish,civil_greeting,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+yeh policy sabke fayde ke liye banayi gayi hai,hinglish,neutral_review,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+main aapse kal subah baat karta hoon,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0
+bhai weekend ka kya plan hai?,hinglish,civil_social,True,sentinel_hinglish_contextual_v2,train,0.0,0.0,0.0,1.0

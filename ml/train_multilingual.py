@@ -180,7 +180,7 @@ def evaluate_model(
 # =====================================================================
 def train_telugu():
     print("\n" + "="*60)
-    print(">>> [1/4] Training Telugu Model (mounikaiiith/Telugu-Hatespeech + Interpersonal Insults)")
+    print(">>> [1/4] Training Telugu Model (mounikaiiith/Telugu-Hatespeech + Generalization Corpus)")
     print("="*60)
     
     train_orig = pd.read_csv("data/processed/indic/telugu_train.csv")
@@ -194,7 +194,9 @@ def train_telugu():
         supp_train, supp_temp = train_test_split(supp_df, test_size=0.30, stratify=supp_df['legitimate'], random_state=RANDOM_STATE)
         supp_val, supp_test = train_test_split(supp_temp, test_size=0.50, stratify=supp_temp['legitimate'], random_state=RANDOM_STATE)
         
-        train_df = pd.concat([train_orig, supp_train], ignore_index=True).drop_duplicates(subset=['text'])
+        # 3x weighting of conversational generalization samples during training
+        supp_train_rep = pd.concat([supp_train] * 3, ignore_index=True)
+        train_df = pd.concat([train_orig, supp_train_rep], ignore_index=True)
         val_df = pd.concat([val_orig, supp_val], ignore_index=True).drop_duplicates(subset=['text'])
         test_df = pd.concat([test_orig, supp_test], ignore_index=True).drop_duplicates(subset=['text'])
     else:
@@ -214,7 +216,7 @@ def train_telugu():
     print(f"Telugu Test:  {len(X_test)} samples ({y_test.sum()} harmful, {(y_test==0).sum()} legit)")
     
     t0 = time.time()
-    pipe = build_pipeline(char_ngrams=(2, 4), word_ngrams=(1, 2), c_val=2.0, token_pattern=INDIC_TOKEN_PATTERN, word_min_df=1)
+    pipe = build_pipeline(char_ngrams=(2, 5), word_ngrams=(1, 2), c_val=2.5, token_pattern=INDIC_TOKEN_PATTERN, word_min_df=1)
     pipe.fit(X_train, y_train)
     fit_time = time.time() - t0
     print(f"Training completed in {fit_time:.2f}s")
@@ -222,7 +224,7 @@ def train_telugu():
     best_th = tune_threshold(pipe, X_val, y_val, min_recall=0.40)
     print(f"Optimal validation threshold: {best_th}")
     
-    eval_res = evaluate_model(pipe, best_th, X_test, y_test, "Telugu", "mounikaiiith/Telugu-Hatespeech + Interpersonal Insults")
+    eval_res = evaluate_model(pipe, best_th, X_test, y_test, "Telugu", "mounikaiiith/Telugu-Hatespeech + Generalization Corpus")
     print(f"Test Results: Acc={eval_res['metrics']['accuracy']}, Prec={eval_res['metrics']['precision']}, "
           f"Rec={eval_res['metrics']['recall']}, F1={eval_res['metrics']['f1_score']}, ROC-AUC={eval_res['metrics']['roc_auc']}")
     print(f"Confusion Matrix: {eval_res['confusion_matrix']}")
@@ -235,10 +237,10 @@ def train_telugu():
     
     config = {
         "language": "telugu",
-        "model_version": "telugu_word_char_v2",
+        "model_version": "telugu_generalization_v3",
         "model_type": "scikit_learn_tfidf_logreg",
-        "architecture": "FeatureUnion(IndicWord (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
-        "dataset_source": "mounikaiiith/Telugu-Hatespeech + Interpersonal Insults Corpus",
+        "architecture": "FeatureUnion(IndicWord (1,2) + Char_wb (2,5)) -> LogisticRegression(balanced)",
+        "dataset_source": "mounikaiiith/Telugu-Hatespeech + Generalization Corpus",
         "train_samples": len(X_train),
         "val_samples": len(X_val),
         "test_samples": len(X_test),
@@ -325,12 +327,26 @@ def train_hindi():
 # =====================================================================
 def train_hinglish():
     print("\n" + "="*60)
-    print(">>> [3/4] Training Hinglish Model (pankajbiswas6/prism-hinglish-hate-speech)")
+    print(">>> [3/4] Training Hinglish Model (PRISM + Conversational Context Corpus)")
     print("="*60)
     
-    train_df = pd.read_csv("data/processed/indic/hinglish_train.csv")
-    val_df = pd.read_csv("data/processed/indic/hinglish_val.csv")
-    test_df = pd.read_csv("data/processed/indic/hinglish_test.csv")
+    train_orig = pd.read_csv("data/processed/indic/hinglish_train.csv")
+    val_orig = pd.read_csv("data/processed/indic/hinglish_val.csv")
+    test_orig = pd.read_csv("data/processed/indic/hinglish_test.csv")
+    
+    supp_path = "data/processed/indic/hinglish_supplementary_context.csv"
+    if os.path.exists(supp_path):
+        supp_df = pd.read_csv(supp_path)
+        supp_train, supp_temp = train_test_split(supp_df, test_size=0.30, stratify=supp_df['legitimate'], random_state=RANDOM_STATE)
+        supp_val, supp_test = train_test_split(supp_temp, test_size=0.50, stratify=supp_temp['legitimate'], random_state=RANDOM_STATE)
+        
+        # 6x weighting of conversational context & control samples during training
+        supp_train_rep = pd.concat([supp_train] * 6, ignore_index=True)
+        train_df = pd.concat([train_orig, supp_train_rep], ignore_index=True)
+        val_df = pd.concat([val_orig, supp_val], ignore_index=True).drop_duplicates(subset=['text'])
+        test_df = pd.concat([test_orig, supp_test], ignore_index=True).drop_duplicates(subset=['text'])
+    else:
+        train_df, val_df, test_df = train_orig, val_orig, test_orig
     
     X_train = np.array(train_df["text"].fillna("").tolist(), dtype=object)
     y_train = np.array((train_df["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
@@ -346,15 +362,15 @@ def train_hinglish():
     print(f"Hinglish Test:  {len(X_test)} samples ({y_test.sum()} hate, {(y_test==0).sum()} legit)")
     
     t0 = time.time()
-    pipe = build_pipeline(char_ngrams=(3, 5), word_ngrams=(1, 2), c_val=2.0, token_pattern=r'(?u)\b\w+\b', word_min_df=2)
+    pipe = build_pipeline(char_ngrams=(3, 5), word_ngrams=(1, 2), c_val=3.0, token_pattern=r'(?u)\b\w+\b', word_min_df=1)
     pipe.fit(X_train, y_train)
     fit_time = time.time() - t0
     print(f"Training completed in {fit_time:.2f}s")
     
-    best_th = tune_threshold(pipe, X_val, y_val)
+    best_th = tune_threshold(pipe, X_val, y_val, min_recall=0.70)
     print(f"Optimal validation threshold: {best_th}")
     
-    eval_res = evaluate_model(pipe, best_th, X_test, y_test, "Hinglish", "pankajbiswas6/prism-hinglish-hate-speech")
+    eval_res = evaluate_model(pipe, best_th, X_test, y_test, "Hinglish", "pankajbiswas6/prism-hinglish-hate-speech + Conversational Context Corpus")
     print(f"Test Results: Acc={eval_res['metrics']['accuracy']}, Prec={eval_res['metrics']['precision']}, "
           f"Rec={eval_res['metrics']['recall']}, F1={eval_res['metrics']['f1_score']}, ROC-AUC={eval_res['metrics']['roc_auc']}")
     print(f"Confusion Matrix: {eval_res['confusion_matrix']}")
@@ -367,10 +383,10 @@ def train_hinglish():
     
     config = {
         "language": "hinglish",
-        "model_version": "hinglish_word_char_v1",
+        "model_version": "hinglish_contextual_v2",
         "model_type": "scikit_learn_tfidf_logreg",
         "architecture": "FeatureUnion(Word (1,2) + Char_wb (3,5)) -> LogisticRegression(balanced)",
-        "dataset_source": "pankajbiswas6/prism-hinglish-hate-speech",
+        "dataset_source": "pankajbiswas6/prism-hinglish-hate-speech + Conversational Context Corpus",
         "train_samples": len(X_train),
         "val_samples": len(X_val),
         "test_samples": len(X_test),

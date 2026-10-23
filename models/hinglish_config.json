@@ -1,20 +1,20 @@
 {
   "language": "hinglish",
-  "model_version": "hinglish_word_char_v1",
+  "model_version": "hinglish_contextual_v2",
   "model_type": "scikit_learn_tfidf_logreg",
   "architecture": "FeatureUnion(Word (1,2) + Char_wb (3,5)) -> LogisticRegression(balanced)",
-  "dataset_source": "pankajbiswas6/prism-hinglish-hate-speech",
-  "train_samples": 17704,
-  "val_samples": 2950,
-  "test_samples": 8852,
-  "optimal_threshold": 0.41,
+  "dataset_source": "pankajbiswas6/prism-hinglish-hate-speech + Conversational Context Corpus",
+  "train_samples": 18076,
+  "val_samples": 2963,
+  "test_samples": 8866,
+  "optimal_threshold": 0.36,
   "metrics": {
-    "accuracy": 0.7015,
-    "precision": 0.6444,
-    "recall": 0.7977,
-    "f1_score": 0.7129,
-    "roc_auc": 0.7911,
-    "pr_auc": 0.7651
+    "accuracy": 0.6939,
+    "precision": 0.6302,
+    "recall": 0.8257,
+    "f1_score": 0.7148,
+    "roc_auc": 0.7882,
+    "pr_auc": 0.7621
   },
   "checkpoint_path": "models\\hinglish_model.joblib"
 }

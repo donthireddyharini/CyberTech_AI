@@ -1,31 +1,31 @@
 {
   "language": "Telugu",
-  "dataset": "mounikaiiith/Telugu-Hatespeech + Interpersonal Insults",
+  "dataset": "mounikaiiith/Telugu-Hatespeech + Generalization Corpus",
   "split": "held_out_test",
-  "total_test_samples": 7031,
-  "positive_samples": 82,
-  "negative_samples": 6949,
-  "optimal_threshold": 0.42,
+  "total_test_samples": 7036,
+  "positive_samples": 86,
+  "negative_samples": 6950,
+  "optimal_threshold": 0.52,
   "metrics": {
-    "accuracy": 0.9774,
-    "precision": 0.223,
-    "recall": 0.378,
-    "f1_score": 0.2805,
-    "roc_auc": 0.839,
-    "pr_auc": 0.1967
+    "accuracy": 0.9798,
+    "precision": 0.2627,
+    "recall": 0.3605,
+    "f1_score": 0.3039,
+    "roc_auc": 0.8566,
+    "pr_auc": 0.2425
   },
   "confusion_matrix": {
-    "true_negatives": 6841,
-    "false_positives": 108,
-    "false_negatives": 51,
+    "true_negatives": 6863,
+    "false_positives": 87,
+    "false_negatives": 55,
     "true_positives": 31,
     "raw_matrix": [
       [
-        6841,
-        108
+        6863,
+        87
       ],
       [
-        51,
+        55,
         31
       ]
     ]

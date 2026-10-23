@@ -73,9 +73,9 @@ LANGUAGE_CATALOG: dict[str, ModelMetadata] = {
         operational_status="validated_automated_model",
         route_status="validated_model",
         review_status="automated_pass_or_flag",
-        primary_checkpoint="hinglish_word_char_v1 (models/hinglish_model.joblib)",
+        primary_checkpoint="hinglish_contextual_v2 (models/hinglish_model.joblib)",
         model_type="scikit_learn_tfidf_logreg",
-        notice="Validated production Hinglish model active (threshold=0.29, ROC-AUC=0.7855, F1=0.7098).",
+        notice="Validated production Hinglish model active (threshold=0.36, ROC-AUC=0.7882, F1=0.7148).",
         license_note="Apache 2.0 / Academic (PRISM Corpus)",
         task_label_type="Binary Hate & Abusive Speech (PRISM Hinglish)"
     ),
@@ -86,9 +86,9 @@ LANGUAGE_CATALOG: dict[str, ModelMetadata] = {
         operational_status="validated_automated_model",
         route_status="validated_model",
         review_status="automated_pass_or_flag",
-        primary_checkpoint="telugu_word_char_v2 (models/telugu_model.joblib)",
+        primary_checkpoint="telugu_generalization_v3 (models/telugu_model.joblib)",
         model_type="scikit_learn_tfidf_logreg",
-        notice="Validated production Telugu model active (threshold=0.42, ROC-AUC=0.8390).",
+        notice="Validated production Telugu generalization model active (threshold=0.52, ROC-AUC=0.8566).",
         license_note="Academic Research (IIIT Hyderabad Telugu Corpus + Interpersonal Insults)",
         task_label_type="Hate Speech & Harassment (IIIT Telugu + Insults)"
     ),

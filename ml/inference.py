@@ -88,8 +88,8 @@ class MultilingualPredictor:
         "telugu": {
             "model_filename": "telugu_model.joblib",
             "config_filename": "telugu_config.json",
-            "default_threshold": 0.42,
-            "default_version": "telugu_word_char_v2",
+            "default_threshold": 0.52,
+            "default_version": "telugu_generalization_v3",
             "task": "Telugu Hate Speech & Harassment Classification"
         },
         "hindi": {
@@ -102,15 +102,15 @@ class MultilingualPredictor:
         "hinglish": {
             "model_filename": "hinglish_model.joblib",
             "config_filename": "hinglish_config.json",
-            "default_threshold": 0.41,
-            "default_version": "hinglish_word_char_v1",
+            "default_threshold": 0.36,
+            "default_version": "hinglish_contextual_v2",
             "task": "Hinglish Code-Mixed Hate Speech Classification (PRISM)"
         },
         "code_mixed": {
             "model_filename": "hinglish_model.joblib",
             "config_filename": "hinglish_config.json",
-            "default_threshold": 0.41,
-            "default_version": "hinglish_word_char_v1",
+            "default_threshold": 0.36,
+            "default_version": "hinglish_contextual_v2",
             "task": "Hinglish Code-Mixed Hate Speech Classification (PRISM)"
         },
         "kannada": {

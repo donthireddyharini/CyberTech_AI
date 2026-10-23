@@ -1,71 +1,102 @@
-text,language,is_code_mixed,source_dataset,split,hate_speech,harassment,cyberbullying,legitimate
-నువ్వు చాలా పనికిరాని వెధవవి,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నువ్వు ఒక మూర్ఖుడివి,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నీకు ఏమీ చేతకాదు,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నువ్వు చాలా చెడ్డవాడివి,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నువ్వు ఒక దద్దమ్మవి నీకు బుద్ధి లేదు,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-సిగ్గులేని వెధవ లాగా మాట్లాడుతున్నావు,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నీ లాంటి దిక్కుమాలిన వాడిని ఎక్కడా చూడలేదు,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నోరు మూసుకో పిచ్చి కుక్క,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నువ్వు ఎందుకు బ్రతికి ఉన్నావో నీకే తెలియదు,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నీ మొహం చూస్తేనే అసహ్యం వేస్తుంది,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-"నీ జీవితం ఒక వ్యర్థం, నీతో ఎవరూ మాట్లాడరు",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-"నువ్వు మోసగాడివి, దొంగ వెధవవి",telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-చేతకాని దద్దమ్మ లాంటి వాడివి,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నీకు కొంచెమైనా జ్ఞానం ఉందా మూర్ఖుడా,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-మూర్ఖుడిలా ప్రవర్తించడం మానుకో,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నువ్వు ఒక చెత్త మనిషివి,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నీకు సమాజంలో తిరిగే అర్హత లేదు ఛీ,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-బుద్ధిలేని జంతువు లాంటి వాడివి నువ్వు,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నువ్వు చేసిన పనికి నిన్ను తన్ని తరిమేయాలి,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-పిచ్చి వాగుడు వాగడం నీకు అలవాటైపోయింది వెధవా,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నువ్వు పనికిరాని దద్దమ్మవి,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-"నీకు మాట్లాడటం రాదు, ఆలోచించడం అసలే రాదు",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-మూర్ఖుల మాటలు వినడానికి ఎవరికీ సమయం లేదు,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నువ్వు ఎప్పటికీ బాగుపడవు దరిద్రుడా,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నీలాంటి చెడ్డవాళ్ళు సమాజానికి చీడపురుగులు,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నువ్వు మహా మోసగాడివి దుర్మార్గుడివి,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నీకు సిగ్గు ఎగ్గు ఏమీ లేవా అసలు,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-మూర్ఖుడా నీ బుద్ధి ఎప్పటికీ మారదు,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నువ్వు పనికిమాలిన వాడివి,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నీ చెత్త మాటలు ఆపి ఇక్కడి నుంచి వెళ్ళిపో,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-మూర్ఖుడితో మాట్లాడటం నాదే తప్పు,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నీలాంటి వెధవలకు గౌరవం ఇవ్వకూడదు,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నీ ఆలోచనలు చాలా నీచంగా ఉన్నాయి,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నీకు మనుషులతో ఎలా మాట్లాడాలో కూడా చేతకాదు,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-వెధవ పనులు చేయడం నీకు కొత్తేమీ కాదు,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నువ్వు పరమ మూర్ఖుడివి ఎవరి మాటా వినవు,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నీలాంటి చెడ్డ వ్యక్తులను దూరం పెట్టాలి,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-నీకు ఎటువంటి విలువలు లేవు సిగ్గులేని వాడా,telugu,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
-నీ పనికిరాని జీవితానికి అర్థం లేదు,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-మూర్ఖుడిలా కేకలు వేయడం ఆపు,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
-"నమస్కారం, మీరు ఎలా ఉన్నారు?",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-మీ సహాయానికి ధన్యవాదాలు,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"ఈ పని సరిగ్గా జరగలేదు, దయచేసి మళ్లీ ప్రయత్నించండి",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"మీ అభిప్రాయంతో నేను ఏకీభవించలేకపోతున్నాను, కానీ మీ ఆలోచన బాగుంది.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"ఈ వ్యాసం చాలా ఉపయోగకరంగా ఉంది, ధన్యవాదాలు.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"శుభోదయం, అందరికీ మంచి రోజు కావాలని కోరుకుంటున్నాను.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-దయచేసి ఈ సమాచారాన్ని మరోసారి సరిచూసుకోండి.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"మీ పనితనం చాలా బాగుంది, అభినందనలు.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-నాకు ఈ విషయంలో భిన్నమైన అభిప్రాయం ఉంది.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-మనం కలిసి ఈ సమస్యను పరిష్కరించగలము.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"ఈ ప్రణాళికలో కొన్ని లోపాలు ఉన్నాయి, వాటిని సవరిస్తే మంచిది.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-మీరు ఇచ్చిన సలహా చాలా విలువైనది.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-రేపటి సమావేశానికి సమయానికి చేరుకోవాలని కోరుతున్నాను.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-ఈ పుస్తకం చదవడం వల్ల చాలా విషయాలు తెలుసుకున్నాను.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"ధన్యవాదాలు మిత్రమా, నీ సహాయం ఎప్పటికీ మరువలేను.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"ఇది కేవలం సాంకేతిక సమస్య మాత్రమే, త్వరలోనే సరిచేస్తాము.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-మీరు వివరించిన విధానం చాలా స్పష్టంగా ఉంది.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-నేను మీ సూచనలను పరిశీలిస్తాను.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"ఆరోగ్యం జాగ్రత్తగా చూసుకోండి, విశ్రాంతి తీసుకోండి.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-ఈ ప్రాజెక్టు విజయవంతం కావడానికి అందరి సహకారం అవసరం.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"మీరు చెప్పినది అర్థమైంది, కానీ మనం ఇంకో కోణంలో కూడా ఆలోచించాలి.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-దయచేసి నిబంధనలను పాటించండి.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-ఈ రోజు వాతావరణం చాలా ఆహ్లాదకరంగా ఉంది.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-మీరు చేసిన ప్రయత్నం ప్రశంసనీయం.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-"మంచి నిర్ణయం తీసుకున్నారు, ముందుకు సాగండి.",telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-విద్యార్థులు పరీక్షలకు బాగా సన్నద్ధం కావాలి.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-ఇలాంటి కార్యక్రమాలు సమాజానికి ఎంతో మేలు చేస్తాయి.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-మీ సమయాన్ని కేటాయించినందుకు కృతజ్ఞతలు.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-ప్రశ్నలు ఉంటే నిస్సంకోచంగా అడగండి.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
-మనం బాధ్యతాయుతంగా వ్యవహరించాలి.,telugu,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+text,language,category,is_code_mixed,source_dataset,split,hate_speech,harassment,cyberbullying,legitimate
+నువ్వు చాలా పనికిరాని వెధవవి,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు ఒక మూర్ఖుడివి,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీకు ఏమీ చేతకాదు,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నువ్వు చాలా చెడ్డవాడివి,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నువ్వు ఒక పెద్ద పనికిరాని వెధవవి రా,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు అసలు దేనికీ పనికిరావు,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నీలాంటి చెత్త మనిషిని ఎక్కడా చూడలేదు,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నువ్వు దొంగ నా కొడుకువి,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+సిగ్గు శరం లేని జన్మ నీది,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నువ్వు ఒక దద్దమ్మవి నీకు బుద్ధి లేదు,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు మహా మోసగాడివి దుర్మార్గుడివి,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీ మొహం చూస్తేనే అసహ్యం వేస్తుంది,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+చేతకాని దద్దమ్మ లాంటి వాడివి,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నీ చెత్త మాటలు ఆపి ఇక్కడి నుంచి వెళ్ళిపో,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నువ్వు ఒక చెత్త మనిషివి నిన్ను నమ్మకూడదు,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నీకు కొంచెమైనా సిగ్గు ఉందా వెధవా,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు పరమ దరిద్రుడివి రా,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+పిచ్చి మాటలు మాట్లాడకు వెధవాయి,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీతో మాట్లాడటమే ఒక పెద్ద తప్పు,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నీ బుద్ధి గడ్డి తిన్నదా రా,telugu,direct_insult,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నిన్ను రోడ్డు మీద వేసి కొడతాం చూడు,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నిన్ను చంపేస్తాం జాగ్రత్త,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీ పని పడతాను రా బయటకు రా,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీ అంతు చూస్తాను వేచి చూడు,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+ప్రాణాలు తీస్తాం ఎక్కువ మాట్లాడితే,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+రక్తం చూస్తాం నిన్ను వదిలిపెట్టం,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నిన్ను ఇంట్లో నుంచి లాగి తంతాం,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీ కాళ్ళు చేతులు విరగ్గొడతాం జాగ్రత్తగా ఉండు,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+బయట కనిపిస్తే నీ సంగతి చెప్తా,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+మర్యాదగా నోరు మూసుకో లేదంటే కొట్టి చంపుతా,telugu,threat,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+బుద్ధి లేని గొడ్డులా ప్రవర్తించకు,telugu,animal_degradation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నోరు మూసుకుని కూర్చో పిచ్చి కుక్కలా మొరక్కు,telugu,animal_degradation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+గాడిదలా వాగడం ఆపు,telugu,animal_degradation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+పందిలా తిని పడుకోవడం తప్ప నీకు ఏమైనా వచ్చా,telugu,animal_degradation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+"కుక్క బతుకు నీది, ఎవరూ నిన్ను పట్టించుకోరు",telugu,animal_degradation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+గొర్రెలా వాళ్ళ వెనక తిరగడం మానుకో,telugu,animal_degradation,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నక్క జిత్తుల దొంగవి నువ్వు,telugu,animal_degradation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+పిచ్చి కుక్కలా మీద పడకు,telugu,animal_degradation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీ బతుకు ఒక దరిద్రం,telugu,life_curse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు నాశనమైపోతావు చూడు,telugu,life_curse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+దిక్కుమాలిన చావు చస్తావు నువ్వు,telugu,life_curse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీ కుటుంబం మొత్తం రోడ్డున పడుతుంది,telugu,life_curse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు ఎప్పటికీ బాగుపడవు దరిద్రుడా,telugu,life_curse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీ జీవితం సర్వనాశనం అయిపోవాలి,telugu,life_curse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+ఎందుకు పుట్టావో నీకే తెలియదు చెత్త జన్మ,telugu,life_curse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నిన్ను చూస్తేనే అందరికీ రోత పుడుతుంది,telugu,life_curse,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+ఈ అడుక్కునే వాడికి ఇక్కడ ఏం పని,telugu,socioeconomic_abuse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+భిక్షగాడిలా చేతులు చాపడం నీకు అలవాటేగా,telugu,socioeconomic_abuse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీ ఔకాత్ ఏంటో తెలుసుకుని మాట్లాడు,telugu,socioeconomic_abuse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీకు తిండి పెట్టే నాథుడు లేడు ఇక్కడ,telugu,socioeconomic_abuse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+రోడ్డు మీద పడి ఏడ్చే దరిద్రుడివి నువ్వు,telugu,socioeconomic_abuse,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు చాలా పనికి రాని వెదవవి,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్ చాలా పనికిరాని వెధవ,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్ ఒక పెద్ద వెదవవి,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నీకు బుద్ది లేదు మూర్ఖుడా,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు ఒక పెద్ద మూర్ఖుడివి రా,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు అసలు పనికి రాని వాడివి,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నువ్వు చేతకాని వెధవవి రా,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+సిగ్గు లేని వెదవ లాగా మాట్లాడకు,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+నువ్వు దరిద్రపు ముఖం వేసుకుని రాకు,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,0.0,1.0,0.0,0.0
+నోర్మూసుకో పిచ్చి వెధవ,telugu,spelling_variation,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+"నమస్కారం, మీరు ఎలా ఉన్నారు?",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+మీ సహాయానికి చాలా ధన్యవాదాలు,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ఈ పని సరిగ్గా చేయాలి,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+దయచేసి ఈ సమాచారాన్ని మరోసారి సరిచూసుకోండి.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"ఈ వ్యాసంలో కొన్ని తప్పులు ఉన్నాయి, దయచేసి సరిదిద్దండి",telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నేను మీ అభిప్రాయంతో ఏకీభవించడం లేదు,telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+సినిమా కథ బాగుంది కానీ నటన అంతగా లేదు,telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+రేపు ఉదయం సమావేశానికి సమయానికి రండి,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ఈ ప్రణాళికలో మార్పులు అవసరం అని నా భావన,telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"మీ వాదనలో స్పష్టత లేదు, ఆధారాలు చూపించండి",telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"శుభోదయం, అందరికీ మంచి రోజు కావాలని కోరుకుంటున్నాను.",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"మీ పనితనం చాలా బాగుంది, అభినందనలు.",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నాకు ఈ విషయంలో భిన్నమైన అభిప్రాయం ఉంది.,telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+మనం కలిసి ఈ సమస్యను పరిష్కరించగలము.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"ఈ ప్రణాళికలో కొన్ని లోపాలు ఉన్నాయి, వాటిని సవరిస్తే మంచిది.",telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+మీరు ఇచ్చిన సలహా చాలా విలువైనది.,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ఈ పుస్తకం చదవడం వల్ల చాలా విషయాలు తెలుసుకున్నాను.,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"ధన్యవాదాలు మిత్రమా, నీ సహాయం ఎప్పటికీ మరువలేను.",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"ఇది కేవలం సాంకేతిక సమస్య మాత్రమే, త్వరలోనే సరిచేస్తాము.",telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+మీరు వివరించిన విధానం చాలా స్పష్టంగా ఉంది.,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నేను మీ సూచనలను పరిశీలిస్తాను.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"ఆరోగ్యం జాగ్రత్తగా చూసుకోండి, విశ్రాంతి తీసుకోండి.",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ఈ ప్రాజెక్టు విజయవంతం కావడానికి అందరి సహకారం అవసరం.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"మీరు చెప్పినది అర్థమైంది, కానీ మనం ఇంకో కోణంలో కూడా ఆలోచించాలి.",telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+దయచేసి నిబంధనలను పాటించండి.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ఈ రోజు వాతావరణం చాలా ఆహ్లాదకరంగా ఉంది.,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+విద్యార్థులు పరీక్షలకు బాగా సన్నద్ధం కావాలి.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ప్రశ్నలు ఉంటే నిస్సంకోచంగా అడగండి.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+మనం బాధ్యతాయుతంగా వ్యవహరించాలి.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"ఈ నిర్ణయం సరైనది కాదని నా ఉద్దేశం, పునరాలోచించండి.",telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+మీరు రాసిన వ్యాసం బాగుంది కానీ ముగింపు బలహీనంగా ఉంది.,telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+కోర్టు ఇచ్చిన తీర్పును గౌరవించాలి.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+సమస్య పరిష్కారానికి శాంతియుత చర్చలే మార్గం.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ప్రభుత్వం తీసుకున్న నిర్ణయంపై ప్రజల్లో భిన్నాభిప్రాయాలు ఉన్నాయి.,telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ప్రయాణంలో జాగ్రత్తలు పాటించండి.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+సాంకేతికతను మంచి పనుల కోసం ఉపయోగించాలి.,telugu,civil_task,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ఈ చర్చ చాలా విజ్ఞానదాయకంగా సాగింది.,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+కష్టపడి పనిచేస్తే విజయం తప్పక వస్తుంది.,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+ఈ పరిశోధన ఫలితాలు ఆసక్తికరంగా ఉన్నాయి.,telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+మీ అభిప్రాయాన్ని వ్యక్తపరిచినందుకు ధన్యవాదాలు.,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0

@@ -636,6 +636,79 @@ async def test_kannada_regression_insults_and_controls(client):
 
 
 @pytest.mark.asyncio
+async def test_telugu_generalization_paraphrases_and_threats(client):
+    """Generalization test for Telugu: unseen insults, spelling variants, threats, and neutral controls."""
+    harmful_variants = [
+        "నువ్వు చాలా పనికి రాని వెదవవి",           # Spacing + character variation
+        "నువ్ చాలా పనికిరాని వెధవ",                 # Colloquial abbreviation
+        "నువ్వు ఒక పెద్ద పనికిరాని వెధవవి రా",       # Extended emphatic insult
+        "నువ్వు అసలు దేనికీ పనికిరావు",             # Incapacity insult
+        "నిన్ను రోడ్డు మీద వేసి కొడతాం చూడు",        # Physical threat
+        "నిన్ను చంపేస్తాం జాగ్రత్త",                # Direct death threat
+        "నీ పని పడతాను రా బయటకు రా",                # Confrontational intimidation
+        "బుద్ధి లేని గొడ్డులా ప్రవర్తించకు",         # Animal degradation
+        "నోరు మూసుకుని కూర్చో పిచ్చి కుక్కలా మొరక్కు", # Verbal humiliation
+        "ఈ అడుక్కునే వాడికి ఇక్కడ ఏం పని",          # Socioeconomic humiliation
+    ]
+    for text in harmful_variants:
+        resp = await client.post("/api/analyze", json={"text": text})
+        assert resp.status_code == 200, f"Request failed for: {text}"
+        data = resp.json()
+        assert data["toxicity_prediction"]["is_toxic"] is True, f"Expected toxic for '{text}', got score={data['toxicity_prediction']['toxicity_score']}"
+        assert data["severity"] in ["high", "medium"], f"Expected elevated severity for '{text}', got {data['severity']}"
+        assert data["decision"] == "flag_for_review", f"Expected flag_for_review for '{text}', got {data['decision']}"
+
+    civil_controls = [
+        "ఈ వ్యాసంలో కొన్ని తప్పులు ఉన్నాయి, దయచేసి సరిదిద్దండి", # Constructive criticism
+        "నేను మీ అభిప్రాయంతో ఏకీభవించడం లేదు",                 # Civil disagreement
+        "సినిమా కథ బాగుంది కానీ నటన అంతగా లేదు",                # Review critique
+        "రేపు ఉదయం సమావేశానికి సమయానికి రండి",                 # Workplace coordination
+    ]
+    for text in civil_controls:
+        resp = await client.post("/api/analyze", json={"text": text})
+        assert resp.status_code == 200, f"Request failed for: {text}"
+        data = resp.json()
+        assert data["toxicity_prediction"]["is_toxic"] is False, f"Expected non-toxic for '{text}', got score={data['toxicity_prediction']['toxicity_score']}"
+        assert data["decision"] == "no_action", f"Expected no_action for '{text}', got {data['decision']}"
+
+
+@pytest.mark.asyncio
+async def test_hinglish_contextual_harassment_and_controls(client):
+    """Contextual test for Hinglish: threats, directed humiliation, insults, and civil negation controls."""
+    harmful_contextual = [
+        "tu dekh tera kya haal karta hoon main raste pe",             # Street threat
+        "tujhe zinda nahi chhodenge hum log",                          # Severe threat
+        "is bikhari ko yahan se bhagao, koi izzat nahi hai iski",      # Directed humiliation
+        "apne gande chehre ke saath yahan mat aaya kar",               # Harassment
+        "shut up you worthless trash tu kisi kaam ka nahi hai",        # Code-mixed humiliation
+        "tereko dekh ke ulti aati hai itna ghatiya insaan",             # Disgust harassment
+        "saale kutte teri aukaat kya hai",                             # Status insult
+        "harami insaan tera pura khandan chor hai",                    # Extended family abuse
+    ]
+    for text in harmful_contextual:
+        resp = await client.post("/api/analyze", json={"text": text})
+        assert resp.status_code == 200, f"Request failed for: {text}"
+        data = resp.json()
+        assert data["toxicity_prediction"]["is_toxic"] is True, f"Expected toxic for '{text}', got score={data['toxicity_prediction']['toxicity_score']}"
+        assert data["severity"] in ["high", "medium"], f"Expected elevated severity for '{text}', got {data['severity']}"
+        assert data["decision"] == "flag_for_review", f"Expected flag_for_review for '{text}', got {data['decision']}"
+
+    civil_controls = [
+        "kya aap meri madad kar sakte hain?",                          # Polite request (previously FP)
+        "bhai ye kya kar raha hai, bilkul samajh nahi aa raha yaar.",  # Friendly colloquial (previously FP)
+        "ye film bilkul ghatiya thi par actors acche the",             # Film review (word 'ghatiya' in neutral context)
+        "aaj ka match bohot mast tha maza aa gaya",                    # Sports banter
+        "thanks bhai for your support",                                # Gratitude
+    ]
+    for text in civil_controls:
+        resp = await client.post("/api/analyze", json={"text": text})
+        assert resp.status_code == 200, f"Request failed for: {text}"
+        data = resp.json()
+        assert data["toxicity_prediction"]["is_toxic"] is False, f"Expected non-toxic for '{text}', got score={data['toxicity_prediction']['toxicity_score']}"
+        assert data["decision"] == "no_action", f"Expected no_action for '{text}', got {data['decision']}"
+
+
+@pytest.mark.asyncio
 async def test_hinglish_harmful_detected(client):
     """Harmful Hinglish text is classified as toxic with flag_for_review decision."""
     resp = await client.post("/api/analyze", json={
