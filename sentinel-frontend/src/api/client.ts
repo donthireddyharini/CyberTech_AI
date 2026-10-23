@@ -65,6 +65,64 @@ export const feedbackApi = {
   list: (params?: { page?: number; validation_status?: string }) =>
     api.get('/feedback', { params }),
   errorAnalysis: () => api.get<ErrorAnalysis>('/feedback/errors'),
+  exportUrl: (format: 'csv' | 'jsonl' = 'csv') => `/api/feedback/export?format=${format}`,
+};
+
+// ─── Real-Time Comment Monitoring (Zero API Keys) ─────────────────────────────
+export const monitoringApi = {
+  status: () => api.get<{
+    monitoring_status: string;
+    offline_local_inference: boolean;
+    api_keys_required: boolean;
+    external_network_calls: boolean;
+    active_model_name: string;
+    active_threshold: number;
+    total_monitored_records: number;
+    flagged_records_count: number;
+    pending_human_review_count: number;
+    reviewed_records_count: number;
+    last_processed_timestamp: string | null;
+  }>('/monitor/status'),
+  batchAnalyze: (data: {
+    comments: string[];
+    language_hint?: string;
+    platform_source?: string;
+    deduplicate?: boolean;
+  }) => api.post<{
+    monitoring_mode: string;
+    platform_notice: string;
+    total_received: number;
+    processed_count: number;
+    duplicate_count: number;
+    flagged_count: number;
+    approved_count: number;
+    severity_breakdown: Record<string, number>;
+    language_breakdown: Record<string, number>;
+    processing_time_ms: number;
+    items: Array<{
+      id: string;
+      text: string;
+      toxicity_score: number | null;
+      is_toxic: boolean;
+      detected_language: string;
+      severity: string;
+      decision: string;
+      review_status: string;
+      model_version: string;
+      processing_time_ms: number;
+    }>;
+  }>('/monitor/batch-analyze', data),
+  uploadCsv: (file: File, deduplicate = true, platform_name = 'CSV Import', language_hint?: string) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('deduplicate', String(deduplicate));
+    form.append('platform_name', platform_name);
+    if (language_hint) form.append('language_hint', language_hint);
+    return api.post('/monitor/upload-csv', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  exportUrl: (format: 'csv' | 'jsonl' = 'csv') => `/api/monitor/export-reviewed-feedback?format=${format}`,
 };
 
 // ─── Evaluation ───────────────────────────────────────────────────────────────

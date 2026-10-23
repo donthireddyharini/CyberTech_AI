@@ -45,3 +45,6 @@ test_*.db
 # Archives
 *.zip
 *.tar.gz
+
+sentinel.db
+*.db

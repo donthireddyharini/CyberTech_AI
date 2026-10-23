@@ -130,3 +130,14 @@ async def list_feedback(
             for f in items
         ],
     }
+
+
+@router.get("/export")
+async def export_feedback_dataset(
+    format: str = Query("csv", pattern="^(csv|jsonl)$"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Export reviewed feedback examples for offline model retraining."""
+    from app.api.v1.monitor import export_reviewed_feedback
+    return await export_reviewed_feedback(format=format, db=db)
+

@@ -1,6 +1,6 @@
 {
   "model_type": "Word+Char TF-IDF + LogisticRegression (Balanced Class Weights)",
-  "architecture": "FeatureUnion(Word n-gram (1,2) [30k] + Char_wb n-gram (3,5) [25k]) -> LogisticRegression(C=2.0, balanced)",
+  "architecture": "FeatureUnion(Word n-gram (1,2) [30k] + Char_wb n-gram (3,5) [25k]) -> LogisticRegression(C=1.0, balanced)",
   "framework": "scikit-learn",
   "random_state": 42,
   "word_ngram_range": [
@@ -13,11 +13,15 @@
     5
   ],
   "char_max_features": 25000,
-  "selected_C": 2.0,
+  "selected_C": 1.0,
   "optimal_threshold": 0.4,
   "threshold_tuning_strategy": "Validation set precision-recall trade-off optimization for safety moderation",
   "training_samples": 13898,
   "training_positives": 864,
   "checkpoint_path": "models/baseline_toxicity.joblib",
-  "task_scope": "English toxicity binary classification"
+  "task_scope": "English toxicity binary classification",
+  "dataset_source": "Civil Comments (Jigsaw/Google, CC0 1.0 Universal)",
+  "license": "CC0 1.0 Universal Public Domain Dedication",
+  "trained_timestamp": "2026-10-23T06:37:01Z",
+  "total_training_time_seconds": 92.57
 }

@@ -713,3 +713,86 @@ async def test_urdu_perso_arabic_script_detection(client):
     assert "MuRIL" in data["language_route"]["model_name"]
 
 
+# ─── Live Real-Time Comment Monitoring & Export Tests (No API Keys) ──────────
+
+@pytest.mark.asyncio
+async def test_monitoring_status_endpoint(client):
+    """GET /api/monitor/status verifies zero external API keys and local offline inference."""
+    resp = await client.get("/api/monitor/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["monitoring_status"] == "active_local_listening"
+    assert data["offline_local_inference"] is True
+    assert data["api_keys_required"] is False
+    assert data["external_network_calls"] is False
+    assert "models/baseline_toxicity.joblib" in data["active_model_name"]
+    assert data["total_monitored_records"] >= 0
+
+
+@pytest.mark.asyncio
+async def test_monitoring_batch_analyze_with_deduplication(client):
+    """POST /api/monitor/batch-analyze tests real-time processing and in-memory deduplication."""
+    payload = {
+        "comments": [
+            "This is a respectful and thoughtful discussion point.",
+            "You are a completely pathetic idiot and you should shut up.",
+            "This is a respectful and thoughtful discussion point.", # Duplicate
+            "bhai ye explanation kaafi mast hai, thanks!",
+        ],
+        "deduplicate": True,
+        "platform_source": "Local Test Ingestion"
+    }
+    resp = await client.post("/api/monitor/batch-analyze", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total_received"] == 4
+    assert data["processed_count"] == 3
+    assert data["duplicate_count"] == 1
+    assert data["flagged_count"] >= 1
+    assert data["approved_count"] >= 1
+    assert len(data["items"]) == 3
+    assert data["monitoring_mode"] == "local_offline_pipeline"
+
+
+@pytest.mark.asyncio
+async def test_monitoring_upload_csv(client):
+    """POST /api/monitor/upload-csv tests CSV schema detection and local ingestion."""
+    csv_content = (
+        "comment,author\n"
+        "\"Great progress on the project!\",user1\n"
+        "\"You are a completely pathetic idiot and you should shut up.\",user2\n"
+        "\"Great progress on the project!\",user3\n"
+    )
+    files = {
+        "file": ("comments.csv", csv_content.encode("utf-8"), "text/csv")
+    }
+    data = {
+        "deduplicate": "true",
+        "platform_name": "Test CSV Upload"
+    }
+    resp = await client.post("/api/monitor/upload-csv", files=files, data=data)
+    assert resp.status_code == 200
+    res = resp.json()
+    assert res["total_received"] == 3
+    assert res["processed_count"] == 2
+    assert res["duplicate_count"] == 1
+    assert res["flagged_count"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_export_reviewed_feedback_csv_and_jsonl(client):
+    """GET /api/monitor/export-reviewed-feedback exports data for retraining."""
+    # Test CSV format
+    resp_csv = await client.get("/api/monitor/export-reviewed-feedback?format=csv")
+    assert resp_csv.status_code == 200
+    assert "text/csv" in resp_csv.headers["content-type"]
+    assert "record_id" in resp_csv.text
+    assert "target_binary_label" in resp_csv.text
+
+    # Test JSONL format
+    resp_jsonl = await client.get("/api/monitor/export-reviewed-feedback?format=jsonl")
+    assert resp_jsonl.status_code == 200
+    assert "application/x-ndjson" in resp_jsonl.headers["content-type"]
+
+
+

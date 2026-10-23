@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import {
   MessageSquare, Flag, Clock, AlertTriangle,
   TrendingUp, RefreshCw, CheckCircle, Eye, ChevronRight,
-  Activity, Cpu, Zap, Scale
+  Activity, Cpu, Zap, Scale, Upload, FileText, Download, CheckCircle2,
+  ShieldCheck, Database, ListFilter, Play
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { dashboardApi } from '../api/client';
+import { dashboardApi, monitoringApi } from '../api/client';
 import type { DashboardSummary, DistributionData, RecentActivity } from '../types';
 import { useToast } from '../App';
 
@@ -192,6 +193,67 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
 
+  // ─── Real-Time Local Ingestion & Comment Monitoring (Zero API Keys) ───────
+  const [ingestMode, setIngestMode] = useState<'text' | 'csv'>('text');
+  const [batchText, setBatchText] = useState('');
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [deduplicate, setDeduplicate] = useState(true);
+  const [isIngesting, setIsIngesting] = useState(false);
+  const [batchResult, setBatchResult] = useState<any | null>(null);
+  const [monitorStatus, setMonitorStatus] = useState<any | null>(null);
+
+  const fetchMonitorStatus = async () => {
+    try {
+      const resp = await monitoringApi.status();
+      setMonitorStatus(resp.data);
+    } catch {
+      // Non-blocking background status check
+    }
+  };
+
+  const handleBatchIngest = async () => {
+    if (ingestMode === 'text') {
+      const lines = batchText.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length === 0) {
+        addToast('Please enter at least one comment to analyze.', 'error');
+        return;
+      }
+      setIsIngesting(true);
+      try {
+        const resp = await monitoringApi.batchAnalyze({
+          comments: lines,
+          deduplicate,
+          platform_source: 'Manual Live Batch',
+        });
+        setBatchResult(resp.data);
+        addToast(`Processed ${resp.data.processed_count} comments (${resp.data.flagged_count} flagged) locally.`, 'success');
+        fetchData();
+        fetchMonitorStatus();
+      } catch (err: any) {
+        addToast(err.message || 'Batch analysis failed', 'error');
+      } finally {
+        setIsIngesting(false);
+      }
+    } else {
+      if (!csvFile) {
+        addToast('Please select a CSV, TSV, or TXT file to upload.', 'error');
+        return;
+      }
+      setIsIngesting(true);
+      try {
+        const resp = await monitoringApi.uploadCsv(csvFile, deduplicate, `Uploaded File (${csvFile.name})`);
+        setBatchResult(resp.data);
+        addToast(`Imported & analyzed ${resp.data.processed_count} comments (${resp.data.flagged_count} flagged).`, 'success');
+        fetchData();
+        fetchMonitorStatus();
+      } catch (err: any) {
+        addToast(err.message || 'CSV analysis failed', 'error');
+      } finally {
+        setIsIngesting(false);
+      }
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -214,7 +276,10 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    fetchMonitorStatus();
+  }, []);
 
   const toChartData = (obj: Record<string, number> | undefined) =>
     Object.entries(obj || {}).map(([name, value]) => ({ name, value }));
@@ -282,6 +347,228 @@ export default function Dashboard() {
           <span>{error} — Make sure the backend is running on port 8000.</span>
         </div>
       )}
+
+      {/* ─── Real-Time Local Comment Ingestion & Monitoring Console (Zero API Keys) ─── */}
+      <div className="card-glow p-5 border border-indigo-700/40 bg-gradient-to-br from-[#0c1333] via-[#080d26] to-[#05091a]">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-indigo-900/50 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-950/60 border border-purple-700/40 flex items-center justify-center text-purple-400">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-white tracking-tight">Real-Time Comment Ingestion & Local Monitoring</h2>
+                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-700/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Zero API Keys Required
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Local offline NLP inference pipeline for user-submitted comments and lawfully imported datasets. No social media scraping.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href="/api/monitor/export-reviewed-feedback?format=csv"
+              download="sentinel_retraining_dataset.csv"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-navy-800 hover:bg-navy-700 border border-indigo-800/50 text-indigo-200 text-xs font-semibold transition-colors shadow-sm"
+              title="Export all human-reviewed corrections and moderator feedback as CSV for model retraining"
+            >
+              <Download className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Export for Retraining (CSV)</span>
+            </a>
+            <a
+              href="/api/monitor/export-reviewed-feedback?format=jsonl"
+              download="sentinel_retraining_dataset.jsonl"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-navy-800 hover:bg-navy-700 border border-indigo-800/50 text-slate-300 text-xs font-semibold transition-colors shadow-sm"
+              title="Export all human-reviewed corrections as JSONL"
+            >
+              <FileText className="w-3.5 h-3.5 text-slate-400" />
+              <span>JSONL</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Ingestion Controls */}
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-1 p-1 bg-navy-950/80 rounded-xl border border-indigo-900/50">
+              <button
+                type="button"
+                onClick={() => setIngestMode('text')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                  ingestMode === 'text'
+                    ? 'bg-indigo-600 text-white shadow-glow-purple font-semibold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Text Batch Submission
+              </button>
+              <button
+                type="button"
+                onClick={() => setIngestMode('csv')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                  ingestMode === 'csv'
+                    ? 'bg-indigo-600 text-white shadow-glow-purple font-semibold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Upload CSV / Text Dataset
+              </button>
+            </div>
+
+            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={deduplicate}
+                onChange={(e) => setDeduplicate(e.target.checked)}
+                className="rounded border-indigo-800 bg-navy-900 text-indigo-500 focus:ring-0"
+              />
+              <span>Deduplicate identical comments in batch</span>
+            </label>
+          </div>
+
+          {ingestMode === 'text' ? (
+            <div>
+              <textarea
+                value={batchText}
+                onChange={(e) => setBatchText(e.target.value)}
+                placeholder="Paste comments here (one comment per line)...&#10;Example:&#10;This is an insightful discussion, thanks for sharing!&#10;You are a completely pathetic idiot and you should shut up.&#10;bhai ye solution sach me kaafi helpful tha yaar, thanks."
+                rows={4}
+                className="w-full rounded-xl bg-navy-950/80 border border-indigo-900/60 p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+              />
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl border-2 border-dashed border-indigo-900/60 bg-navy-950/40 flex flex-col items-center justify-center text-center">
+              <Upload className="w-8 h-8 text-indigo-400 mb-2 opacity-70" />
+              <input
+                type="file"
+                accept=".csv,.tsv,.txt"
+                onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                className="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer"
+              />
+              <p className="text-[11px] text-slate-500 mt-2">
+                Auto-detects columns: <code>comment</code>, <code>text</code>, <code>content</code>, <code>body</code>. Resilient to UTF-8 &amp; Latin-1 encoding errors.
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <button
+              onClick={handleBatchIngest}
+              disabled={isIngesting}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition-all shadow-glow-purple disabled:opacity-50"
+            >
+              {isIngesting ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Processing Comments Locally...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Analyze Comments Locally</span>
+                </>
+              )}
+            </button>
+
+            {monitorStatus && (
+              <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono">
+                <span>Model: <strong className="text-slate-200">enhanced_word_char_v2</strong></span>
+                <span>•</span>
+                <span>Operating Threshold: <strong className="text-slate-200">{monitorStatus.active_threshold ?? 0.40}</strong></span>
+                <span>•</span>
+                <span>Total Stored Records: <strong className="text-slate-200">{monitorStatus.total_monitored_records}</strong></span>
+              </div>
+            )}
+          </div>
+
+          {/* Results Summary & Feed */}
+          {batchResult && (
+            <div className="mt-4 p-4 rounded-xl bg-navy-950/90 border border-indigo-900/60 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2 border-b border-indigo-900/40 pb-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-white">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Batch Ingestion Completed in {batchResult.processing_time_ms} ms</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px]">
+                  <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
+                    Received: {batchResult.total_received}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 font-mono border border-indigo-800/40">
+                    Processed: {batchResult.processed_count}
+                  </span>
+                  {batchResult.duplicate_count > 0 && (
+                    <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-300 font-mono border border-amber-800/40">
+                      Duplicates Filtered: {batchResult.duplicate_count}
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 rounded bg-red-950 text-red-300 font-mono border border-red-800/40">
+                    Flagged: {batchResult.flagged_count}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-mono border border-emerald-800/40">
+                    Approved: {batchResult.approved_count}
+                  </span>
+                </div>
+              </div>
+
+              {/* Table of Ingested Results */}
+              <div className="overflow-x-auto max-h-60 overflow-y-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-indigo-900/40 text-slate-400 font-medium">
+                      <th className="py-2 pr-3">Comment Text</th>
+                      <th className="py-2 pr-3">Language</th>
+                      <th className="py-2 pr-3">Toxicity Score</th>
+                      <th className="py-2 pr-3">Severity</th>
+                      <th className="py-2 pr-3">Decision</th>
+                      <th className="py-2">Latency</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-indigo-950/40">
+                    {batchResult.items.map((it: any) => (
+                      <tr key={it.id} className="hover:bg-indigo-950/30">
+                        <td className="py-2 pr-3 max-w-sm truncate font-medium text-slate-200">
+                          {it.text}
+                        </td>
+                        <td className="py-2 pr-3 text-slate-400 capitalize">
+                          {it.detected_language}
+                        </td>
+                        <td className="py-2 pr-3 font-mono">
+                          {it.toxicity_score !== null ? (
+                            <span className={it.toxicity_score >= 0.40 ? 'text-red-400 font-bold' : 'text-emerald-400'}>
+                              {(it.toxicity_score * 100).toFixed(1)}%
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 italic">GPU-pending</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-3">
+                          <SeverityBadge severity={it.severity} />
+                        </td>
+                        <td className="py-2 pr-3">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            it.decision === 'no_action'
+                              ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'
+                              : 'bg-red-950/60 text-red-400 border border-red-800/40'
+                          }`}>
+                            {it.decision}
+                          </span>
+                        </td>
+                        <td className="py-2 text-slate-400 font-mono text-[11px]">
+                          {it.processing_time_ms} ms
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* 4 Metric Cards matching the exact figures & sparklines from reference image */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
