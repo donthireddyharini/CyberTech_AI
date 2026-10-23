@@ -381,9 +381,10 @@ class BaselineNLPEngine:
                 # Propagate machine-learning toxicity signals into multi-label scores and severity
                 if raw_pred['is_toxic']:
                     if resolved_key == "telugu":
-                        hate_score = max(hate_score, raw_pred['toxicity_score'])
-                        if not hate_evidence:
-                            hate_evidence = [f"Telugu hate speech model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
+                        hate_score = max(hate_score, round(raw_pred['toxicity_score'] * 0.90, 3))
+                        harassment_score = max(harassment_score, raw_pred['toxicity_score'])
+                        if not harassment_evidence:
+                            harassment_evidence = [f"Telugu harassment/toxicity model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
                     elif resolved_key == "hindi":
                         hate_score = max(hate_score, round(raw_pred['toxicity_score'] * 0.9, 3))
                         harassment_score = max(harassment_score, round(raw_pred['toxicity_score'] * 0.9, 3))
@@ -396,9 +397,9 @@ class BaselineNLPEngine:
                             hate_evidence = [f"Hinglish hate model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
                     elif resolved_key == "kannada":
                         harassment_score = max(harassment_score, raw_pred['toxicity_score'])
-                        hate_score = max(hate_score, round(raw_pred['toxicity_score'] * 0.85, 3))
+                        hate_score = max(hate_score, round(raw_pred['toxicity_score'] * 0.90, 3))
                         if not harassment_evidence:
-                            harassment_evidence = [f"Kannada offensive model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
+                            harassment_evidence = [f"Kannada harassment/offensive model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
                     elif resolved_key == "english" and raw_pred['toxicity_score'] >= 0.70:
                         harassment_score = max(harassment_score, raw_pred['toxicity_score'])
                         if not harassment_evidence:

@@ -1,0 +1,71 @@
+text,language,is_code_mixed,source_dataset,split,hate_speech,harassment,cyberbullying,legitimate
+ನೀನು ಮೂರ್ಖ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನೀನು ತುಂಬಾ ಕೆಟ್ಟವನು,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನಿನಗೆ ಏನೂ ಮಾಡಲು ಬರುವುದಿಲ್ಲ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನೀನೊಬ್ಬ ಬುದ್ಧಿಹೀನ ದಡ್ಡ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ಬಾಯಿ ಮುಚ್ಕೋ ಮೂರ್ಖನೇ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನೀನು ಸಂಪೂರ್ಣ ನಿಷ್ಪ್ರಯೋಜಕ ವ್ಯಕ್ತಿ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನಿನ್ನ ಮುಖ ನೋಡಿದರೆ ಅಸಹ್ಯವಾಗುತ್ತದೆ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನೀನೊಬ್ಬ ನಾಚಿಕೆಯಿಲ್ಲದ ಕೆಟ್ಟ ಮನುಷ್ಯ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನ್ನಂತ ಮೂರ್ಖನನ್ನು ಜಗತ್ತಿನಲ್ಲಿ ಎಲ್ಲಿಯೂ ನೋಡಿಲ್ಲ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನಗೆ ಕನಿಷ್ಠ ಜ್ಞಾನವೂ ಇಲ್ಲ ದಡ್ಡ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನೀನು ಬದುಕಿರುವುದೇ ವೇಸ್ಟ್,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನೀನು ಕಳ್ಳ ಮತ್ತು ಮೋಸಗಾರ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನ್ನ ಕೆಟ್ಟ ಮಾತುಗಳನ್ನು ನಿಲ್ಲಿಸು ಮೂರ್ಖ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನಗೆ ಮರ್ಯಾದೆ ಇಲ್ಲವೇ ಕೆಟ್ಟವನೇ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನೀನು ಸಮಾಜಕ್ಕೆ ಕಳಂಕ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ದಡ್ಡನಂತೆ ವರ್ತಿಸುವುದನ್ನು ನಿಲ್ಲಿಸು,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನಿನಗೆ ಸರಿಯಾಗಿ ಮಾತನಾಡಲೂ ಬರುವುದಿಲ್ಲ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನೀನೊಬ್ಬ ಪರಮ ಮೂರ್ಖ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನ್ನಂತಹ ಕೆಟ್ಟ ಜನರ ಸಹವಾಸವೇ ಬೇಡ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ಹೋಗೋ ಬೋಳಿಮಗನೆ ಸುಳೆಮಗನೆ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನ್ನ ಜೀವನ ಪೂರ್ತಿ ಹಾಳಾಗಲಿ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನೀನು ಕಸದಂತೆ ಬಿದ್ದಿದ್ದೀಯಾ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ಮೂರ್ಖ ನಿನ್ನ ಮಾತು ಯಾರು ಕೇಳಲ್ಲ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನಿನ್ನ ಕೆಟ್ಟ ಬುದ್ಧಿ ಎಂದಿಗೂ ಬದಲಾಗದು,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನೀನೊಬ್ಬ ಯೋಗ್ಯತೆ ಇಲ್ಲದ ನಾಲಾಯಕ್,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನಗೆ ಯಾವುದೇ ಸಂಸ್ಕಾರವಿಲ್ಲ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ಬುದ್ಧಿಹೀನನಂತೆ ಕೂಗಾಡಬೇಡ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನಿನ್ನಂತಹ ಮೂರ್ಖರು ಭೂಮಿಗೆ ಭಾರ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನೀನು ಏನು ಮಾಡಿದರೂ ಕೆಟ್ಟದ್ದೇ ಮಾಡುತ್ತೀಯ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನಿನ್ನಿಂದ ಯಾರಿಗೂ ಯಾವುದೇ ಪ್ರಯೋಜನವಿಲ್ಲ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ಮೂರ್ಖರೊಂದಿಗೆ ವಾದ ಮಾಡುವುದು ವ್ಯರ್ಥ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನಿನ್ನ ದುರಹಂಕಾರವೇ ನಿನ್ನ ನಾಶಕ್ಕೆ ಕಾರಣ,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನಿನ್ನ ಮುಖಕ್ಕೆ ಕನ್ನಡಿ ನೋಡ್ಕೋ ಮೊದಲು,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ನೀನು ಸುಳ್ಳುಗಾರ ಮತ್ತು ವಂಚಕ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನ್ನಂತ ಕೆಟ್ಟವರನ್ನು ಕ್ಷಮಿಸಬಾರದು,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,1.0,0.0,0.0
+ಹೋಗಿ ಎಲ್ಲಾದರೂ ಸಾಯಿ ನಾಲಾಯಕ್,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನೀನೊಬ್ಬ ನಾಚಿಕೆಗೇಡು ವ್ಯಕ್ತಿ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನ್ನ ಕೊಳಕು ಬಾಯಿಯನ್ನು ಮುಚ್ಚು,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ಯಾವುದಕ್ಕೂ ಬಾರದ ಮೂರ್ಖ ನೀನು,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+ನಿನ್ನಂತಹ ದುಷ್ಟನಿಗೆ ಒಳ್ಳೆ ಕಾಲ ಬರೋದಿಲ್ಲ,kannada,False,sentinel_interpersonal_insults_v1,train,1.0,1.0,0.0,0.0
+"ನಮಸ್ಕಾರ, ನೀವು ಹೇಗಿದ್ದೀರಿ?",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನಿಮ್ಮ ಸಹಾಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ಈ ಕೆಲಸ ಸರಿಯಾಗಿ ಆಗಿಲ್ಲ, ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನನ್ನ ಪ್ರಕಾರ ಈ ವಿಷಯವನ್ನು ಇನ್ನೊಮ್ಮೆ ಪರಿಶೀಲಿಸಬೇಕು.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ನಿಮ್ಮ ಅಭಿಪ್ರಾಯ ನನಗೆ ಒಪ್ಪಿಗೆಯಿಲ್ಲ, ಆದರೆ ಗೌರವಿಸುತ್ತೇನೆ.",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ಶುಭೋದಯ, ಎಲ್ಲರಿಗೂ ಒಳ್ಳೆಯ ದಿನವಾಗಲಿ.",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ಈ ಲೇಖನ ಬಹಳ ಉಪಯುಕ್ತವಾಗಿದೆ, ಧನ್ಯವಾದಗಳು.",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ದಯವಿಟ್ಟು ಈ ದಾಖಲೆಯನ್ನು ಪರಿಶೀಲಿಸಿ ಸಹಿ ಮಾಡಿ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ನಿಮ್ಮ ಕೆಲಸ ತುಂಬಾ ಚೆನ್ನಾಗಿದೆ, ಅಭಿನಂದನೆಗಳು.",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನಾವೆಲ್ಲರೂ ಒಟ್ಟಾಗಿ ಈ ಸಮಸ್ಯೆಗೆ ಪರಿಹಾರ ಕಂಡುಕೊಳ್ಳೋಣ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ಈ ಯೋಜನೆಯಲ್ಲಿ ಕೆಲವು ಸಣ್ಣ ತಪ್ಪುಗಳಿವೆ, ಸರಿಪಡಿಸಬಹುದು.",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನೀವು ನೀಡಿದ ಸಲಹೆ ತುಂಬಾ ಉಪಯುಕ್ತವಾಗಿದೆ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನಾಳಿನ ಸಭೆಗೆ ಎಲ್ಲರೂ ಸರಿಯಾದ ಸಮಯಕ್ಕೆ ಬನ್ನಿ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ಈ ಪುಸ್ತಕ ಓದುವುದರಿಂದ ಹೊಸ ವಿಷಯಗಳು ತಿಳಿದವು.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನಿಮ್ಮ ಸಹಕಾರಕ್ಕೆ ತುಂಬಾ ಧನ್ಯವಾದಗಳು ಸ್ನೇಹಿತರೆ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ಇದು ಕೇವಲ ತಾಂತ್ರಿಕ ದೋಷ, ಬೇಗನೆ ಸರಿಯಾಗಲಿದೆ.",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನೀವು ವಿವರಿಸಿದ ರೀತಿ ತುಂಬಾ ಸುಲಭವಾಗಿ ಅರ್ಥವಾಯಿತು.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನಾನು ನಿಮ್ಮ ಸಲಹೆಯನ್ನು ಖಂಡಿತವಾಗಿ ಪರಿಗಣಿಸುತ್ತೇನೆ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ಆರೋಗ್ಯದ ಕಡೆ ಗಮನ ಕೊಡಿ, ಚೆನ್ನಾಗಿ ವಿಶ್ರಾಂತಿ ಪಡೆಯಿರಿ.",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ಈ ಕೆಲಸ ಯಶಸ್ವಿಯಾಗಲು ಎಲ್ಲರ ಶ್ರಮ ಬೇಕು.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ನೀವು ಹೇಳಿದ್ದು ಸರಿ, ಆದರೆ ನಾವು ಬೇರೆ ದಾರಿಯನ್ನೂ ನೋಡಬೇಕು.",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ದಯವಿಟ್ಟು ನಿಯಮಗಳನ್ನು ಪಾಲಿಸಿ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ಇಂದಿನ ಹವಾಮಾನ ತುಂಬಾ ಆಹ್ಲಾದಕರವಾಗಿದೆ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನಿಮ್ಮ ಪ್ರಯತ್ನ ಶ್ಲಾಘನೀಯ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+"ಒಳ್ಳೆಯ ನಿರ್ಧಾರ ತೆಗೆದುಕೊಂಡಿದ್ದೀರಿ, ಮುಂದುವರಿಯಿರಿ.",kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ವಿದ್ಯಾರ್ಥಿಗಳು ಪರೀಕ್ಷೆಗೆ ಚೆನ್ನಾಗಿ ಸಿದ್ಧರಾಗಬೇಕು.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ಇಂತಹ ಕಾರ್ಯಕ್ರಮಗಳು ಸಮಾಜಕ್ಕೆ ತುಂಬಾ ಒಳ್ಳೆಯದು.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನಿಮ್ಮ ಅಮೂಲ್ಯ ಸಮಯ ನೀಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ಯಾವುದೇ ಸಂಶಯವಿದ್ದರೆ ದಯವಿಟ್ಟು ಕೇಳಿ.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0
+ನಾವು ಜವಾಬ್ದಾರಿಯುತವಾಗಿ ವರ್ತಿಸಬೇಕು.,kannada,False,sentinel_interpersonal_insults_v1,train,0.0,0.0,0.0,1.0

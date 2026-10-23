@@ -3,12 +3,12 @@ Sentinel AI — Multilingual Model Training Pipeline
 (CSEAIML2026-P03)
 
 Trains genuine, local scikit-learn models for non-English languages:
-  1. Telugu (mounikaiiith/Telugu-Hatespeech in native Telugu script)
+  1. Telugu (mounikaiiith/Telugu-Hatespeech + vetted interpersonal insults dataset)
   2. Hindi (necrosyth/hindi-social-media-hostility-detection in Devanagari script)
   3. Hinglish / Code-Mixed (pankajbiswas6/prism-hinglish-hate-speech)
-  4. Kannada (community-datasets/offenseval_dravidian)
+  4. Kannada (community-datasets/offenseval_dravidian + vetted interpersonal insults dataset)
 
-Uses Word + Character n-gram FeatureUnion with balanced LogisticRegression.
+Uses Indic-aware Unicode Word + Character n-gram FeatureUnion with balanced LogisticRegression.
 Tunes decision threshold on validation set without test leakage.
 Evaluates on held-out test splits and serializes model checkpoints to models/
 and evaluation metrics to reports/.
@@ -30,7 +30,6 @@ from sklearn.metrics import (
     classification_report
 )
 
-# Fix Windows stdout encoding for non-ASCII text printing
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -41,24 +40,34 @@ MODELS_DIR = "models"
 REPORTS_DIR = "reports"
 RANDOM_STATE = 42
 
+# Indic Unicode Regex: matches words containing Telugu (0C00-0C7F), Kannada (0C80-0CFF), Devanagari (0900-097F), and Latin alphanumeric
+INDIC_TOKEN_PATTERN = r'[\u0C00-\u0C7F\u0C80-\u0CFF\u0900-\u097F\w]+'
+
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
 
-def build_pipeline(char_ngrams=(2, 4), word_ngrams=(1, 2), c_val=1.0) -> Pipeline:
+def build_pipeline(
+    char_ngrams=(2, 4),
+    word_ngrams=(1, 2),
+    c_val=1.0,
+    token_pattern=INDIC_TOKEN_PATTERN,
+    word_min_df=1
+) -> Pipeline:
     """Builds a robust TF-IDF Word + Character n-gram pipeline with balanced LogisticRegression."""
     feature_union = FeatureUnion([
         ("word", TfidfVectorizer(
+            token_pattern=token_pattern,
             ngram_range=word_ngrams,
             max_features=25000,
-            min_df=2,
+            min_df=word_min_df,
             sublinear_tf=True
         )),
         ("char", TfidfVectorizer(
             analyzer="char_wb",
             ngram_range=char_ngrams,
             max_features=30000,
-            min_df=2,
+            min_df=1,
             sublinear_tf=True
         ))
     ])
@@ -123,7 +132,6 @@ def evaluate_model(
     preds = (probs >= threshold).astype(int)
     
     cm = confusion_matrix(y_test, preds).tolist()
-    # tn, fp, fn, tp
     tn, fp, fn, tp = int(cm[0][0]), int(cm[0][1]), int(cm[1][0]), int(cm[1][1])
     
     acc = float(accuracy_score(y_test, preds))
@@ -168,16 +176,29 @@ def evaluate_model(
 
 
 # =====================================================================
-# 1. TELUGU MODEL TRAINING
+# 1. TELUGU MODEL TRAINING (with Indic Unicode tokenization & insults data)
 # =====================================================================
 def train_telugu():
     print("\n" + "="*60)
-    print(">>> [1/4] Training Telugu Model (mounikaiiith/Telugu-Hatespeech)")
+    print(">>> [1/4] Training Telugu Model (mounikaiiith/Telugu-Hatespeech + Interpersonal Insults)")
     print("="*60)
     
-    train_df = pd.read_csv("data/processed/indic/telugu_train.csv")
-    val_df = pd.read_csv("data/processed/indic/telugu_val.csv")
-    test_df = pd.read_csv("data/processed/indic/telugu_test.csv")
+    train_orig = pd.read_csv("data/processed/indic/telugu_train.csv")
+    val_orig = pd.read_csv("data/processed/indic/telugu_val.csv")
+    test_orig = pd.read_csv("data/processed/indic/telugu_test.csv")
+    
+    # Stratified split of supplementary insults dataset: 70% train, 15% val, 15% test
+    supp_path = "data/processed/indic/telugu_supplementary_insults.csv"
+    if os.path.exists(supp_path):
+        supp_df = pd.read_csv(supp_path)
+        supp_train, supp_temp = train_test_split(supp_df, test_size=0.30, stratify=supp_df['legitimate'], random_state=RANDOM_STATE)
+        supp_val, supp_test = train_test_split(supp_temp, test_size=0.50, stratify=supp_temp['legitimate'], random_state=RANDOM_STATE)
+        
+        train_df = pd.concat([train_orig, supp_train], ignore_index=True).drop_duplicates(subset=['text'])
+        val_df = pd.concat([val_orig, supp_val], ignore_index=True).drop_duplicates(subset=['text'])
+        test_df = pd.concat([test_orig, supp_test], ignore_index=True).drop_duplicates(subset=['text'])
+    else:
+        train_df, val_df, test_df = train_orig, val_orig, test_orig
     
     X_train = np.array(train_df["text"].fillna("").tolist(), dtype=object)
     y_train = np.array((train_df["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
@@ -188,12 +209,12 @@ def train_telugu():
     X_test = np.array(test_df["text"].fillna("").tolist(), dtype=object)
     y_test = np.array((test_df["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
     
-    print(f"Telugu Train: {len(X_train)} samples ({y_train.sum()} hate, {(y_train==0).sum()} legit)")
-    print(f"Telugu Val:   {len(X_val)} samples ({y_val.sum()} hate, {(y_val==0).sum()} legit)")
-    print(f"Telugu Test:  {len(X_test)} samples ({y_test.sum()} hate, {(y_test==0).sum()} legit)")
+    print(f"Telugu Train: {len(X_train)} samples ({y_train.sum()} harmful, {(y_train==0).sum()} legit)")
+    print(f"Telugu Val:   {len(X_val)} samples ({y_val.sum()} harmful, {(y_val==0).sum()} legit)")
+    print(f"Telugu Test:  {len(X_test)} samples ({y_test.sum()} harmful, {(y_test==0).sum()} legit)")
     
     t0 = time.time()
-    pipe = build_pipeline(char_ngrams=(2, 4), word_ngrams=(1, 2), c_val=2.0)
+    pipe = build_pipeline(char_ngrams=(2, 4), word_ngrams=(1, 2), c_val=2.0, token_pattern=INDIC_TOKEN_PATTERN, word_min_df=1)
     pipe.fit(X_train, y_train)
     fit_time = time.time() - t0
     print(f"Training completed in {fit_time:.2f}s")
@@ -201,7 +222,7 @@ def train_telugu():
     best_th = tune_threshold(pipe, X_val, y_val, min_recall=0.40)
     print(f"Optimal validation threshold: {best_th}")
     
-    eval_res = evaluate_model(pipe, best_th, X_test, y_test, "Telugu", "mounikaiiith/Telugu-Hatespeech")
+    eval_res = evaluate_model(pipe, best_th, X_test, y_test, "Telugu", "mounikaiiith/Telugu-Hatespeech + Interpersonal Insults")
     print(f"Test Results: Acc={eval_res['metrics']['accuracy']}, Prec={eval_res['metrics']['precision']}, "
           f"Rec={eval_res['metrics']['recall']}, F1={eval_res['metrics']['f1_score']}, ROC-AUC={eval_res['metrics']['roc_auc']}")
     print(f"Confusion Matrix: {eval_res['confusion_matrix']}")
@@ -214,10 +235,10 @@ def train_telugu():
     
     config = {
         "language": "telugu",
-        "model_version": "telugu_word_char_v1",
+        "model_version": "telugu_word_char_v2",
         "model_type": "scikit_learn_tfidf_logreg",
-        "architecture": "FeatureUnion(Word (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
-        "dataset_source": "mounikaiiith/Telugu-Hatespeech (IIIT Hyderabad)",
+        "architecture": "FeatureUnion(IndicWord (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
+        "dataset_source": "mounikaiiith/Telugu-Hatespeech + Interpersonal Insults Corpus",
         "train_samples": len(X_train),
         "val_samples": len(X_val),
         "test_samples": len(X_test),
@@ -246,7 +267,6 @@ def train_hindi():
     X = np.array(raw_df["text"].fillna("").tolist(), dtype=object)
     y = np.array((raw_df["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
     
-    # Stratified 70% train, 15% val, 15% test
     X_train, X_temp, y_train, y_temp = train_test_split(
         X, y, test_size=0.30, stratify=y, random_state=RANDOM_STATE
     )
@@ -259,7 +279,7 @@ def train_hindi():
     print(f"Hindi Test:  {len(X_test)} samples ({y_test.sum()} hostile, {(y_test==0).sum()} non-hostile)")
     
     t0 = time.time()
-    pipe = build_pipeline(char_ngrams=(2, 4), word_ngrams=(1, 2), c_val=1.5)
+    pipe = build_pipeline(char_ngrams=(2, 4), word_ngrams=(1, 2), c_val=1.5, token_pattern=INDIC_TOKEN_PATTERN, word_min_df=2)
     pipe.fit(X_train, y_train)
     fit_time = time.time() - t0
     print(f"Training completed in {fit_time:.2f}s")
@@ -326,7 +346,7 @@ def train_hinglish():
     print(f"Hinglish Test:  {len(X_test)} samples ({y_test.sum()} hate, {(y_test==0).sum()} legit)")
     
     t0 = time.time()
-    pipe = build_pipeline(char_ngrams=(3, 5), word_ngrams=(1, 2), c_val=2.0)
+    pipe = build_pipeline(char_ngrams=(3, 5), word_ngrams=(1, 2), c_val=2.0, token_pattern=r'(?u)\b\w+\b', word_min_df=2)
     pipe.fit(X_train, y_train)
     fit_time = time.time() - t0
     print(f"Training completed in {fit_time:.2f}s")
@@ -368,36 +388,53 @@ def train_hinglish():
 
 
 # =====================================================================
-# 4. KANNADA MODEL TRAINING
+# 4. KANNADA MODEL TRAINING (with Indic Unicode tokenization & insults data)
 # =====================================================================
 def train_kannada():
     print("\n" + "="*60)
-    print(">>> [4/4] Training Kannada Model (community-datasets/offenseval_dravidian)")
+    print(">>> [4/4] Training Kannada Model (community-datasets/offenseval_dravidian + Interpersonal Insults)")
     print("="*60)
     
-    train_df = pd.read_csv("data/processed/indic/kannada_train.csv")
-    val_df = pd.read_csv("data/processed/indic/kannada_val.csv")
+    train_orig = pd.read_csv("data/processed/indic/kannada_train.csv")
+    val_orig = pd.read_csv("data/processed/indic/kannada_val.csv")
     
-    X_train = np.array(train_df["text"].fillna("").tolist(), dtype=object)
-    y_train = np.array((train_df["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
+    supp_path = "data/processed/indic/kannada_supplementary_insults.csv"
+    if os.path.exists(supp_path):
+        supp_df = pd.read_csv(supp_path)
+        supp_train, supp_test = train_test_split(supp_df, test_size=0.30, stratify=supp_df['legitimate'], random_state=RANDOM_STATE)
+        train_comb = pd.concat([train_orig, supp_train], ignore_index=True).drop_duplicates(subset=['text'])
+        test_comb = pd.concat([val_orig, supp_test], ignore_index=True).drop_duplicates(subset=['text'])
+    else:
+        train_comb = train_orig
+        test_comb = val_orig
+        
+    # Split test_comb into stratified 50% validation and 50% held-out test
+    val_split, test_split = train_test_split(test_comb, test_size=0.50, stratify=test_comb['legitimate'], random_state=RANDOM_STATE)
     
-    X_val = np.array(val_df["text"].fillna("").tolist(), dtype=object)
-    y_val = np.array((val_df["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
+    X_train = np.array(train_comb["text"].fillna("").tolist(), dtype=object)
+    y_train = np.array((train_comb["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
+    
+    X_val = np.array(val_split["text"].fillna("").tolist(), dtype=object)
+    y_val = np.array((val_split["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
+    
+    X_test = np.array(test_split["text"].fillna("").tolist(), dtype=object)
+    y_test = np.array((test_split["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
     
     print(f"Kannada Train: {len(X_train)} samples ({y_train.sum()} harmful, {(y_train==0).sum()} legit)")
     print(f"Kannada Val:   {len(X_val)} samples ({y_val.sum()} harmful, {(y_val==0).sum()} legit)")
+    print(f"Kannada Test:  {len(X_test)} samples ({y_test.sum()} harmful, {(y_test==0).sum()} legit)")
     
     t0 = time.time()
-    pipe = build_pipeline(char_ngrams=(2, 4), word_ngrams=(1, 2), c_val=2.0)
+    pipe = build_pipeline(char_ngrams=(2, 4), word_ngrams=(1, 2), c_val=2.0, token_pattern=INDIC_TOKEN_PATTERN, word_min_df=1)
     pipe.fit(X_train, y_train)
     fit_time = time.time() - t0
     print(f"Training completed in {fit_time:.2f}s")
     
-    best_th = tune_threshold(pipe, X_val, y_val)
+    best_th = tune_threshold(pipe, X_val, y_val, min_recall=0.45)
     print(f"Optimal validation threshold: {best_th}")
     
-    eval_res = evaluate_model(pipe, best_th, X_val, y_val, "Kannada", "community-datasets/offenseval_dravidian", split_name="validation")
-    print(f"Validation Results: Acc={eval_res['metrics']['accuracy']}, Prec={eval_res['metrics']['precision']}, "
+    eval_res = evaluate_model(pipe, best_th, X_test, y_test, "Kannada", "community-datasets/offenseval_dravidian + Interpersonal Insults", split_name="held_out_test")
+    print(f"Held-Out Test Results: Acc={eval_res['metrics']['accuracy']}, Prec={eval_res['metrics']['precision']}, "
           f"Rec={eval_res['metrics']['recall']}, F1={eval_res['metrics']['f1_score']}, ROC-AUC={eval_res['metrics']['roc_auc']}")
     print(f"Confusion Matrix: {eval_res['confusion_matrix']}")
     
@@ -409,13 +446,13 @@ def train_kannada():
     
     config = {
         "language": "kannada",
-        "model_version": "kannada_word_char_v1",
+        "model_version": "kannada_word_char_v2",
         "model_type": "scikit_learn_tfidf_logreg",
-        "architecture": "FeatureUnion(Word (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
-        "dataset_source": "community-datasets/offenseval_dravidian",
+        "architecture": "FeatureUnion(IndicWord (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
+        "dataset_source": "community-datasets/offenseval_dravidian + Interpersonal Insults Corpus",
         "train_samples": len(X_train),
         "val_samples": len(X_val),
-        "test_samples": len(X_val),
+        "test_samples": len(X_test),
         "optimal_threshold": best_th,
         "metrics": eval_res["metrics"],
         "checkpoint_path": model_path

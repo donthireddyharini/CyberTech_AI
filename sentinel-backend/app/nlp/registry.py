@@ -86,11 +86,11 @@ LANGUAGE_CATALOG: dict[str, ModelMetadata] = {
         operational_status="validated_automated_model",
         route_status="validated_model",
         review_status="automated_pass_or_flag",
-        primary_checkpoint="telugu_word_char_v1 (models/telugu_model.joblib)",
+        primary_checkpoint="telugu_word_char_v2 (models/telugu_model.joblib)",
         model_type="scikit_learn_tfidf_logreg",
-        notice="Validated production Telugu model active (threshold=0.29, ROC-AUC=0.8361).",
-        license_note="Academic Research (IIIT Hyderabad Telugu Corpus)",
-        task_label_type="Binary Hate Speech (mounikaiiith/Telugu-Hatespeech)"
+        notice="Validated production Telugu model active (threshold=0.42, ROC-AUC=0.8390).",
+        license_note="Academic Research (IIIT Hyderabad Telugu Corpus + Interpersonal Insults)",
+        task_label_type="Hate Speech & Harassment (IIIT Telugu + Insults)"
     ),
     "bengali": ModelMetadata(
         code="bn",
@@ -179,11 +179,11 @@ LANGUAGE_CATALOG: dict[str, ModelMetadata] = {
         operational_status="validated_automated_model",
         route_status="validated_model",
         review_status="automated_pass_or_flag",
-        primary_checkpoint="kannada_word_char_v1 (models/kannada_model.joblib)",
+        primary_checkpoint="kannada_word_char_v2 (models/kannada_model.joblib)",
         model_type="scikit_learn_tfidf_logreg",
-        notice="Validated production Kannada model active (threshold=0.55, ROC-AUC=0.8682, F1=0.6945).",
-        license_note="CC BY 4.0 (OffenseVal Dravidian)",
-        task_label_type="Offensive / Abusive Language"
+        notice="Validated production Kannada model active (threshold=0.39, ROC-AUC=0.8883, F1=0.6970).",
+        license_note="CC BY 4.0 (OffenseVal Dravidian + Interpersonal Insults)",
+        task_label_type="Offensive & Harassment Language"
     ),
     "assamese": ModelMetadata(
         code="as",

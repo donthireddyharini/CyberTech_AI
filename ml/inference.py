@@ -88,37 +88,37 @@ class MultilingualPredictor:
         "telugu": {
             "model_filename": "telugu_model.joblib",
             "config_filename": "telugu_config.json",
-            "default_threshold": 0.29,
-            "default_version": "telugu_word_char_v1",
-            "task": "Telugu Hate Speech Classification (IIIT Hyderabad)"
+            "default_threshold": 0.42,
+            "default_version": "telugu_word_char_v2",
+            "task": "Telugu Hate Speech & Harassment Classification"
         },
         "hindi": {
             "model_filename": "hindi_model.joblib",
             "config_filename": "hindi_config.json",
-            "default_threshold": 0.50,
+            "default_threshold": 0.54,
             "default_version": "hindi_word_char_v1",
             "task": "Hindi Social Media Hostility Classification"
         },
         "hinglish": {
             "model_filename": "hinglish_model.joblib",
             "config_filename": "hinglish_config.json",
-            "default_threshold": 0.29,
+            "default_threshold": 0.41,
             "default_version": "hinglish_word_char_v1",
             "task": "Hinglish Code-Mixed Hate Speech Classification (PRISM)"
         },
         "code_mixed": {
             "model_filename": "hinglish_model.joblib",
             "config_filename": "hinglish_config.json",
-            "default_threshold": 0.29,
+            "default_threshold": 0.41,
             "default_version": "hinglish_word_char_v1",
             "task": "Hinglish Code-Mixed Hate Speech Classification (PRISM)"
         },
         "kannada": {
             "model_filename": "kannada_model.joblib",
             "config_filename": "kannada_config.json",
-            "default_threshold": 0.55,
-            "default_version": "kannada_word_char_v1",
-            "task": "Kannada Offensive Language Classification (OffenseVal)"
+            "default_threshold": 0.39,
+            "default_version": "kannada_word_char_v2",
+            "task": "Kannada Offensive & Harassment Classification"
         }
     }
 

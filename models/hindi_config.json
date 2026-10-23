@@ -7,14 +7,14 @@
   "train_samples": 4009,
   "val_samples": 859,
   "test_samples": 860,
-  "optimal_threshold": 0.5,
+  "optimal_threshold": 0.54,
   "metrics": {
-    "accuracy": 0.9663,
-    "precision": 0.9494,
-    "recall": 0.9801,
-    "f1_score": 0.9645,
-    "roc_auc": 0.9899,
-    "pr_auc": 0.9862
+    "accuracy": 0.9674,
+    "precision": 0.9539,
+    "recall": 0.9776,
+    "f1_score": 0.9656,
+    "roc_auc": 0.99,
+    "pr_auc": 0.9857
   },
   "checkpoint_path": "models\\hindi_model.joblib"
 }

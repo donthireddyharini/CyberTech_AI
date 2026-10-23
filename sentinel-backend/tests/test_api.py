@@ -564,15 +564,75 @@ async def test_hinglish_code_mixed_route_validated_model(client):
 
 @pytest.mark.asyncio
 async def test_telugu_harmful_detected(client):
-    """Harmful Telugu text is classified as toxic with elevated severity."""
+    """Harmful Telugu text (direct personal insult) is classified as toxic with elevated severity."""
     resp = await client.post("/api/analyze", json={
-        "text": "ట్విటర్‌లో విమర్శల వర్షం కురిపించారు."
+        "text": "నువ్వు చాలా పనికిరాని వెధవవి"
     })
     assert resp.status_code == 200
     data = resp.json()
     assert data["toxicity_prediction"]["is_toxic"] is True
     assert data["severity"] in ["high", "medium"]
     assert data["decision"] == "flag_for_review"
+
+
+@pytest.mark.asyncio
+async def test_telugu_regression_insults_and_controls(client):
+    """Comprehensive regression test for Telugu insults and civil controls."""
+    harmful_cases = [
+        "నువ్వు చాలా పనికిరాని వెధవవి",
+        "నువ్వు ఒక మూర్ఖుడివి",
+        "నీకు ఏమీ చేతకాదు",
+        "నువ్వు చాలా చెడ్డవాడివి",
+    ]
+    for text in harmful_cases:
+        resp = await client.post("/api/analyze", json={"text": text})
+        assert resp.status_code == 200, f"Failed for {text}"
+        data = resp.json()
+        assert data["toxicity_prediction"]["is_toxic"] is True, f"Expected toxic for '{text}', got {data['toxicity_prediction']}"
+        assert data["severity"] in ["high", "medium"], f"Expected high/medium severity for '{text}', got {data['severity']}"
+        assert data["decision"] == "flag_for_review", f"Expected flag_for_review for '{text}', got {data['decision']}"
+
+    civil_cases = [
+        "నమస్కారం, మీరు ఎలా ఉన్నారు?",
+        "మీ సహాయానికి చాలా ధన్యవాదాలు",
+        "ఈ పని సరిగ్గా చేయాలి",
+    ]
+    for text in civil_cases:
+        resp = await client.post("/api/analyze", json={"text": text})
+        assert resp.status_code == 200, f"Failed for {text}"
+        data = resp.json()
+        assert data["toxicity_prediction"]["is_toxic"] is False, f"Expected non-toxic for '{text}', got {data['toxicity_prediction']}"
+        assert data["decision"] == "no_action", f"Expected no_action for '{text}', got {data['decision']}"
+
+
+@pytest.mark.asyncio
+async def test_kannada_regression_insults_and_controls(client):
+    """Comprehensive regression test for Kannada insults and civil controls."""
+    harmful_cases = [
+        "ನೀನು ಮೂರ್ಖ",
+        "ನೀನು ತುಂಬಾ ಕೆಟ್ಟವನು",
+        "ನಿನಗೆ ಏನೂ ಮಾಡಲು ಬರುವುದಿಲ್ಲ",
+    ]
+    for text in harmful_cases:
+        resp = await client.post("/api/analyze", json={"text": text})
+        assert resp.status_code == 200, f"Failed for {text}"
+        data = resp.json()
+        assert data["toxicity_prediction"]["is_toxic"] is True, f"Expected toxic for '{text}', got {data['toxicity_prediction']}"
+        assert data["severity"] in ["high", "medium"], f"Expected high/medium severity for '{text}', got {data['severity']}"
+        assert data["decision"] == "flag_for_review", f"Expected flag_for_review for '{text}', got {data['decision']}"
+
+    civil_cases = [
+        "ನಮಸ್ಕಾರ, ನೀವು ಹೇಗಿದ್ದೀರಿ?",
+        "ನಿಮ್ಮ ಸಹಾಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು",
+        "ಈ ಕೆಲಸ ಸರಿಯಾಗಿ ಮಾಡಬೇಕು",
+    ]
+    for text in civil_cases:
+        resp = await client.post("/api/analyze", json={"text": text})
+        assert resp.status_code == 200, f"Failed for {text}"
+        data = resp.json()
+        assert data["toxicity_prediction"]["is_toxic"] is False, f"Expected non-toxic for '{text}', got {data['toxicity_prediction']}"
+        assert data["decision"] == "no_action", f"Expected no_action for '{text}', got {data['decision']}"
+
 
 
 @pytest.mark.asyncio

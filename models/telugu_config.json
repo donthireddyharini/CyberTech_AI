@@ -1,20 +1,20 @@
 {
   "language": "telugu",
-  "model_version": "telugu_word_char_v1",
+  "model_version": "telugu_word_char_v2",
   "model_type": "scikit_learn_tfidf_logreg",
-  "architecture": "FeatureUnion(Word (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
-  "dataset_source": "mounikaiiith/Telugu-Hatespeech (IIIT Hyderabad)",
-  "train_samples": 24599,
-  "val_samples": 3510,
-  "test_samples": 7033,
-  "optimal_threshold": 0.29,
+  "architecture": "FeatureUnion(IndicWord (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
+  "dataset_source": "mounikaiiith/Telugu-Hatespeech + Interpersonal Insults Corpus",
+  "train_samples": 24585,
+  "val_samples": 3519,
+  "test_samples": 7031,
+  "optimal_threshold": 0.42,
   "metrics": {
-    "accuracy": 0.9662,
-    "precision": 0.1478,
-    "recall": 0.4474,
-    "f1_score": 0.2222,
-    "roc_auc": 0.8361,
-    "pr_auc": 0.1753
+    "accuracy": 0.9774,
+    "precision": 0.223,
+    "recall": 0.378,
+    "f1_score": 0.2805,
+    "roc_auc": 0.839,
+    "pr_auc": 0.1967
   },
   "checkpoint_path": "models\\telugu_model.joblib"
 }

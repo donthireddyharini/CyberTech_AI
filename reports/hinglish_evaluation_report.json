@@ -5,28 +5,28 @@
   "total_test_samples": 8852,
   "positive_samples": 4112,
   "negative_samples": 4740,
-  "optimal_threshold": 0.29,
+  "optimal_threshold": 0.41,
   "metrics": {
-    "accuracy": 0.6613,
-    "precision": 0.5896,
-    "recall": 0.8915,
-    "f1_score": 0.7098,
-    "roc_auc": 0.7855,
-    "pr_auc": 0.7616
+    "accuracy": 0.7015,
+    "precision": 0.6444,
+    "recall": 0.7977,
+    "f1_score": 0.7129,
+    "roc_auc": 0.7911,
+    "pr_auc": 0.7651
   },
   "confusion_matrix": {
-    "true_negatives": 2188,
-    "false_positives": 2552,
-    "false_negatives": 446,
-    "true_positives": 3666,
+    "true_negatives": 2930,
+    "false_positives": 1810,
+    "false_negatives": 832,
+    "true_positives": 3280,
     "raw_matrix": [
       [
-        2188,
-        2552
+        2930,
+        1810
       ],
       [
-        446,
-        3666
+        832,
+        3280
       ]
     ]
   }
