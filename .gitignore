@@ -5,8 +5,14 @@ __pycache__/
 *.so
 
 # Environment variables & local configs
+.env
+.env.*
+*.env
 .env.local
 *.env.local
+!.env.example
+!*.env.example
+!**/.env.example
 
 # Virtual environments
 venv/

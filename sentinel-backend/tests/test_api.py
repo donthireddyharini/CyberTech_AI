@@ -45,7 +45,7 @@ def event_loop():
 @pytest.fixture(scope="session", autouse=True)
 async def setup_test_db():
     """Create test tables."""
-    from app.models import moderation, evaluation, feedback, dataset, audit  # noqa
+    from app.models import moderation, evaluation, feedback, dataset, audit, user, social, chat_session  # noqa
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -971,3 +971,155 @@ async def test_export_reviewed_feedback_csv_and_jsonl(client):
 
 
 
+
+
+@pytest.mark.asyncio
+async def test_compare_texts_endpoint(client):
+    """POST /api/analyze/compare-texts performs real independent inference on two inputs."""
+    payload = {
+        "text1": "I appreciate your constructive contribution to this discussion.",
+        "text2": "You are a completely pathetic idiot and you should delete your account.",
+        "language_hint1": "english",
+        "language_hint2": "english",
+        "platform": "manual"
+    }
+    resp = await client.post("/api/analyze/compare-texts", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert "text1_analysis" in data
+    assert "text2_analysis" in data
+    assert "score_differences" in data
+    assert "relative_harm_assessment" in data
+    assert "comparability_notice" in data
+    assert "limitations" in data
+
+    # text1 is civil, text2 is toxic harassment
+    assert data["text1_analysis"]["severity"] == "low"
+    assert data["text2_analysis"]["severity"] in ("high", "medium")
+    assert data["predictions_differ"] is True
+    assert len(data["score_differences"]) >= 4
+    assert len(data["limitations"]) >= 1
+
+    # Empty text rejection
+    resp_empty = await client.post("/api/analyze/compare-texts", json={"text1": "", "text2": "valid text"})
+    assert resp_empty.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_dashboard_summary_kpis_and_timezone(client):
+    """GET /api/dashboard/summary verifies accurate authoritative KPI calculations and day boundaries."""
+    resp = await client.get("/api/dashboard/summary?timeframe=all")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert "total_analyzed" in data
+    assert "flagged_comments" in data
+    assert "non_flagged_comments" in data
+    assert "today_analyzed" in data
+    assert "violation_rate" in data
+    assert "clean_rate" in data
+
+    total = data["total_analyzed"]
+    flagged = data["flagged_comments"]
+    non_flagged = data["non_flagged_comments"]
+
+    assert flagged + non_flagged == total
+    if total > 0:
+        expected_v_rate = round((flagged / total) * 100.0, 2)
+        assert data["violation_rate"] == expected_v_rate
+    else:
+        assert data["violation_rate"] == 0.0
+        assert data["clean_rate"] == 0.0
+
+
+# ─── Chat Session Lifecycle Tests ─────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_chat_sessions_lifecycle(client):
+    """Test full CRUD lifecycle of interactive Context Lab chat sessions."""
+    # 1. Create a session
+    create_resp = await client.post("/api/analyze/sessions", json={
+        "title": "Harassment Scenario Investigation"
+    })
+    assert create_resp.status_code == 200
+    session_data = create_resp.json()
+    assert "id" in session_data
+    session_id = session_data["id"]
+    assert session_data["title"] == "Harassment Scenario Investigation"
+    assert session_data["messages"] == []
+
+    # 2. Add a message to the session
+    msg_payload = {
+        "text": "You are a pathetic idiot and should quit.",
+        "language_hint": "english",
+        "result": {
+            "prediction_id": "test-pred-1",
+            "toxicity_score": 0.95,
+            "is_toxic": True,
+            "severity": "high",
+            "category": "harassment",
+            "labels": {
+                "hate_speech": 0.1,
+                "harassment": 0.95,
+                "cyberbullying": 0.4,
+                "legitimate": 0.05
+            },
+            "language": "en",
+            "explanation": "Targeted hostility detected."
+        }
+    }
+    add_resp = await client.post(f"/api/analyze/sessions/{session_id}/messages", json=msg_payload)
+    assert add_resp.status_code == 200
+    updated_session = add_resp.json()
+    assert len(updated_session["messages"]) == 1
+    assert updated_session["messages"][0]["text"] == msg_payload["text"]
+    assert updated_session["messages"][0]["result"]["toxicity_score"] == 0.95
+
+    # 3. Retrieve session details
+    get_resp = await client.get(f"/api/analyze/sessions/{session_id}")
+    assert get_resp.status_code == 200
+    assert get_resp.json()["id"] == session_id
+    assert len(get_resp.json()["messages"]) == 1
+
+    # 4. List all sessions
+    list_resp = await client.get("/api/analyze/sessions")
+    assert list_resp.status_code == 200
+    sessions_list = list_resp.json()
+    assert any(s["id"] == session_id for s in sessions_list)
+
+    # 5. Delete the session
+    del_resp = await client.delete(f"/api/analyze/sessions/{session_id}")
+    assert del_resp.status_code == 200
+    assert del_resp.json()["status"] == "deleted"
+
+    # Verify 404 after deletion
+    get_deleted = await client.get(f"/api/analyze/sessions/{session_id}")
+    assert get_deleted.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_compare_texts_score_differences_includes_toxicity(client):
+    """Verify compare-texts includes toxicity in score_differences and maintains 0.0 values."""
+    payload = {
+        "text1": "Good morning everyone, have a nice day!",
+        "text2": "Shut up you absolute fool, nobody likes you.",
+        "language_hint1": "english",
+        "language_hint2": "english",
+        "platform": "manual"
+    }
+    resp = await client.post("/api/analyze/compare-texts", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    diffs = data["score_differences"]
+    # Check that toxicity is present
+    assert "toxicity" in diffs
+    assert "hate_speech" in diffs
+    assert "harassment" in diffs
+    assert "cyberbullying" in diffs
+    assert "legitimate" in diffs
+
+    # text1 is civil, text2 is toxic
+    assert diffs["toxicity"]["text2"] > diffs["toxicity"]["text1"]
+    assert diffs["toxicity"]["diff"] > 0

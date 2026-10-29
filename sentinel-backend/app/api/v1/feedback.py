@@ -6,14 +6,49 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.feedback import FeedbackRecord
+from app.models.user import User
+from app.api.v1.auth import get_current_user_optional
 from app.schemas.schemas import FeedbackRequest, FeedbackSchema, ErrorAnalysisSchema
 
 router = APIRouter()
 
 
 @router.post("", response_model=FeedbackSchema)
-async def submit_feedback(request: FeedbackRequest, db: AsyncSession = Depends(get_db)):
-    """Submit human feedback on a model prediction."""
+async def submit_feedback(
+    request: FeedbackRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """
+    Submit human feedback on a model prediction.
+    Performs an upsert if feedback already exists for this record_id to prevent duplicates.
+    """
+    existing = None
+    if request.record_id:
+        existing_res = await db.execute(
+            select(FeedbackRecord).where(FeedbackRecord.record_id == request.record_id)
+        )
+        existing = existing_res.scalars().first()
+
+    if existing:
+        existing.predicted_labels = request.predicted_labels
+        existing.corrected_labels = request.corrected_labels
+        existing.predicted_severity = request.predicted_severity
+        existing.corrected_severity = request.corrected_severity
+        existing.is_false_positive = request.is_false_positive
+        existing.is_false_negative = request.is_false_negative
+        existing.is_ambiguous = request.is_ambiguous
+        existing.is_confirmed = request.is_confirmed
+        existing.explanation = request.explanation
+        existing.language = request.language
+        existing.model_version = request.model_version
+        existing.reviewer_id = request.reviewer_id
+        if current_user:
+            existing.user_id = current_user.id
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+
     feedback = FeedbackRecord(
         id=str(uuid.uuid4()),
         record_id=request.record_id,
@@ -29,6 +64,7 @@ async def submit_feedback(request: FeedbackRequest, db: AsyncSession = Depends(g
         language=request.language,
         model_version=request.model_version,
         reviewer_id=request.reviewer_id,
+        user_id=current_user.id if current_user else None,
         validation_status="pending",
     )
     db.add(feedback)
@@ -38,10 +74,18 @@ async def submit_feedback(request: FeedbackRequest, db: AsyncSession = Depends(g
 
 
 @router.get("/errors", response_model=ErrorAnalysisSchema)
-async def get_error_analysis(db: AsyncSession = Depends(get_db)):
-    """Get error analysis summary from all feedback."""
-    result = await db.execute(select(FeedbackRecord))
-    all_feedback = result.scalars().all()
+async def get_error_analysis(
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """Get error analysis summary scoped to user feedback or workspace feedback."""
+    stmt = select(FeedbackRecord)
+    if current_user:
+        user_res = await db.execute(select(FeedbackRecord).where(FeedbackRecord.user_id == current_user.id))
+        all_feedback = user_res.scalars().all()
+    else:
+        result = await db.execute(stmt)
+        all_feedback = result.scalars().all()
 
     total = len(all_feedback)
     fps = sum(1 for f in all_feedback if f.is_false_positive)

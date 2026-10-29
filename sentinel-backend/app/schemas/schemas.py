@@ -1,6 +1,6 @@
 """Pydantic schemas for API request/response validation."""
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional, Any, Union
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -84,6 +84,81 @@ class CompareContextResponse(BaseModel):
     note: str
 
 
+class CompareTextsRequest(BaseModel):
+    text1: str = Field(..., min_length=1, max_length=10000, description="First comment/message")
+    text2: str = Field(..., min_length=1, max_length=10000, description="Second comment/message")
+    language_hint1: Optional[str] = None
+    language_hint2: Optional[str] = None
+
+    @field_validator("text1", "text2")
+    @classmethod
+    def texts_must_not_be_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Input text must not be blank or whitespace only")
+        return v
+
+
+class ScoreDiffItem(BaseModel):
+    text1: float
+    text2: float
+    diff: float
+
+
+class CompareTextsResponse(BaseModel):
+    text1_analysis: AnalyzeResponse
+    text2_analysis: AnalyzeResponse
+    score_differences: dict[str, ScoreDiffItem]
+    toxicity_difference: Optional[ScoreDiffItem] = None
+    predictions_differ: bool
+    relative_harm_assessment: str
+    comparability_notice: str
+    limitations: list[str]
+
+
+# ─── Context Intelligence Lab Chat Session Schemas ───────────────────────────
+
+class ChatMessageSchema(BaseModel):
+    id: str
+    text: str
+    language_hint: Optional[str] = None
+    platform: Optional[str] = "manual"
+    timestamp: str
+    result: Union[AnalyzeResponse, dict[str, Any]]
+
+
+class ChatSessionCreateRequest(BaseModel):
+    title: Optional[str] = None
+
+
+class ChatSessionSummarySchema(BaseModel):
+    id: str
+    title: str
+    user_id: Optional[str] = None
+    message_count: int = 0
+    created_at: str
+    updated_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class ChatSessionDetailSchema(BaseModel):
+    id: str
+    title: str
+    user_id: Optional[str] = None
+    messages: list[ChatMessageSchema] = []
+    created_at: str
+    updated_at: str
+
+    model_config = {"from_attributes": True}
+
+
+class AddChatMessageRequest(BaseModel):
+    text: str
+    language_hint: Optional[str] = None
+    platform: Optional[str] = "manual"
+    result: Union[AnalyzeResponse, dict[str, Any]]
+
+
 # ─── Moderation Schemas ───────────────────────────────────────────────────────
 
 class ModerationRecordSchema(BaseModel):
@@ -99,7 +174,11 @@ class ModerationRecordSchema(BaseModel):
     legitimate_score: float
     model_name: str
     model_version: str
-    platform: Optional[str]
+    platform: Optional[str] = None
+    source_id: Optional[str] = None
+    source_url: Optional[str] = None
+    author_name: Optional[str] = None
+    parent_comment_id: Optional[str] = None
     is_demo: bool
     created_at: datetime
     ambiguity_warning: Optional[str]
@@ -146,9 +225,14 @@ class ReviewDecisionRequest(BaseModel):
 class DashboardSummarySchema(BaseModel):
     total_analyzed: int
     flagged_comments: int
+    non_flagged_comments: int = 0
     pending_review: int
     high_priority: int
     today_analyzed: int
+    violation_rate: float = 0.0
+    clean_rate: float = 0.0
+    completed_dataset_runs: int = 0
+    dataset_samples_processed: int = 0
     model_name: str
     model_version: str
     model_type: str
@@ -156,10 +240,29 @@ class DashboardSummarySchema(BaseModel):
     is_demo: bool
 
 
+class DatasetRunSchema(BaseModel):
+    id: str
+    dataset_name: str
+    dataset_id: Optional[str] = None
+    status: str
+    total_samples: int
+    processed_count: int
+    failed_count: int
+    flagged_count: int
+    approved_count: int
+    language_breakdown: Optional[dict] = None
+    severity_breakdown: Optional[dict] = None
+    processing_time_ms: float
+    created_at: str
+
+    model_config = {"from_attributes": True}
+
+
 class DistributionSchema(BaseModel):
     severity_distribution: dict[str, int]
     category_distribution: dict[str, int]
     language_distribution: dict[str, int]
+    platform_distribution: Optional[dict[str, int]] = None
 
 
 # ─── Feedback Schemas ─────────────────────────────────────────────────────────
@@ -221,6 +324,7 @@ class EvaluationRunSchema(BaseModel):
     overall_metrics: Optional[dict]
     per_label_metrics: Optional[dict]
     per_language_metrics: Optional[dict]
+    confusion_matrix: Optional[dict] = None
     status: str
     created_at: datetime
     notes: Optional[str]
@@ -264,3 +368,45 @@ class ModelStatusSchema(BaseModel):
     training_data_available: bool
     limitations: list[str]
     capabilities: list[str]
+
+
+# ─── Auth & User Schemas ──────────────────────────────────────────────────────
+
+class UserRegisterRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    email: str = Field(..., min_length=5, max_length=255)
+    password: str = Field(..., min_length=6, max_length=100)
+    preferred_language: str = Field("en", max_length=20)
+
+
+class UserLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class GoogleLoginRequest(BaseModel):
+    credential: str = Field(..., min_length=10, description="Google ID Token JWT")
+
+
+class UserProfileResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    preferred_language: str
+    auth_provider: str = "local"
+    is_active: bool
+    role: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserProfileResponse
+
+
+class UpdateProfileRequest(BaseModel):
+    name: Optional[str] = Field(None, min_length=2, max_length=100)
+    preferred_language: Optional[str] = Field(None, max_length=20)

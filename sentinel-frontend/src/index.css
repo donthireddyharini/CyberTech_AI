@@ -1,18 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    font-family: "Inter", sans-serif;
+  }
+
   * {
     box-sizing: border-box;
+  }
+
+  html, body, #root {
+    font-family: "Inter", sans-serif;
   }
   
   body {
     margin: 0;
-    background-color: #050a1a;
-    color: #e2e8f0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background-color: #F5F6FA;
+    color: #20212B;
+    font-family: "Inter", sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  button, input, optgroup, select, textarea {
+    font-family: "Inter", sans-serif;
   }
 
   ::-webkit-scrollbar {
@@ -20,97 +37,117 @@
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #080f24;
+    background: #F5F6FA;
   }
   ::-webkit-scrollbar-thumb {
-    background: #6366f1;
-    border-radius: 3px;
+    background: #D5D7E2;
+    border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #818cf8;
+    background: #B4B7C9;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-navy-800 border border-indigo-900/40 rounded-xl shadow-card;
+    @apply bg-white border border-[#E9EAF1] rounded-2xl shadow-[0_2px_12px_rgba(32,33,43,0.03)];
   }
   
   .card-glow {
     @apply card;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.1);
+    box-shadow: 0 4px 16px rgba(108, 92, 231, 0.08), 0 0 0 1px rgba(108, 92, 231, 0.15);
+  }
+
+  .glass-card {
+    background: #FFFFFF;
+    border: 1px solid #E9EAF1;
+    border-radius: 1rem;
+    box-shadow: 0 2px 12px rgba(32, 33, 43, 0.03), 0 1px 3px rgba(32, 33, 43, 0.02);
+  }
+
+  .glass-card-subtle {
+    background: #F8F9FE;
+    border: 1px solid #E9EAF1;
+    border-radius: 1rem;
+  }
+
+  .glass-card-elevated {
+    background: #FFFFFF;
+    border: 1px solid #E9EAF1;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 20px rgba(32, 33, 43, 0.05), 0 1px 4px rgba(32, 33, 43, 0.02);
+  }
+
+  .card-interactive {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-interactive:hover {
+    border-color: rgba(108, 92, 231, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -4px rgba(108, 92, 231, 0.08), 0 4px 8px rgba(0, 0, 0, 0.02);
   }
 
   .badge {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold;
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
   }
 
   .btn-primary {
-    @apply px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-navy-900;
+    @apply px-4 py-2 bg-[#6C5CE7] hover:bg-[#5B4BC4] text-white rounded-xl text-xs font-semibold shadow-sm shadow-[#6C5CE7]/20 transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#EEEAFE];
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-navy-700 hover:bg-navy-600 text-slate-300 border border-indigo-900/40 rounded-lg text-sm font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-navy-900;
+    @apply px-4 py-2 bg-white hover:bg-[#F5F6FA] text-[#20212B] border border-[#E9EAF1] hover:border-[#D5D7E2] rounded-xl text-xs font-medium transition-all duration-200 active:scale-95 focus:outline-none shadow-sm;
   }
 
   .btn-danger {
-    @apply px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-700/50 rounded-lg text-sm font-medium transition-colors duration-150;
+    @apply px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-medium transition-all duration-200;
   }
 
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-indigo-950/50 transition-all duration-150 cursor-pointer;
+    @apply flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA] transition-all duration-150 cursor-pointer;
   }
 
   .nav-item-active {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-purple-600/30 to-indigo-600/20 border border-purple-500/30;
+    @apply flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-[#6C5CE7] bg-[#EEEAFE] shadow-sm;
   }
 
   .input-field {
-    @apply w-full px-3 py-2 bg-navy-700 border border-indigo-900/50 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-150;
-  }
-
-  .select-field {
-    @apply input-field appearance-none;
+    @apply w-full px-3.5 py-2.5 bg-white border border-[#E9EAF1] rounded-xl text-xs text-[#20212B] placeholder-[#858795] focus:outline-none focus:border-[#6C5CE7] focus:ring-2 focus:ring-[#EEEAFE] transition-all duration-150;
   }
 
   .label {
-    @apply block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5;
+    @apply block text-[11px] font-semibold text-[#858795] uppercase tracking-wider mb-1.5;
   }
 
-  .severity-low { @apply bg-emerald-900/30 text-emerald-400 border border-emerald-700/40; }
-  .severity-medium { @apply bg-amber-900/30 text-amber-400 border border-amber-700/40; }
-  .severity-high { @apply bg-red-900/30 text-red-400 border border-red-700/40; }
-  .severity-uncertain { @apply bg-slate-800 text-slate-400 border border-slate-700/40; }
+  .severity-low { @apply bg-emerald-50 text-emerald-700 border border-emerald-200; }
+  .severity-medium { @apply bg-amber-50 text-amber-700 border border-amber-200; }
+  .severity-high { @apply bg-rose-50 text-rose-700 border border-rose-200; }
+  .severity-uncertain { @apply bg-slate-100 text-slate-700 border border-slate-200; }
 
-  .status-pending { @apply bg-amber-900/30 text-amber-400; }
-  .status-reviewed { @apply bg-emerald-900/30 text-emerald-400; }
-  .status-escalated { @apply bg-red-900/30 text-red-400; }
-  .status-dismissed { @apply bg-slate-800 text-slate-400; }
-
-  .glow-text-purple {
-    text-shadow: 0 0 20px rgba(147,51,234,0.5);
-  }
-
-  .glow-text-blue {
-    text-shadow: 0 0 20px rgba(99,102,241,0.5);
-  }
-  
-  .gradient-border {
-    border-image: linear-gradient(135deg, #7c3aed, #4f46e5) 1;
-  }
+  .status-pending { @apply bg-amber-50 text-amber-700 border border-amber-200; }
+  .status-reviewed { @apply bg-emerald-50 text-emerald-700 border border-emerald-200; }
+  .status-escalated { @apply bg-rose-50 text-rose-700 border border-rose-200; }
+  .status-dismissed { @apply bg-slate-100 text-slate-700 border border-slate-200; }
 
   .skeleton {
-    @apply animate-pulse bg-navy-700 rounded;
+    @apply animate-pulse bg-slate-200/80 rounded-xl;
   }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+/* Animations & Transitions */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+.page-enter {
+  animation: page-enter 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes slide-in-right {
@@ -119,5 +156,29 @@
 }
 
 .slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
+  animation: slide-in-right 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Motion reduction */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Recharts & SVG Global Typography Inheritance */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-text,
+.recharts-legend-item-text,
+.recharts-default-tooltip,
+.recharts-cartesian-axis-tick-value,
+.recharts-label,
+.recharts-tooltip-wrapper,
+.recharts-responsive-container,
+svg text {
+  font-family: "Inter", sans-serif !important;
 }

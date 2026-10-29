@@ -41,7 +41,7 @@ export default function ProjectOverview() {
       <div className="rounded-2xl p-6 bg-gradient-to-br from-purple-950/40 via-navy-800 to-navy-900 border border-indigo-900/40 space-y-3 shadow-glow-purple">
         <div className="flex items-center gap-2">
           <span className="badge bg-purple-900/50 text-purple-300 border border-purple-700/50">
-            {overview?.project_id || 'CSEAIML2026-P03'}
+            {overview?.project_id || 'CYBERTECH-AI-PROD'}
           </span>
           <span className="text-xs text-slate-400">Academic &amp; Research Prototype</span>
         </div>

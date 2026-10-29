@@ -1,4 +1,4 @@
-// TypeScript types for Sentinel AI
+// TypeScript types for CyberTech AI
 
 export interface LabelScore {
   label: string;
@@ -64,12 +64,68 @@ export interface CompareContextResponse {
   note: string;
 }
 
+export interface ScoreDiffItem {
+  text1: number;
+  text2: number;
+  diff: number;
+}
+
+export interface CompareTextsRequest {
+  text1: string;
+  text2: string;
+  language_hint1?: string;
+  language_hint2?: string;
+}
+
+export interface CompareTextsResponse {
+  text1_analysis: AnalyzeResponse;
+  text2_analysis: AnalyzeResponse;
+  score_differences: Record<string, ScoreDiffItem>;
+  toxicity_difference?: ScoreDiffItem | null;
+  predictions_differ: boolean;
+  relative_harm_assessment: string;
+  comparability_notice: string;
+  limitations: string[];
+}
+
+export interface ChatMessage {
+  id: string;
+  text: string;
+  language_hint?: string;
+  platform?: string;
+  timestamp: string;
+  result: AnalyzeResponse;
+}
+
+export interface ChatSessionSummary {
+  id: string;
+  title: string;
+  user_id?: string | null;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatSessionDetail {
+  id: string;
+  title: string;
+  user_id?: string | null;
+  messages: ChatMessage[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DashboardSummary {
   total_analyzed: number;
   flagged_comments: number;
+  non_flagged_comments?: number;
   pending_review: number;
   high_priority: number;
   today_analyzed: number;
+  violation_rate?: number;
+  clean_rate?: number;
+  completed_dataset_runs?: number;
+  dataset_samples_processed?: number;
   model_name: string;
   model_version: string;
   model_type: string;
@@ -77,10 +133,27 @@ export interface DashboardSummary {
   is_demo: boolean;
 }
 
+export interface DatasetRun {
+  id: string;
+  dataset_name: string;
+  dataset_id?: string | null;
+  status: string;
+  total_samples: number;
+  processed_count: number;
+  failed_count: number;
+  flagged_count: number;
+  approved_count: number;
+  language_breakdown?: Record<string, number> | null;
+  severity_breakdown?: Record<string, number> | null;
+  processing_time_ms: number;
+  created_at: string;
+}
+
 export interface DistributionData {
   severity_distribution: Record<string, number>;
   category_distribution: Record<string, number>;
   language_distribution: Record<string, number>;
+  platform_distribution?: Record<string, number>;
 }
 
 export interface ModerationRecord {
@@ -97,6 +170,10 @@ export interface ModerationRecord {
   model_name: string;
   model_version: string;
   platform: string | null;
+  source_id?: string | null;
+  source_url?: string | null;
+  author_name?: string | null;
+  parent_comment_id?: string | null;
   is_demo: boolean;
   is_code_mixed: boolean;
   created_at: string;
@@ -168,6 +245,13 @@ export interface EvaluationRun {
   overall_metrics: Record<string, unknown> | null;
   per_label_metrics: Record<string, unknown> | null;
   per_language_metrics: Record<string, unknown> | null;
+  confusion_matrix?: {
+    true_negatives?: number;
+    false_positives?: number;
+    false_negatives?: number;
+    true_positives?: number;
+    raw_matrix?: number[][];
+  } | null;
   status: string;
   created_at: string;
   notes: string | null;
@@ -196,6 +280,7 @@ export interface DatasetValidation {
   duplicate_count: number;
   label_distribution: Record<string, number>;
   language_distribution: Record<string, number>;
+  platform_distribution?: Record<string, number>;
   errors: string[];
   warnings: string[];
   preview: Record<string, string>[];
@@ -238,6 +323,10 @@ export interface RecentActivity {
   hate_speech_score: number;
   harassment_score: number;
   cyberbullying_score: number;
+  platform?: string | null;
+  source_url?: string | null;
+  author_name?: string | null;
+  source_id?: string | null;
   is_demo: boolean;
   created_at: string;
 }
@@ -248,4 +337,101 @@ export interface Toast {
   id: string;
   type: ToastType;
   message: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  preferred_language: string;
+  role: string;
+  auth_provider?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+
+export interface GoogleLoginRequest {
+  credential: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  name: string;
+  password: string;
+  preferred_language?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface UpdateProfileRequest {
+  name?: string;
+  preferred_language?: string;
+}
+
+// ─── Social Media Intelligence Types ─────────────────────────────────────────
+
+export interface SocialConnectorStatus {
+  platform: 'youtube' | 'instagram' | string;
+  is_configured: boolean;
+  status: 'ready' | 'unconfigured' | 'rate_limited' | 'credits_depleted' | 'error';
+  message: string;
+  last_sync_timestamp?: string | null;
+  account_info?: string | null;
+  rate_limit_info?: Record<string, unknown> | null;
+}
+
+export interface SocialSyncLog {
+  id: string;
+  platform: string;
+  target_input: string;
+  total_fetched: number;
+  newly_ingested: number;
+  duplicate_count: number;
+  flagged_count: number;
+  approved_count: number;
+  status: string;
+  error_message?: string | null;
+  processing_time_ms: number;
+  created_at: string;
+}
+
+export interface SocialStats {
+  platforms: Record<string, { total: number; flagged: number; approved: number }>;
+  total_social_records: number;
+}
+
+export interface SocialIngestionResult {
+  sync_id: string;
+  platform: string;
+  target_input: string;
+  total_fetched: number;
+  newly_ingested: number;
+  duplicate_count: number;
+  flagged_count: number;
+  approved_count: number;
+  records: Array<{
+    id: string;
+    comment_id: string;
+    text: string;
+    author_name?: string | null;
+    source_url?: string | null;
+    parent_id?: string | null;
+    severity: string;
+    decision: string;
+    detected_language: string;
+    toxicity_score: number | null;
+    is_flagged: boolean;
+    published_at: string;
+  }>;
+  processing_time_ms: number;
+  metadata?: Record<string, unknown>;
 }

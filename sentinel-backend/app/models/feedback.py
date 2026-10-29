@@ -36,6 +36,8 @@ class FeedbackRecord(Base):
     model_version: Mapped[str] = mapped_column(String(50), nullable=True)
     reviewer_id: Mapped[str] = mapped_column(String(100), default="moderator_1")
     
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
     # Validation status
     validation_status: Mapped[str] = mapped_column(String(30), default="pending")  # pending/validated/rejected
     validated_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
@@ -96,6 +98,26 @@ class DatasetRecord(Base):
     status: Mapped[str] = mapped_column(String(30), default="imported")  # uploaded/validated/imported/error
     validation_errors: Mapped[dict] = mapped_column(JSON, nullable=True)
     
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class DatasetRun(Base):
+    """Stores batch detection runs on datasets."""
+    __tablename__ = "dataset_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
+    dataset_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    dataset_id: Mapped[str] = mapped_column(String(36), nullable=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="completed")  # running/completed/failed
+    total_samples: Mapped[int] = mapped_column(Integer, default=0)
+    processed_count: Mapped[int] = mapped_column(Integer, default=0)
+    failed_count: Mapped[int] = mapped_column(Integer, default=0)
+    flagged_count: Mapped[int] = mapped_column(Integer, default=0)
+    approved_count: Mapped[int] = mapped_column(Integer, default=0)
+    language_breakdown: Mapped[dict] = mapped_column(JSON, nullable=True)
+    severity_breakdown: Mapped[dict] = mapped_column(JSON, nullable=True)
+    processing_time_ms: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

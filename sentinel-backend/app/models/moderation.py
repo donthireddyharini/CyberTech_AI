@@ -48,7 +48,14 @@ class ModerationRecord(Base):
     status: Mapped[str] = mapped_column(String(30), default="pending")  # pending/reviewed/escalated/dismissed
     platform: Mapped[str] = mapped_column(String(100), nullable=True)
     source_id: Mapped[str] = mapped_column(String(200), nullable=True)
+    source_url: Mapped[str] = mapped_column(String(500), nullable=True)
+    author_name: Mapped[str] = mapped_column(String(200), nullable=True)
+    author_id: Mapped[str] = mapped_column(String(200), nullable=True)
+    parent_comment_id: Mapped[str] = mapped_column(String(200), nullable=True)
     is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # User ownership
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

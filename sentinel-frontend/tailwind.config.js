@@ -44,6 +44,7 @@ export default {
         'card': '0 4px 24px rgba(0,0,0,0.4)',
       },
       fontFamily: {
+        'sans': ['"Inter"', 'sans-serif'],
         'mono': ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
     },

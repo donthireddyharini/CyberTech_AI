@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Sentinel AI API",
+    title="CyberTech AI API",
     description="Context-Aware Multilingual Hate Speech & Cyberbullying Detection API",
     version="1.0.0",
     docs_url="/docs",

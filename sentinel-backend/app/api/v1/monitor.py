@@ -25,7 +25,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.nlp.engine import get_nlp_engine
 from app.models.moderation import ModerationRecord, HumanReview
-from app.models.feedback import FeedbackRecord
+from app.models.feedback import FeedbackRecord, DatasetRun
+from app.models.user import User
+from app.api.v1.auth import get_current_user_optional
 from app.schemas.schemas import AnalyzeResponse
 from app.api.v1.analyze import _result_to_schema
 
@@ -106,7 +108,8 @@ async def get_monitoring_status(db: AsyncSession = Depends(get_db)):
 @router.post("/batch-analyze", response_model=BatchMonitoringResponse)
 async def batch_analyze_comments(
     payload: BatchTextSubmission,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     """
     Analyzes a batch of comments submitted in real-time.
@@ -178,6 +181,7 @@ async def batch_analyze_comments(
             language_hint=payload.language_hint,
             status="pending" if is_flagged else "reviewed",
             platform=payload.platform_source,
+            user_id=current_user.id if current_user else None,
             is_demo=False,
             inference_timestamp=analysis.inference_timestamp,
             processing_time_ms=analysis.processing_time_ms,
@@ -192,13 +196,34 @@ async def batch_analyze_comments(
             "detected_language": analysis.detected_language,
             "severity": analysis.severity,
             "decision": analysis.decision,
+            "hate_speech_score": next((l.score for l in analysis.labels if l.label == "hate_speech"), 0.0),
+            "harassment_score": next((l.score for l in analysis.labels if l.label == "harassment"), 0.0),
+            "cyberbullying_score": next((l.score for l in analysis.labels if l.label == "cyberbullying"), 0.0),
+            "legitimate_score": next((l.score for l in analysis.labels if l.label == "legitimate"), 0.0),
             "review_status": analysis.language_route.review_status if analysis.language_route else "automated_pass_or_flag",
             "model_version": analysis.model_version,
             "processing_time_ms": analysis.processing_time_ms,
         })
 
-    await db.commit()
     elapsed_ms = round((time.time() - t0) * 1000, 2)
+    # Persist batch dataset run summary
+    batch_run = DatasetRun(
+        id=str(uuid.uuid4()),
+        dataset_name=payload.platform_source or "Batch Submission",
+        user_id=current_user.id if current_user else None,
+        status="completed",
+        total_samples=total_received,
+        processed_count=len(processed_comments),
+        failed_count=0,
+        flagged_count=flagged_count,
+        approved_count=approved_count,
+        language_breakdown=lang_dist,
+        severity_breakdown=severity_dist,
+        processing_time_ms=elapsed_ms,
+        created_at=datetime.utcnow()
+    )
+    db.add(batch_run)
+    await db.commit()
 
     return BatchMonitoringResponse(
         monitoring_mode="local_offline_pipeline",
@@ -221,20 +246,24 @@ async def upload_csv_monitoring(
     deduplicate: bool = Form(True),
     language_hint: Optional[str] = Form(None),
     platform_name: str = Form("CSV Import"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     """
-    Ingests and incrementally analyzes comments from an uploaded CSV or TXT file.
-    Validates schema, normalizes encodings (UTF-8 / Latin-1), and removes duplicates.
+    Ingests and incrementally analyzes comments from an uploaded CSV, TSV, or TXT file.
+    Validates schema, normalizes encodings (UTF-8 with BOM / Latin-1), and removes duplicates.
     """
-    if not file.filename.lower().endswith((".csv", ".tsv", ".txt")):
+    fname = file.filename.lower() if file.filename else ""
+    if not fname.endswith((".csv", ".tsv", ".txt")):
         raise HTTPException(status_code=400, detail="Only CSV, TSV, or TXT files are supported.")
         
     content_bytes = await file.read()
+    if not content_bytes or not content_bytes.strip():
+        raise HTTPException(status_code=400, detail="Uploaded file is empty. Please select a file with text rows.")
     
-    # Resilient decoding
+    # Resilient decoding (UTF-8-SIG strips BOM automatically)
     text_content = ""
-    for enc in ["utf-8", "utf-8-sig", "latin-1", "cp1252"]:
+    for enc in ["utf-8-sig", "utf-8", "latin-1", "cp1252", "iso-8859-1"]:
         try:
             text_content = content_bytes.decode(enc)
             break
@@ -244,40 +273,72 @@ async def upload_csv_monitoring(
     if not text_content:
         text_content = content_bytes.decode("utf-8", errors="replace")
 
+    text_content = text_content.lstrip("\ufeff").strip()
+    if not text_content:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty. Please select a file with text rows.")
+
     comments: List[str] = []
     
-    if file.filename.lower().endswith(".txt"):
-        comments = [line.strip() for line in text_content.splitlines() if line.strip()]
+    if fname.endswith(".txt"):
+        lines = [line.strip() for line in text_content.splitlines() if line.strip()]
+        if lines and lines[0].lower() in ["text", "comment", "comments", "content", "sentence", "sentences"]:
+            lines = lines[1:]
+        comments = lines
     else:
         # Delimiter detection
-        delimiter = "\t" if file.filename.lower().endswith(".tsv") else ","
+        delimiter = "\t" if fname.endswith(".tsv") else ","
+        first_line = text_content.splitlines()[0] if text_content.splitlines() else ""
+        if not fname.endswith(".tsv"):
+            if "\t" in first_line and "," not in first_line:
+                delimiter = "\t"
+            elif ";" in first_line and "," not in first_line:
+                delimiter = ";"
+
         try:
-            sample = text_content[:2048]
-            dialect = csv.Sniffer().sniff(sample, delimiters=",\t;")
-            delimiter = dialect.delimiter
-        except Exception:
-            pass
+            reader = csv.reader(io.StringIO(text_content), delimiter=delimiter)
+            rows = [r for r in reader if any(cell.strip() for cell in r)]
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse CSV file: {str(e)}")
 
-        reader = csv.reader(io.StringIO(text_content), delimiter=delimiter)
-        rows = list(reader)
         if not rows:
-            raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+            raise HTTPException(status_code=400, detail="Uploaded file is empty. Please select a file with text rows.")
 
-        header = [col.lower().strip() for col in rows[0]]
+        header = [col.strip().strip('"\'').lower() for col in rows[0]]
         
         # Identify target text column
+        preferred_names = [
+            "comment", "text", "comments", "cleaned_text", "comment_text",
+            "message", "messages", "content", "body", "tweet", "tweets",
+            "sentence", "sentences", "input", "review", "reviews",
+            "statement", "query", "user_comment", "utterance"
+        ]
         text_idx = -1
-        preferred_names = ["comment", "text", "message", "content", "body", "tweet", "cleaned_text", "comment_text"]
         for name in preferred_names:
             if name in header:
                 text_idx = header.index(name)
                 break
-                
+
+        if text_idx == -1:
+            # Check for partial keyword match in header
+            for i, col in enumerate(header):
+                if any(kw in col for kw in ["comment", "text", "content", "sentence", "tweet", "message"]):
+                    text_idx = i
+                    break
+
         start_row = 1
         if text_idx == -1:
-            # If no recognizable header, treat first column of row 0 as data if no header detected
-            text_idx = 0
-            start_row = 0
+            if len(rows[0]) == 1:
+                # Single column file without header or header was raw text
+                text_idx = 0
+                if header[0] in preferred_names:
+                    start_row = 1
+                else:
+                    start_row = 0
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Missing text column in CSV header. Supported names: text, comment, content, body, sentence, tweet."
+                )
 
         for r in rows[start_row:]:
             if len(r) > text_idx and r[text_idx].strip():
@@ -287,15 +348,14 @@ async def upload_csv_monitoring(
         raise HTTPException(status_code=400, detail="No readable text comments found in the uploaded file.")
 
     # Delegate to batch submission
+    source_name = platform_name if platform_name and platform_name != "CSV Import" else f"Imported File ({file.filename})"
     submission = BatchTextSubmission(
         comments=comments,
         language_hint=language_hint,
-        platform_source=f"Imported File ({file.filename})",
+        platform_source=source_name,
         deduplicate=deduplicate
     )
-    return await batch_analyze_comments(submission, db)
-
-
+    return await batch_analyze_comments(submission, db, current_user=current_user)
 @router.get("/export-reviewed-feedback")
 async def export_reviewed_feedback(
     format: str = Query("csv", pattern="^(csv|jsonl)$"),

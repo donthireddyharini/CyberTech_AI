@@ -408,9 +408,8 @@ SCRIPT_PATTERNS: dict[str, str] = {
 COMPILED_SCRIPT_PATTERNS = {k: re.compile(v) for k, v in SCRIPT_PATTERNS.items()}
 
 CODE_MIX_MARKERS = [
-    "yaar", "bhai", "kya", "nahi", "hai", "bol", "kar", "mat", "mera", "tera",
-    "antha", "ikkade", "cheppandi", "mari", "ante", "em", "endi",
-    "yen", "illa", "aru", "yenu", "bekku", "dhanyawad", "shukriya"
+    "yaar", "bhai", "kya", "nahi", "nahin", "hai", "hain", "bol", "kar", "karo", "karega", "mat", "mera", "meri", "tere", "tera",
+    "shukriya", "dhanyawad", "chahiye", "accha", "achha", "bahut", "theek", "pagal", "chup", "bakwas", "kamine", "saale", "harami", "aukaat"
 ]
 
 

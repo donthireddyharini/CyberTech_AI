@@ -29,17 +29,23 @@ HATE_SPEECH_PATTERNS = [
 ]
 
 HARASSMENT_PATTERNS = [
-    r"\b(shut\s+up|you('re|\s+are)\s+(stupid|dumb|idiot|moron|loser|pathetic))\b",
+    r"\b(shut\s+up|you('re|\s+are)\s+(a\s+|an\s+)?(complete\s+|total\s+|absolute\s+)?(stupid|dumb|idiot|moron|loser|pathetic|clown|disgusting|horrible|creep))\b",
     r"\b(kill\s+your(self|selves)|end\s+it\s+all)\b",
     r"\b(nobody\s+(likes|wants)\s+you)\b",
-    r"\b(i('ll|\s+will)\s+(hurt|destroy|ruin|find)\s+you)\b",
-    r"\b(worthless|useless)\s+(piece|person|human)?\b",
+    r"\b(i('ll|\s+will)\s+(hurt|destroy|ruin|find|kill)\s+you)\b",
+    r"\b(worthless|useless)\s+(piece|person|human|clown)?\b",
+    r"\b(delete\s+your\s+account|stop\s+posting\s+here|get\s+off\s+the\s+internet)\b",
+    r"\b(nobody\s+cares\s+about\s+you)\b",
+    r"(నువ్వు\s+చాలా\s+పనికిరాని\s+వెధవవి|నోరు\s+మూసుకుని\s+ఉండు)",
+    r"(तू\s+बहुत\s+ही\s+घटिया|बदतमीज\s+इंसान|बकवास\s+बंद\s+कर)",
+    r"(ನೀನು\s+ತುಂಬಾ\s+ಕೆಟ್ಟವನು|ಇಲ್ಲಿಂದ\s+ತೊಲಗು)",
+    r"\b(bekaar\s+aur\s+fraud|dafa\s+ho\s+ja|wahiyat\s+aadmi)\b",
 ]
 
 CYBERBULLYING_PATTERNS = [
     r"\b(everyone\s+(hates|knows)\s+you)\b",
     r"\b(you\s+(should|deserve\s+to)\s+(die|suffer))\b",
-    r"\b(ugly|fat|disgusting)\s+(freak|pig|cow|loser)\b",
+    r"\b(ugly|fat|disgusting|pathetic)\s+(freak|pig|cow|loser|clown)\b",
     r"\b(spread(ing)?\s+(rumors|lies)\s+about)\b",
     r"\b(screenshot|expose|leak)\s+(your|his|her|their)\b",
 ]
@@ -50,6 +56,15 @@ LEGITIMATE_INDICATORS = [
     r"\b(here\s+is\s+why|because|the\s+reason\s+is|my\s+argument)\b",
     r"\b(constructive\s+criticism|feedback|suggestion)\b",
     r"\b(agree\s+to\s+disagree|let's\s+discuss)\b",
+    r"\b(great\s+(recipe|video|work|job|content|song|music|explanation)|love\s+this|awesome\s+video)\b",
+    r"\b(thank\s+you|thanks\s+for\s+sharing|well\s+done)\b",
+]
+
+SEVERE_THREAT_PATTERNS = [
+    r"\b(kill\s+your(self|selves)|end\s+it\s+all)\b",
+    r"\b(i('ll|\s+will)\s+(hurt|destroy|ruin|find|kill)\s+you)\b",
+    r"\b(you\s+(should|deserve\s+to)\s+(die|suffer))\b",
+    r"(నిన్ను\s+చంపేస్తాం|నిన్ను\s+రోడ్డు\s+మీద\s+వేసి\s+కొడతాం)",
 ]
 
 UNCERTAINTY_INDICATORS = [
@@ -75,9 +90,10 @@ OTHER_SCRIPTS = {
     "cjk": r"[\u4E00-\u9FFF]",
 }
 
-CODE_MIX_MARKERS = ["yaar", "bhai", "kya", "nahi", "hai", "bol", "kar", "mat", "mera", "tera",
-                    "antha", "ikkade", "cheppandi", "mari", "ante", "em", "endi",
-                    "yen", "illa", "aru", "yenu", "bekku"]
+CODE_MIX_MARKERS = [
+    "yaar", "bhai", "kya", "nahi", "nahin", "hai", "hain", "bol", "kar", "karo", "karega", "mat", "mera", "meri", "tere", "tera",
+    "shukriya", "dhanyawad", "chahiye", "accha", "achha", "bahut", "theek", "pagal", "chup", "bakwas", "kamine", "saale", "harami", "aukaat"
+]
 
 
 @dataclass
@@ -142,6 +158,7 @@ class BaselineNLPEngine:
         self._harassment_patterns = [re.compile(p, re.IGNORECASE) for p in HARASSMENT_PATTERNS]
         self._cyberbullying_patterns = [re.compile(p, re.IGNORECASE) for p in CYBERBULLYING_PATTERNS]
         self._legit_patterns = [re.compile(p, re.IGNORECASE) for p in LEGITIMATE_INDICATORS]
+        self._severe_threat_patterns = [re.compile(p, re.IGNORECASE) for p in SEVERE_THREAT_PATTERNS]
         self._uncertainty_patterns = [re.compile(p, re.IGNORECASE) for p in UNCERTAINTY_INDICATORS]
         self._lang_patterns = {k: re.compile(v) for k, v in LANGUAGE_SCRIPTS.items()}
         self._other_lang_patterns = {k: re.compile(v) for k, v in OTHER_SCRIPTS.items()}
@@ -219,17 +236,44 @@ class BaselineNLPEngine:
         harassment_score: float,
         cyberbullying_score: float,
         legit_score: float,
+        toxicity_score: Optional[float] = None,
+        threshold: float = 0.40,
+        has_severe_threat: bool = False,
+        is_conflicted: bool = False,
     ) -> tuple[str, str]:
+        """
+        Documented provisional operational severity policy:
+        Since trained models produce binary toxicity probabilities (toxicity_score in [0, 1]),
+        CyberTech AI derives operational severity bands rather than claiming a calibrated 3-class classifier:
+          - 'high': elevated toxicity (toxicity_score >= 0.75 or explicit severe harm/threat pattern).
+          - 'medium': moderate toxicity (threshold <= toxicity_score < 0.75).
+          - 'uncertain': conflicting contextual or discourse signals (e.g. strong legitimate indicators alongside toxicity).
+          - 'low': non-toxic (toxicity_score < threshold or clean legitimate discourse).
+        """
+        if has_severe_threat:
+            return "high", "Operational severity band: explicit severe harm or threat pattern detected."
+
+        if is_conflicted or (legit_score >= 0.4 and toxicity_score is not None and toxicity_score >= threshold):
+            return "uncertain", "Operational severity band: conflicting contextual/discourse signals detected; human review recommended."
+
+        if toxicity_score is not None:
+            if toxicity_score >= 0.75:
+                return "high", f"Operational severity band: elevated toxicity score ({toxicity_score:.3f} >= 0.75)."
+            elif toxicity_score >= threshold:
+                return "medium", f"Operational severity band: moderate toxicity detected ({toxicity_score:.3f} >= threshold {threshold:.2f})."
+            else:
+                return "low", f"Operational severity band: non-toxic prediction ({toxicity_score:.3f} < threshold {threshold:.2f})."
+
         max_score = max(hate_score, harassment_score, cyberbullying_score)
         if legit_score > 0.5 and max_score < 0.4:
-            return "low", "Strong legitimate indicators found; low harm signal."
+            return "low", "Operational severity band: strong legitimate indicators found; low harm signal."
         if max_score >= 0.7:
-            return "high", "Strong harmful pattern match detected."
+            return "high", "Operational severity band: strong harmful pattern match detected."
         if max_score >= 0.4:
-            return "medium", "Moderate harmful signals detected; review recommended."
+            return "medium", "Operational severity band: moderate harmful signals detected; review recommended."
         if max_score > 0.0:
-            return "uncertain", "Weak signals detected; context needed for reliable assessment."
-        return "low", "No harmful patterns detected."
+            return "uncertain", "Operational severity band: weak signals detected; context needed for reliable assessment."
+        return "low", "Operational severity band: no harmful patterns detected."
 
     def analyze(
         self,
@@ -262,6 +306,8 @@ class BaselineNLPEngine:
         harassment_evidence = self._match_patterns(analysis_window, self._harassment_patterns)
         cyber_evidence = self._match_patterns(analysis_window, self._cyberbullying_patterns)
         legit_evidence = self._match_patterns(analysis_window, self._legit_patterns)
+        severe_threat_evidence = self._match_patterns(analysis_window, self._severe_threat_patterns)
+        has_severe_threat = len(severe_threat_evidence) > 0
 
         # Score calculation (simple presence-based, NOT calibrated probabilities)
         hate_score = min(len(hate_evidence) * 0.35, 0.95)
@@ -281,7 +327,14 @@ class BaselineNLPEngine:
         ]
 
         # Severity
-        severity, severity_reason = self._compute_severity(hate_score, harassment_score, cyber_score, legit_score)
+        severity, severity_reason = self._compute_severity(
+            hate_score=hate_score,
+            harassment_score=harassment_score,
+            cyberbullying_score=cyber_score,
+            legit_score=legit_score,
+            has_severe_threat=has_severe_threat,
+            is_conflicted=bool(uncertainty_evidence)
+        )
 
         # Decision
         max_harmful = max(hate_score, harassment_score, cyber_score)
@@ -368,6 +421,7 @@ class BaselineNLPEngine:
         if route.status == "validated_model":
             try:
                 raw_pred = self._multilingual_predictor.predict(text, language=resolved_key)
+                
                 toxicity_pred = ToxicityPrediction(
                     is_toxic=raw_pred['is_toxic'],
                     toxicity_score=raw_pred['toxicity_score'],
@@ -378,53 +432,50 @@ class BaselineNLPEngine:
                     scope_notice=raw_pred['scope_notice']
                 )
                 
-                # Propagate machine-learning toxicity signals into multi-label scores and severity
-                if raw_pred['is_toxic']:
-                    if resolved_key == "telugu":
-                        hate_score = max(hate_score, round(raw_pred['toxicity_score'] * 0.90, 3))
-                        harassment_score = max(harassment_score, raw_pred['toxicity_score'])
-                        if not harassment_evidence:
-                            harassment_evidence = [f"Telugu harassment/toxicity model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
-                    elif resolved_key == "hindi":
-                        hate_score = max(hate_score, round(raw_pred['toxicity_score'] * 0.9, 3))
-                        harassment_score = max(harassment_score, round(raw_pred['toxicity_score'] * 0.9, 3))
-                        if not hate_evidence:
-                            hate_evidence = [f"Hindi hostility model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
-                    elif resolved_key in ["hinglish", "code_mixed"]:
-                        hate_score = max(hate_score, raw_pred['toxicity_score'])
-                        harassment_score = max(harassment_score, round(raw_pred['toxicity_score'] * 0.85, 3))
-                        if not hate_evidence:
-                            hate_evidence = [f"Hinglish hate model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
-                    elif resolved_key == "kannada":
-                        harassment_score = max(harassment_score, raw_pred['toxicity_score'])
-                        hate_score = max(hate_score, round(raw_pred['toxicity_score'] * 0.90, 3))
-                        if not harassment_evidence:
-                            harassment_evidence = [f"Kannada harassment/offensive model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
-                    elif resolved_key == "english" and raw_pred['toxicity_score'] >= 0.70:
-                        harassment_score = max(harassment_score, raw_pred['toxicity_score'])
-                        if not harassment_evidence:
-                            harassment_evidence = [f"English toxicity model ({raw_pred['model_version']}) score: {raw_pred['toxicity_score']:.3f}"]
-
+                # Multi-label semantic category scores reflect pattern and discourse evidence.
+                # Binary toxicity score is preserved distinctly in toxicity_prediction rather than
+                # artificially overwritten into harassment_score or hate_speech_score.
+                if raw_pred['is_toxic'] and legit_score < 0.4:
                     legit_score = min(legit_score, 0.20)
                     
-                    # Rebuild labels with ML-augmented scores
-                    labels = [
-                        LabelScore("hate_speech", round(hate_score, 3), hate_evidence),
-                        LabelScore("harassment", round(harassment_score, 3), harassment_evidence),
-                        LabelScore("cyberbullying", round(cyber_score, 3), cyber_evidence),
-                        LabelScore("legitimate", round(legit_score, 3), legit_evidence),
-                    ]
-                    
-                    # Recompute severity and decision
-                    severity, severity_reason = self._compute_severity(hate_score, harassment_score, cyber_score, legit_score)
-                    max_harmful = max(hate_score, harassment_score, cyber_score)
-                    if max_harmful >= 0.6:
-                        decision = "flag_for_review"
-                        recommended_action = "Escalate to human moderator for review (harmful language detected)."
-                    elif max_harmful >= 0.35:
-                        decision = "flag_for_review"
-                        recommended_action = "Flagged by validated machine learning safety model."
-                    confidence_level = "high" if max_harmful >= 0.75 else "medium"
+                # Rebuild labels with updated scores
+                labels = [
+                    LabelScore("hate_speech", round(hate_score, 3), hate_evidence),
+                    LabelScore("harassment", round(harassment_score, 3), harassment_evidence),
+                    LabelScore("cyberbullying", round(cyber_score, 3), cyber_evidence),
+                    LabelScore("legitimate", round(legit_score, 3), legit_evidence),
+                ]
+                
+                # Recompute severity according to documented operational policy
+                is_conflicted = bool(legit_score >= 0.4 and (raw_pred['is_toxic'] or uncertainty_evidence))
+                severity, severity_reason = self._compute_severity(
+                    hate_score=hate_score,
+                    harassment_score=harassment_score,
+                    cyberbullying_score=cyber_score,
+                    legit_score=legit_score,
+                    toxicity_score=raw_pred['toxicity_score'],
+                    threshold=raw_pred['threshold'],
+                    has_severe_threat=has_severe_threat,
+                    is_conflicted=is_conflicted,
+                )
+
+                # Operational decision policy
+                if has_severe_threat or severity == "high":
+                    decision = "flag_for_review"
+                    recommended_action = "Escalate to human moderator for review (elevated toxicity or severe threat detected)."
+                    confidence_level = "high"
+                elif severity == "medium":
+                    decision = "flag_for_review"
+                    recommended_action = "Flagged by validated machine learning safety model."
+                    confidence_level = "medium"
+                elif severity == "uncertain":
+                    decision = "human_review"
+                    recommended_action = "Conflicting/ambiguous signals detected — recommend human review with full context."
+                    confidence_level = "low"
+                else:
+                    decision = "no_action"
+                    recommended_action = "No policy violation detected. Clean/benign content."
+                    confidence_level = "high" if raw_pred['confidence'] >= 0.5 else "medium"
             except Exception as e:
                 logger.error(f"Model inference failed: {e}")
                 toxicity_pred = ToxicityPrediction(

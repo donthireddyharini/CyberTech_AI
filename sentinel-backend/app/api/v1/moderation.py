@@ -21,6 +21,7 @@ async def list_moderation_records(
     severity: Optional[str] = Query(None),
     language: Optional[str] = Query(None),
     decision: Optional[str] = Query(None),
+    platform: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc"),
@@ -37,6 +38,16 @@ async def list_moderation_records(
         query = query.where(ModerationRecord.detected_language == language)
     if decision:
         query = query.where(ModerationRecord.decision == decision)
+    if platform and platform.lower() != "all":
+        p_clean = platform.lower().strip()
+        if p_clean in ("instagram", "ig"):
+            query = query.where(func.lower(ModerationRecord.platform).in_(["instagram", "ig"]))
+        elif p_clean in ("twitter", "x"):
+            query = query.where(func.lower(ModerationRecord.platform).in_(["x", "twitter"]))
+        elif p_clean in ("csv", "csv_upload"):
+            query = query.where(func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]))
+        else:
+            query = query.where(func.lower(ModerationRecord.platform) == p_clean)
     if search:
         query = query.where(ModerationRecord.original_text.ilike(f"%{search}%"))
 
@@ -75,6 +86,10 @@ async def list_moderation_records(
                 "model_name": r.model_name,
                 "model_version": r.model_version,
                 "platform": r.platform,
+                "source_id": r.source_id,
+                "source_url": r.source_url,
+                "author_name": r.author_name,
+                "parent_comment_id": r.parent_comment_id,
                 "is_demo": r.is_demo,
                 "is_code_mixed": r.is_code_mixed,
                 "created_at": r.created_at.isoformat(),
@@ -119,6 +134,10 @@ async def get_moderation_record(record_id: str, db: AsyncSession = Depends(get_d
         "language_hint": record.language_hint,
         "status": record.status,
         "platform": record.platform,
+        "source_id": record.source_id,
+        "source_url": record.source_url,
+        "author_name": record.author_name,
+        "parent_comment_id": record.parent_comment_id,
         "is_demo": record.is_demo,
         "model_name": record.model_name,
         "model_version": record.model_version,
