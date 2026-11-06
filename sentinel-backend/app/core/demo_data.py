@@ -61,10 +61,57 @@ DEMO_COMMENTS = [
 ]
 
 
+async def seed_users(session):
+    """Ensure standard benchmark accounts exist and have valid credentials."""
+    from app.models.user import User
+    from app.core.security import hash_password
+    users_to_seed = [
+        ("admin@cybertech.ai", "Lead Administrator", "CyberTech2026!", "admin", "local"),
+        ("evaluator@cybertech.ai", "Faculty Evaluator", "DemoPassword2026!", "admin", "local"),
+        ("moderator@cybertech.ai", "Safety Moderator", "Moderator2026!", "moderator", "local"),
+        ("admin@sentinel.ai", "Platform Administrator", "Password123!", "admin", "local"),
+        ("demo@sentinel.ai", "Demo Moderator", "Password123!", "moderator", "local"),
+        ("test@sentinel.ai", "Test User", "Password123!", "moderator", "local"),
+        ("evaluator.google@cybertech.ai", "Dr. Rajesh Kumar (Faculty Evaluator)", "", "admin", "google"),
+    ]
+    for email, name, pwd, role, auth_prov in users_to_seed:
+        res = await session.execute(select(User).where(User.email == email))
+        user = res.scalars().first()
+        hp = hash_password(pwd) if pwd else ""
+        if not user:
+            new_u = User(
+                id=str(uuid.uuid4()),
+                email=email,
+                name=name,
+                hashed_password=hp,
+                preferred_language="en",
+                role=role,
+                is_active=True,
+                auth_provider=auth_prov,
+                google_id="google-evaluator-demo-sub-2026" if auth_prov == "google" else None,
+                created_at=datetime.utcnow()
+            )
+            session.add(new_u)
+        else:
+            if pwd:
+                user.hashed_password = hp
+            user.name = name
+            user.role = role
+            user.is_active = True
+            session.add(user)
+    await session.commit()
+
+
 async def seed_demo_data():
-    """Seed the database with demo records if empty."""
+    """Seed the database with demo records and benchmark users."""
     async with AsyncSessionLocal() as session:
-        # Check if already seeded
+        # Always verify benchmark user accounts
+        try:
+            await seed_users(session)
+        except Exception:
+            pass
+
+        # Check if records already seeded
         result = await session.execute(select(ModerationRecord).limit(1))
         existing = result.scalars().first()
         if existing:

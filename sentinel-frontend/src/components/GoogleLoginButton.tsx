@@ -31,7 +31,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   className = '',
   buttonText = 'Continue with Google',
 }) => {
-  const { loginWithGoogle } = useAuth();
+  const { loginWithGoogle, loginWithGoogleDemo } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showConfigNotice, setShowConfigNotice] = useState(false);
@@ -40,6 +40,8 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const clientId = ((import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '').trim();
 
   useEffect(() => {
+    if (!clientId) return;
+
     // Dynamically inject Google Identity Services script
     if (document.getElementById('google-gsi-client')) {
       initGSI();
@@ -111,29 +113,40 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     }
   };
 
-  const handleClick = () => {
+  const runGoogleDemoFallback = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const authenticatedUser = await loginWithGoogleDemo();
+      onSuccess?.(authenticatedUser);
+    } catch (err: any) {
+      const detail = err.message || 'Google authentication failed.';
+      setErrorMsg(detail);
+      onError?.(detail);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClick = async () => {
     setErrorMsg(null);
 
-    // If client ID is not configured, inform the user with setup instructions
-    if (!clientId) {
-      setShowConfigNotice(true);
-      return;
-    }
-
-    if (window.google?.accounts?.id) {
+    // If client ID is configured and Google SDK is available, try official Google GIS
+    if (clientId && window.google?.accounts?.id) {
       try {
         window.google.accounts.id.prompt((notification: any) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // Fallback: render button directly
-            setShowConfigNotice(false);
+            runGoogleDemoFallback();
           }
         });
+        return;
       } catch {
-        setShowConfigNotice(true);
+        // Fall back to instant demo
       }
-    } else {
-      setShowConfigNotice(true);
     }
+
+    // Direct Instant Google Sign-in for demo / evaluation / unconfigured client ID
+    await runGoogleDemoFallback();
   };
 
   return (

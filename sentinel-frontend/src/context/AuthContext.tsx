@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (data: LoginRequest) => Promise<User>;
   loginWithGoogle: (credential: string) => Promise<User>;
+  loginWithGoogleDemo: () => Promise<User>;
   register: (data: RegisterRequest) => Promise<User>;
   logout: () => Promise<void>;
   updateProfile: (data: UpdateProfileRequest) => Promise<User>;
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   login: async () => { throw new Error('Not implemented'); },
   loginWithGoogle: async () => { throw new Error('Not implemented'); },
+  loginWithGoogleDemo: async () => { throw new Error('Not implemented'); },
   register: async () => { throw new Error('Not implemented'); },
   logout: async () => {},
   updateProfile: async () => { throw new Error('Not implemented'); },
@@ -83,6 +85,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return loggedInUser;
   }, []);
 
+  const loginWithGoogleDemo = useCallback(async (): Promise<User> => {
+    const resp = await authApi.googleDemoLogin();
+    const { access_token, user: loggedInUser } = resp.data;
+    localStorage.setItem('sentinel_token', access_token);
+    localStorage.setItem('sentinel_user', JSON.stringify(loggedInUser));
+    setToken(access_token);
+    setUser(loggedInUser);
+    return loggedInUser;
+  }, []);
+
   const register = useCallback(async (data: RegisterRequest): Promise<User> => {
     const resp = await authApi.register(data);
     const { access_token, user: registeredUser } = resp.data;
@@ -123,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!token && !!user,
         login,
         loginWithGoogle,
+        loginWithGoogleDemo,
         register,
         logout,
         updateProfile,

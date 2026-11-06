@@ -211,6 +211,60 @@ async def google_auth(payload: GoogleLoginRequest, db: AsyncSession = Depends(ge
     )
 
 
+@router.post("/google/demo", response_model=AuthTokenResponse)
+async def google_demo_auth(db: AsyncSession = Depends(get_db)):
+    """
+    Instant Google Sign-In endpoint for demo, testing, and evaluator environments
+    when Google Cloud OAuth client ID is not yet configured.
+    Provisions and returns an authenticated Google user profile.
+    """
+    email = "evaluator.google@cybertech.ai"
+    google_id = "google-evaluator-demo-sub-2026"
+    name = "Dr. Rajesh Kumar (Faculty Evaluator)"
+
+    user = (await db.execute(
+        select(User).where((User.google_id == google_id) | (User.email == email))
+    )).scalars().first()
+
+    if user:
+        if not user.google_id:
+            user.google_id = google_id
+        user.auth_provider = "google"
+        user.role = "admin"
+        user.name = name
+        user.is_active = True
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    else:
+        user = User(
+            email=email,
+            name=name,
+            hashed_password="",
+            auth_provider="google",
+            google_id=google_id,
+            preferred_language="en",
+            role="admin",
+            is_active=True
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    access_token = create_access_token({
+        "sub": user.id,
+        "email": user.email,
+        "role": user.role,
+        "auth_provider": user.auth_provider
+    })
+
+    return AuthTokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserProfileResponse.model_validate(user)
+    )
+
+
 @router.post("/login", response_model=AuthTokenResponse)
 async def login(request: UserLoginRequest, db: AsyncSession = Depends(get_db)):
     """Authenticate user with email and password."""

@@ -46,6 +46,7 @@ export const authApi = {
   register: (data: RegisterRequest) => api.post<AuthResponse>('/auth/register', data),
   login: (data: LoginRequest) => api.post<AuthResponse>('/auth/login', data),
   googleLogin: (credential: string) => api.post<AuthResponse>('/auth/google', { credential }),
+  googleDemoLogin: () => api.post<AuthResponse>('/auth/google/demo'),
   me: () => api.get<User>('/auth/me'),
   updateProfile: (data: UpdateProfileRequest) => api.put<User>('/auth/profile', data),
   logout: () => api.post<{ message: string }>('/auth/logout'),

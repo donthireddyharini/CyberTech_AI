@@ -34,6 +34,19 @@ export default function LoginPage() {
     }
   };
 
+  const DEMO_ACCOUNTS = [
+    { label: 'Faculty Evaluator', role: 'Evaluator', email: 'evaluator@cybertech.ai', pass: 'DemoPassword2026!' },
+    { label: 'Lead Admin', role: 'Admin', email: 'admin@cybertech.ai', pass: 'CyberTech2026!' },
+    { label: 'Safety Moderator', role: 'Moderator', email: 'moderator@cybertech.ai', pass: 'Moderator2026!' },
+  ];
+
+  const fillCredentials = (acc: typeof DEMO_ACCOUNTS[0]) => {
+    setMode('login');
+    setEmail(acc.email);
+    setPassword(acc.pass);
+    setError(null);
+  };
+
   const handleQuickDemo = async () => {
     setError(null);
     setLoading(true);
@@ -41,12 +54,7 @@ export default function LoginPage() {
       try {
         await login({ email: 'evaluator@cybertech.ai', password: 'DemoPassword2026!' });
       } catch {
-        await register({
-          email: 'evaluator@cybertech.ai',
-          name: 'Faculty Evaluator',
-          password: 'DemoPassword2026!',
-          preferred_language: 'en'
-        });
+        await login({ email: 'admin@cybertech.ai', password: 'CyberTech2026!' });
       }
       navigate('/', { replace: true });
     } catch (err: any) {
@@ -97,6 +105,31 @@ export default function LoginPage() {
             <span className="bg-white px-3 text-[11px] font-semibold text-[#858795] uppercase tracking-wider relative">
               Or continue with email
             </span>
+          </div>
+
+          {/* Quick-Fill Demo Chips */}
+          <div className="bg-[#F8F9FE] p-3 rounded-xl border border-[#E9EAF1] space-y-1.5">
+            <div className="text-[11px] font-semibold text-[#858795] flex items-center justify-between">
+              <span>Pre-Configured Accounts:</span>
+              <span className="text-[10px] text-[#6C5CE7]">Click to auto-fill</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {DEMO_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  onClick={() => fillCredentials(acc)}
+                  className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer text-center truncate ${
+                    email === acc.email
+                      ? 'bg-[#6C5CE7] text-white border-[#6C5CE7] shadow-xs'
+                      : 'bg-white text-[#20212B] border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:bg-[#F3F4FD]'
+                  }`}
+                  title={`${acc.label} (${acc.email})`}
+                >
+                  {acc.role}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Error Alert */}

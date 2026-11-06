@@ -44,13 +44,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware — restrict to configured origins
-origins = [o.strip() for o in settings.CORS_ORIGINS.split(",")]
+# CORS middleware — support configured origins and local LAN network hostlinks
+origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"^https?://.*$",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
