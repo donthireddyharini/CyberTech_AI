@@ -1,0 +1,8 @@
+{
+  "name": "CyberTech AI",
+  "description": "Context-Aware Multilingual Hate Speech & Cyberbullying Detection System for Social Media",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
