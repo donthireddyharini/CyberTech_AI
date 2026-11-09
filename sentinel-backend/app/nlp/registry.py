@@ -447,7 +447,8 @@ CODE_MIX_MARKERS = [
 
 TELUGU_ROMAN_MARKERS = [
     # Pronouns & Common Words
-    "nuvvu", "nuvv", "nuv", "meeru", "nenu", "manamu", "memu", "vaallu",
+    "nuvvu", "nuvv", "nuv", "meeru", "nenu", "neanu", "manamu", "memu", "vaallu",
+    "avunu", "ippudu", "kona", "chepparu", "bokka", "mamuluga",
     "neeku", "neek", "naaku", "maaku", "meeku",
     "chala", "chaala", "bagundi", "bavundi", "bavundhi", "bagundhi", "bagunnavu", "bavunnavu",
     "sahayam", "cheppavu", "cheppu", "enti", "enduku", "ekkada", "eppudu",
