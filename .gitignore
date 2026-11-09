@@ -57,3 +57,4 @@ sentinel.db
 
 # Scratch scripts
 scratch/
+*.tsbuildinfo
