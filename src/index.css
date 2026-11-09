@@ -1,0 +1,260 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body, #root {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  
+  body {
+    margin: 0;
+    background-color: #F5F6FA;
+    color: #20212B;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  button, input, optgroup, select, textarea {
+    font-family: inherit;
+  }
+
+  /* Ultra-Clean Modern Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #D9DBE6;
+    border-radius: 9999px;
+    transition: background-color 0.2s ease;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #B4B7C9;
+  }
+}
+
+@layer components {
+  /* Crisp, Elevated Cards */
+  .card {
+    @apply bg-white border border-[#E9EAF1] rounded-2xl shadow-[0_2px_10px_rgba(32,33,43,0.025)];
+  }
+  
+  .card-glow {
+    @apply card;
+    box-shadow: 0 4px 18px rgba(108, 92, 231, 0.08), 0 0 0 1px rgba(108, 92, 231, 0.15);
+  }
+
+  .glass-card {
+    background: #FFFFFF;
+    border: 1px solid #E9EAF1;
+    border-radius: 1rem;
+    box-shadow: 0 2px 10px rgba(32, 33, 43, 0.025), 0 1px 3px rgba(32, 33, 43, 0.02);
+  }
+
+  .glass-card-subtle {
+    background: #F8F9FE;
+    border: 1px solid #E9EAF1;
+    border-radius: 1rem;
+  }
+
+  .glass-card-elevated {
+    background: #FFFFFF;
+    border: 1px solid #E9EAF1;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 20px rgba(32, 33, 43, 0.05), 0 1px 4px rgba(32, 33, 43, 0.02);
+  }
+
+  /* Silky Interactive Hover */
+  .card-interactive {
+    transition: border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-interactive:hover {
+    border-color: rgba(108, 92, 231, 0.32);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -4px rgba(108, 92, 231, 0.07), 0 2px 6px rgba(32, 33, 43, 0.02);
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-[#6C5CE7] hover:bg-[#5B4BC4] text-white rounded-xl text-xs font-semibold shadow-sm shadow-[#6C5CE7]/20 transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#EEEAFE];
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-white hover:bg-[#F8F9FE] text-[#20212B] border border-[#E9EAF1] hover:border-[#D5D7E2] rounded-xl text-xs font-medium transition-all duration-200 active:scale-[0.98] focus:outline-none shadow-sm;
+  }
+
+  .btn-danger {
+    @apply px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-medium transition-all duration-200 active:scale-[0.98];
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-[#858795] hover:text-[#20212B] hover:bg-[#F8F9FE] transition-all duration-150 cursor-pointer;
+  }
+
+  .nav-item-active {
+    @apply flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-[#6C5CE7] bg-[#EEEAFE] shadow-sm;
+  }
+
+  .input-field {
+    @apply w-full px-3.5 py-2.5 bg-white border border-[#E9EAF1] rounded-xl text-xs text-[#20212B] placeholder-[#858795] focus:outline-none focus:border-[#6C5CE7] focus:ring-2 focus:ring-[#EEEAFE] transition-all duration-150;
+  }
+
+  .label {
+    @apply block text-[11px] font-semibold text-[#858795] uppercase tracking-wider mb-1.5;
+  }
+
+  .severity-low { @apply bg-emerald-50 text-emerald-700 border border-emerald-200; }
+  .severity-medium { @apply bg-amber-50 text-amber-700 border border-amber-200; }
+  .severity-high { @apply bg-rose-50 text-rose-700 border border-rose-200; }
+  .severity-uncertain { @apply bg-slate-100 text-slate-700 border border-slate-200; }
+
+  .status-pending { @apply bg-amber-50 text-amber-700 border border-amber-200; }
+  .status-reviewed { @apply bg-emerald-50 text-emerald-700 border border-emerald-200; }
+  .status-escalated { @apply bg-rose-50 text-rose-700 border border-rose-200; }
+  .status-dismissed { @apply bg-slate-100 text-slate-700 border border-slate-200; }
+
+  .skeleton {
+    @apply animate-pulse bg-slate-200/80 rounded-xl;
+  }
+}
+
+/* Global Micro-Interaction Transition Smoothing */
+a, button, input, select, textarea {
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-duration: 180ms;
+}
+
+/* Snappy, Smooth Page Transition */
+@keyframes page-enter {
+  0% {
+    opacity: 0.88;
+    transform: translateY(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.slide-in-right {
+  animation: slide-in-right 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Motion reduction */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Recharts & SVG Global Typography Inheritance */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-text,
+.recharts-legend-item-text,
+.recharts-default-tooltip,
+.recharts-cartesian-axis-tick-value,
+.recharts-label,
+.recharts-tooltip-wrapper,
+.recharts-responsive-container,
+svg text {
+  font-family: "Inter", sans-serif !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHART ENTRANCE & CIRCLE REVEAL ANIMATIONS (CyberTech AI Courseu Light)
+   - Donut charts: smooth 360-degree circle finish and stop
+   - Line & Area charts: left-to-right progressive stroke & gradient wipe
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1. Complete Circle Finish Animation for Donut Charts */
+@keyframes donut-circle-finish {
+  0% {
+    transform: rotate(0deg) scale(0.9);
+    opacity: 0.2;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.donut-casual-container,
+.donut-circle-container {
+  will-change: transform, opacity;
+}
+
+.donut-casual-container svg.recharts-surface,
+.donut-circle-container svg.recharts-surface {
+  transform-origin: 50% 50%;
+  animation: donut-circle-finish 1.2s cubic-bezier(0.16, 1, 0.3, 1) 1 forwards;
+  will-change: transform, opacity;
+}
+
+/* 2. Left-to-Right Draw & Reveal Animation for Line / Area Charts */
+@keyframes line-chart-draw {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.3;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+.line-chart-animated {
+  animation: line-chart-draw 1.25s cubic-bezier(0.16, 1, 0.3, 1) 1 forwards;
+  will-change: clip-path, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .donut-casual-container svg.recharts-surface,
+  .donut-circle-container svg.recharts-surface,
+  .line-chart-animated {
+    animation: none !important;
+  }
+}
