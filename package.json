@@ -1,0 +1,12 @@
+{
+  "name": "cybertech-ai",
+  "version": "1.0.0",
+  "description": "CyberTech AI Trust & Safety Operations Platform",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix sentinel-frontend run dev",
+    "build": "npm --prefix sentinel-frontend run build",
+    "preview": "npm --prefix sentinel-frontend run preview",
+    "install:all": "npm --prefix sentinel-frontend install && pip install -r sentinel-backend/requirements.txt"
+  }
+}
