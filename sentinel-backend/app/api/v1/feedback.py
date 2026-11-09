@@ -141,47 +141,110 @@ async def list_feedback(
     page_size: int = Query(20, ge=1, le=100),
     validation_status: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """List all feedback records."""
-    query = select(FeedbackRecord)
+    """List all feedback records with joined moderation details and account isolation."""
+    from app.models.moderation import ModerationRecord
+    query = select(FeedbackRecord, ModerationRecord).outerjoin(
+        ModerationRecord, FeedbackRecord.record_id == ModerationRecord.id
+    )
+    if current_user:
+        if current_user.role != "admin":
+            query = query.where(FeedbackRecord.user_id == current_user.id)
+    else:
+        query = query.where(FeedbackRecord.user_id.is_(None))
     if validation_status:
         query = query.where(FeedbackRecord.validation_status == validation_status)
     
-    count_q = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_q)).scalar()
+    count_q = select(func.count(FeedbackRecord.id))
+    if current_user:
+        if current_user.role != "admin":
+            count_q = count_q.where(FeedbackRecord.user_id == current_user.id)
+    else:
+        count_q = count_q.where(FeedbackRecord.user_id.is_(None))
+    if validation_status:
+        count_q = count_q.where(FeedbackRecord.validation_status == validation_status)
+    total = (await db.execute(count_q)).scalar() or 0
 
     query = query.order_by(FeedbackRecord.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(query)
-    items = result.scalars().all()
+    rows = result.all()
+
+    items_out = []
+    for f, mod in rows:
+        if mod is None and f.record_id:
+            m_res = await db.execute(select(ModerationRecord).where(ModerationRecord.id == f.record_id.strip()))
+            mod = m_res.scalars().first()
+
+        verdict = (
+            "Confirmed" if f.is_confirmed
+            else "False Positive" if f.is_false_positive
+            else "False Negative" if f.is_false_negative
+            else "Ambiguous" if f.is_ambiguous
+            else "Reviewed"
+        )
+
+        comment_text = ""
+        if mod and mod.original_text and mod.original_text.strip():
+            comment_text = mod.original_text.strip()
+        elif mod and mod.normalized_text and mod.normalized_text.strip():
+            comment_text = mod.normalized_text.strip()
+        elif f.explanation and f.explanation.strip():
+            comment_text = f.explanation.strip()
+        else:
+            comment_text = "Direct benchmark comment under moderation review"
+
+        tox_score = None
+        if mod:
+            if mod.labels:
+                for l in mod.labels:
+                    if isinstance(l, dict) and l.get("label") in ("toxicity", "toxic"):
+                        tox_score = round(float(l.get("score", 0.0)), 3)
+                        break
+            if tox_score is None:
+                tox_score = round(max(mod.hate_speech_score or 0.0, mod.harassment_score or 0.0, mod.cyberbullying_score or 0.0), 3)
+
+        items_out.append({
+            "id": f.id,
+            "record_id": f.record_id,
+            "comment_text": comment_text,
+            "severity": (mod.severity if mod else f.predicted_severity) or "low",
+            "severity_reason": mod.severity_reason if mod else "Operational severity policy evaluation",
+            "platform": (mod.platform if mod else "manual") or "manual",
+            "human_review": verdict,
+            "status": f.validation_status or (mod.status if mod else "reviewed"),
+            "is_false_positive": f.is_false_positive,
+            "is_false_negative": f.is_false_negative,
+            "is_ambiguous": f.is_ambiguous,
+            "is_confirmed": f.is_confirmed,
+            "language": f.language or (mod.detected_language if mod else "english"),
+            "model_version": f.model_version or (mod.model_version if mod else "v1.0.0"),
+            "validation_status": f.validation_status or "reviewed",
+            "explanation": f.explanation,
+            "reviewer_notes": f.explanation or (mod.recommended_action if mod else ""),
+            "decision": mod.decision if mod else "no_action",
+            "toxicity_score": tox_score,
+            "hate_speech_score": round(mod.hate_speech_score or 0.0, 3) if mod else 0.0,
+            "harassment_score": round(mod.harassment_score or 0.0, 3) if mod else 0.0,
+            "cyberbullying_score": round(mod.cyberbullying_score or 0.0, 3) if mod else 0.0,
+            "legitimate_score": round(mod.legitimate_score or 0.0, 3) if mod else 0.0,
+            "created_at": f.created_at.isoformat() if f.created_at else (mod.created_at.isoformat() if mod and mod.created_at else ""),
+        })
 
     return {
         "total": total,
         "page": page,
-        "items": [
-            {
-                "id": f.id,
-                "record_id": f.record_id,
-                "is_false_positive": f.is_false_positive,
-                "is_false_negative": f.is_false_negative,
-                "is_ambiguous": f.is_ambiguous,
-                "is_confirmed": f.is_confirmed,
-                "language": f.language,
-                "model_version": f.model_version,
-                "validation_status": f.validation_status,
-                "explanation": f.explanation,
-                "created_at": f.created_at.isoformat(),
-            }
-            for f in items
-        ],
+        "items": items_out,
     }
 
 
 @router.get("/export")
 async def export_feedback_dataset(
     format: str = Query("csv", pattern="^(csv|jsonl)$"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """Export reviewed feedback examples for offline model retraining."""
+    """Export reviewed feedback examples for offline model retraining with account isolation."""
     from app.api.v1.monitor import export_reviewed_feedback
-    return await export_reviewed_feedback(format=format, db=db)
+    return await export_reviewed_feedback(format=format, db=db, current_user=current_user)
 

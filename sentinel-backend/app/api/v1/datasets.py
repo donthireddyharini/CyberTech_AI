@@ -106,10 +106,19 @@ async def _seed_official_datasets_if_needed(db: AsyncSession):
 
 
 @router.get("")
-async def list_datasets(db: AsyncSession = Depends(get_db)):
-    """List all registered datasets available for inspection and detection."""
+async def list_datasets(
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """List all registered datasets available for inspection and detection with account isolation."""
     await _seed_official_datasets_if_needed(db)
-    result = await db.execute(select(DatasetRecord).order_by(DatasetRecord.created_at.desc()))
+    q = select(DatasetRecord)
+    if current_user:
+        if current_user.role != "admin":
+            q = q.where(or_(DatasetRecord.user_id == current_user.id, DatasetRecord.user_id.is_(None)))
+    else:
+        q = q.where(DatasetRecord.user_id.is_(None))
+    result = await db.execute(q.order_by(DatasetRecord.created_at.desc()))
     datasets = result.scalars().all()
     return [
         {
@@ -432,6 +441,7 @@ async def import_dataset(
     val_ratio: float = Form(0.15),
     test_ratio: float = Form(0.15),
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     """Import a validated dataset into the system registry."""
     content = await file.read()
@@ -485,6 +495,7 @@ async def import_dataset(
         missing_values=missing,
         duplicate_count=dups,
         status="ready_for_detection",
+        user_id=current_user.id if current_user else None,
     )
     db.add(dataset)
     await db.commit()

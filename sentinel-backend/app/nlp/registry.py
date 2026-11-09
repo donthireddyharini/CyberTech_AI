@@ -408,8 +408,77 @@ SCRIPT_PATTERNS: dict[str, str] = {
 COMPILED_SCRIPT_PATTERNS = {k: re.compile(v) for k, v in SCRIPT_PATTERNS.items()}
 
 CODE_MIX_MARKERS = [
-    "yaar", "bhai", "kya", "nahi", "nahin", "hai", "hain", "bol", "kar", "karo", "karega", "mat", "mera", "meri", "tere", "tera",
-    "shukriya", "dhanyawad", "chahiye", "accha", "achha", "bahut", "theek", "pagal", "chup", "bakwas", "kamine", "saale", "harami", "aukaat"
+    # Pronouns & Address
+    "tu", "tera", "teri", "tere", "tujhe", "tujhko", "tum", "tumhara", "tumhari", "tumhare",
+    "tumhe", "aap", "aapka", "aapki", "aapke", "aapko", "aapne", "mera", "meri", "mere",
+    "mujhe", "mujhko", "hum", "humara", "humari", "humare", "hume", "yaar", "bhai", "bhaiya", "dost",
+    
+    # Common Hindi verbs & auxiliaries
+    "hai", "hain", "ho", "hoo", "tha", "theye", "thi", "hoga", "hogi", "hoge",
+    "kya", "kyu", "kyun", "kaise", "kahan", "kab", "kaun",
+    "nahi", "nahin", "na", "mat", "kar", "karo", "karega", "karegi", "karege", "karna", "kiya",
+    "bol", "bolo", "bologe", "bolna", "bola", "baat", "batao", "dekh", "dekho", "dekhna",
+    "chahiye", "aata", "aati", "aate", "raha", "rahe", "rahi", "hona", "hota", "hoti", "hote",
+    "de", "dena", "jana", "jao", "ja", "gaya", "gayi", "gaye", "aao", "aana",
+    "kuch", "sab", "apna", "apne", "apni", "kisi", "koi", "aur", "lekin", "par",
+    
+    # Common Hindi adjectives / nouns
+    "insaan", "aadmi", "log", "duniya", "zindagi", "samay", "waqt",
+    "theek", "sahi", "galat", "kaam", "naam",
+    
+    # Civil & Positive Markers
+    "shukriya", "dhanyawad", "dhanyavad", "namaste", "namaskar",
+    "accha", "achha", "acche", "acchi", "achhi", "acha", "ache", "achi", "bahut", "bohot", "bhut",
+    "badhiya", "sundar", "shandar", "kamaal", "pyara", "pyare", "madad", "zabardast",
+    
+    # Harmful / Harassment / Insult Markers (Latin script)
+    "kutta", "kutte", "kutti", "kuttiya", "kamina", "kamine", "kamini",
+    "saala", "saale", "saali", "harami", "haramkhor", "haramzada",
+    "chutiya", "chutiye", "chutiyapa", "bhenchod", "behenchod", "bc", "mc", "madarchod", "maderchod",
+    "bhosdike", "bhosadike", "bhosdi", "lund", "lodu", "lavde", "laude", "chut", "choot", "maa ki chut", "teri maa ki",
+    "gandu", "gaandu", "gadha", "gadhe", "gadhi", "ullu",
+    "besharam", "nalayak", "pagal", "paagal", "bakwas", "chup",
+    "bevakoof", "bewakoof", "bevakuf", "bewakuf", "bewkoof", "bevkoof", "bewaqoof",
+    "mar ja", "marja", "maar dalunga", "randi", "bura", "bure",
+    "dhokha", "dhokhebaz", "chor", "jhootha", "jhoothe", "laanat", "neech", "paapi",
+    "thappad", "aukaat", "aukat", "sharam", "ghatiya", "badtameez", "badtamiz",
+    "dafa", "wahiyat", "nikal", "bhadwa", "bhadwe", "suar", "suwar"
+]
+
+TELUGU_ROMAN_MARKERS = [
+    # Pronouns & Common Words
+    "nuvvu", "nuvv", "nuv", "meeru", "nenu", "manamu", "memu", "vaallu",
+    "neeku", "neek", "naaku", "maaku", "meeku",
+    "chala", "chaala", "bagundi", "bavundi", "bavundhi", "bagundhi", "bagunnavu", "bavunnavu",
+    "sahayam", "cheppavu", "cheppu", "enti", "enduku", "ekkada", "eppudu",
+    "kadu", "kaadhu", "ledu", "ledhu", "unnadu", "unnaru", "undi",
+    "dabbulu", "pani", "katha", "vishayam",
+    
+    # Civil & Compliments
+    "dhanyavadalu", "kruthagnathalu", "manchivadivi", "manchivi", "manchidi", "manchi",
+    "manchodivi", "manchodu", "manchivadu",
+    "goppa", "telivainavadivi", "adbhutam", "adbhutanga", "prema", "sneham", "snehitudivi",
+    
+    # Insults & Harassment
+    "panikirani", "vedhava", "vedhavavi", "vedhavi", "chettaa", "chetta", "aipothavu",
+    "daridram", "bathuku", "noru musuko", "musuko", "champesta", "dikkumalina",
+    "picchoda", "pichoda", "donga", "sigguledu", "vellipo"
+]
+
+KANNADA_ROMAN_MARKERS = [
+    # Pronouns & Common Words
+    "neenu", "neevu", "naanu", "naavu", "avaru", "nimage", "ninage", "nanage",
+    "tumba", "thumba", "yenu", "enu", "hege", "yaake", "yake", "elli", "yaava",
+    "beku", "beda", "illa", "agalla", "ide", "kelsa", "kelasa", "maadu", "maadi",
+    
+    # Civil & Compliments
+    "chennagi", "chennagide", "dhanyavada", "dhanyavadagalu", "olleya", "olleyavaru",
+    "sundara", "sahaya", "preeti", "sneha", "upayukta", "upayuktavagide",
+    
+    # Insults & Harassment
+    "moorukha", "murkha", "gottilla", "kettavanu", "kettavalu", "ketta",
+    "illinda tolagu", "tolagu", "bayi mucchu", "mucchu", "halkat", "halagi hogu",
+    "siggu illa", "donga", "bekku"
 ]
 
 
@@ -418,31 +487,31 @@ class ModelRegistry:
 
     def __init__(self):
         self._cached_models: dict[str, Any] = {}
+        self._resolve_cache: dict[tuple[str, Optional[str]], tuple[str, str, bool]] = {}
 
     def resolve_language(self, text: str, language_hint: Optional[str] = None) -> tuple[str, str, bool]:
+        cache_key = (text[:250], language_hint) if text else ("", language_hint)
+        if cache_key in self._resolve_cache:
+            return self._resolve_cache[cache_key]
         """
         Resolves the target language key, script name, and code-mixing flag.
-        Returns (target_lang_key, detected_script_name, is_code_mixed).
+        Ensures native Indic scripts cannot be overridden by an incompatible hint,
+        and accurately distinguishes Hinglish, Romanized Telugu, and Romanized Kannada.
         """
-        # If user explicitly selected a language hint, honor it
-        if language_hint and language_hint.strip():
-            hint_norm = language_hint.strip().lower()
-            resolved_key = LANGUAGE_ALIASES.get(hint_norm, hint_norm)
-            if resolved_key in LANGUAGE_CATALOG:
-                meta = LANGUAGE_CATALOG[resolved_key]
-                return resolved_key, meta.script_family, (resolved_key == "code_mixed")
-            else:
-                return resolved_key, "Unsupported", False
+        hint_clean = language_hint.strip().lower() if (language_hint and language_hint.strip()) else None
+        if hint_clean in ("auto", "auto-detect", "none", "null", ""):
+            hint_clean = None
 
-        # Automatic Script Detection
+        # 1. Native Indic script detection (highest priority — native script cannot be overridden by incompatible hint)
         detected_script = "Latin"
-        detected_lang = "english"
+        detected_lang = None
+        is_code_mixed = False
 
         for script_name, pat in COMPILED_SCRIPT_PATTERNS.items():
             if pat.search(text):
                 if script_name == "devanagari":
                     detected_script = "Devanagari"
-                    detected_lang = "hindi"  # Primary Devanagari route
+                    detected_lang = "hindi"
                 elif script_name == "telugu":
                     detected_script = "Telugu"
                     detected_lang = "telugu"
@@ -481,13 +550,75 @@ class ModelRegistry:
                     detected_lang = script_name
                 break
 
-        # Check for code mixing in Latin text
-        lower = text.lower()
-        is_code_mixed = any(re.search(rf"\b{re.escape(marker)}\b", lower) for marker in CODE_MIX_MARKERS)
-        if is_code_mixed and detected_lang == "english":
-            detected_lang = "code_mixed"
-            detected_script = "Latin / Code-Mixed"
+        # If native script detected, let compatible hint refine it (e.g. Marathi/Nepali in Devanagari)
+        if detected_lang is not None:
+            if hint_clean:
+                hint_key = LANGUAGE_ALIASES.get(hint_clean, hint_clean)
+                devanagari_langs = {"hindi", "marathi", "nepali", "sanskrit", "bodo", "dogri", "konkani", "maithili"}
+                bengali_langs = {"bengali", "assamese"}
+                perso_arabic_langs = {"urdu", "kashmiri", "sindhi"}
 
+                if detected_script == "Devanagari" and hint_key in devanagari_langs:
+                    detected_lang = hint_key
+                elif detected_script == "Bengali-Assamese" and hint_key in bengali_langs:
+                    detected_lang = hint_key
+                elif detected_script == "Perso-Arabic" and hint_key in perso_arabic_langs:
+                    detected_lang = hint_key
+
+            if len(self._resolve_cache) > 4000:
+                self._resolve_cache.clear()
+            self._resolve_cache[cache_key] = (detected_lang, detected_script, is_code_mixed)
+            return detected_lang, detected_script, is_code_mixed
+
+        # 2. Latin script text: check regional markers (Telugu, Kannada, Hinglish)
+        lower = text.lower()
+        has_telugu_markers = any(re.search(rf"\b{re.escape(marker)}\b", lower) for marker in TELUGU_ROMAN_MARKERS)
+        has_kannada_markers = any(re.search(rf"\b{re.escape(marker)}\b", lower) for marker in KANNADA_ROMAN_MARKERS)
+        has_codemix_markers = any(re.search(rf"\b{re.escape(marker)}\b", lower) for marker in CODE_MIX_MARKERS)
+
+        if has_telugu_markers:
+            detected_lang = "telugu"
+            detected_script = "Latin / Telugu Transliteration"
+            is_code_mixed = True
+        elif has_kannada_markers:
+            detected_lang = "kannada"
+            detected_script = "Latin / Kannada Transliteration"
+            is_code_mixed = True
+        elif has_codemix_markers:
+            if hint_clean:
+                hint_key = LANGUAGE_ALIASES.get(hint_clean, hint_clean)
+                if hint_key == "hindi":
+                    detected_lang = "hindi"
+                    detected_script = "Latin / Hindi Transliteration"
+                    is_code_mixed = True
+                else:
+                    detected_lang = "code_mixed"
+                    detected_script = "Latin / Hinglish (Code-Mixed)"
+                    is_code_mixed = True
+            else:
+                detected_lang = "code_mixed"
+                detected_script = "Latin / Hinglish (Code-Mixed)"
+                is_code_mixed = True
+        elif hint_clean:
+            # Honor explicit user language hint for Latin text when no conflicting markers are present
+            resolved_key = LANGUAGE_ALIASES.get(hint_clean, hint_clean)
+            if resolved_key in LANGUAGE_CATALOG:
+                meta = LANGUAGE_CATALOG[resolved_key]
+                detected_lang = resolved_key
+                detected_script = meta.script_family
+                is_code_mixed = (resolved_key == "code_mixed")
+            else:
+                detected_lang = resolved_key
+                detected_script = "Unsupported"
+                is_code_mixed = False
+        else:
+            detected_lang = "english"
+            detected_script = "Latin"
+            is_code_mixed = False
+
+        if len(self._resolve_cache) > 4000:
+            self._resolve_cache.clear()
+        self._resolve_cache[cache_key] = (detected_lang, detected_script, is_code_mixed)
         return detected_lang, detected_script, is_code_mixed
 
     def get_route_metadata(self, lang_key: str) -> ModelMetadata:

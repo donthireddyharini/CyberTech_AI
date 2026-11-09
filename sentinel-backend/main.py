@@ -30,6 +30,13 @@ async def lifespan(app: FastAPI):
     if settings.DEMO_MODE:
         await seed_demo_data()
         logger.info("Demo data seeded.")
+    try:
+        from app.nlp.engine import get_nlp_engine
+        engine = get_nlp_engine()
+        engine.warmup()
+        logger.info("All multilingual models successfully pre-warmed.")
+    except Exception as e:
+        logger.warning(f"Model warmup failed: {e}")
     logger.info("Sentinel AI backend ready.")
     yield
     logger.info("Sentinel AI backend shutting down...")

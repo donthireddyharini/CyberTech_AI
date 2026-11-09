@@ -53,7 +53,16 @@ def _result_to_schema(result, record_id: str) -> AnalyzeResponse:
         id=record_id,
         text=result.text,
         original_text=result.original_text,
-        labels=[LabelScoreSchema(label=l.label, score=l.score, evidence=l.evidence) for l in result.labels],
+        labels=[
+            LabelScoreSchema(
+                label=l.label,
+                score=l.score,
+                evidence=l.evidence,
+                supported=getattr(l, "supported", True),
+                note=getattr(l, "note", None)
+            )
+            for l in result.labels
+        ],
         severity=result.severity,
         severity_reason=result.severity_reason,
         decision=result.decision,
@@ -128,7 +137,11 @@ async def analyze_text(
 
 
 @router.post("/compare-context", response_model=CompareContextResponse)
-async def compare_context(request: CompareContextRequest, db: AsyncSession = Depends(get_db)):
+async def compare_context(
+    request: CompareContextRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
     """Compare analysis with and without conversation context."""
     engine = get_nlp_engine()
     try:
@@ -165,6 +178,39 @@ async def compare_context(request: CompareContextRequest, db: AsyncSession = Dep
             "delta": delta,
         }
 
+    # Persist the contextual detection to the authoritative database
+    rec_ctx = ModerationRecord(
+        id=id2,
+        original_text=result_with_ctx.original_text,
+        normalized_text=result_with_ctx.text,
+        context_before=request.context_before,
+        context_after=request.context_after,
+        model_name=result_with_ctx.model_name,
+        model_version=result_with_ctx.model_version,
+        labels=[{"label": l.label, "score": l.score, "evidence": l.evidence} for l in result_with_ctx.labels],
+        hate_speech_score=next((l.score for l in result_with_ctx.labels if l.label == "hate_speech"), 0.0),
+        harassment_score=next((l.score for l in result_with_ctx.labels if l.label == "harassment"), 0.0),
+        cyberbullying_score=next((l.score for l in result_with_ctx.labels if l.label == "cyberbullying"), 0.0),
+        legitimate_score=next((l.score for l in result_with_ctx.labels if l.label == "legitimate"), 0.0),
+        severity=result_with_ctx.severity,
+        severity_reason=result_with_ctx.severity_reason,
+        decision=result_with_ctx.decision,
+        confidence_level=result_with_ctx.confidence_level,
+        recommended_action=result_with_ctx.recommended_action,
+        ambiguity_warning=result_with_ctx.ambiguity_warning,
+        detected_language=result_with_ctx.detected_language,
+        is_code_mixed=result_with_ctx.is_code_mixed,
+        language_hint=request.language_hint,
+        status="pending" if result_with_ctx.decision != "no_action" else "reviewed",
+        platform="Compare Context",
+        user_id=current_user.id if current_user else None,
+        is_demo=False,
+        inference_timestamp=result_with_ctx.inference_timestamp,
+        processing_time_ms=result_with_ctx.processing_time_ms,
+    )
+    db.add(rec_ctx)
+    await db.commit()
+
     return CompareContextResponse(
         without_context=no_ctx_schema,
         with_context=with_ctx_schema,
@@ -181,7 +227,11 @@ async def compare_context(request: CompareContextRequest, db: AsyncSession = Dep
 
 
 @router.post("/compare-texts", response_model=CompareTextsResponse)
-async def compare_texts(request: CompareTextsRequest):
+async def compare_texts(
+    request: CompareTextsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
     """
     Perform real comparative inference on two user-provided texts.
     Analyzes both texts independently using the appropriate language detection and ML pipelines.
@@ -203,22 +253,34 @@ async def compare_texts(request: CompareTextsRequest):
     schema2 = _result_to_schema(res2, id2)
 
     # Category score differences
-    labels1 = {l.label: l.score for l in res1.labels}
-    labels2 = {l.label: l.score for l in res2.labels}
+    labels1_map = {l.label: l for l in res1.labels}
+    labels2_map = {l.label: l for l in res2.labels}
     all_labels = ["hate_speech", "harassment", "cyberbullying", "legitimate"]
 
     score_diffs: dict[str, ScoreDiffItem] = {}
     for lbl in all_labels:
-        s1 = round(labels1.get(lbl, 0.0), 3)
-        s2 = round(labels2.get(lbl, 0.0), 3)
-        score_diffs[lbl] = ScoreDiffItem(text1=s1, text2=s2, diff=round(s2 - s1, 3))
+        l1 = labels1_map.get(lbl)
+        l2 = labels2_map.get(lbl)
+        s1 = round(l1.score if l1 else 0.0, 3)
+        s2 = round(l2.score if l2 else 0.0, 3)
+        sup1 = getattr(l1, "supported", True) if l1 else False
+        sup2 = getattr(l2, "supported", True) if l2 else False
+        supported = sup1 and sup2
+        note = None if supported else "Not available in one or more models"
+        score_diffs[lbl] = ScoreDiffItem(
+            text1=s1,
+            text2=s2,
+            diff=round(s2 - s1, 3),
+            supported=supported,
+            note=note
+        )
 
     # Toxicity differences
     tox_diff = None
     if getattr(res1, "toxicity_prediction", None) and getattr(res2, "toxicity_prediction", None):
         t1 = round(res1.toxicity_prediction.toxicity_score, 4)
         t2 = round(res2.toxicity_prediction.toxicity_score, 4)
-        tox_diff = ScoreDiffItem(text1=t1, text2=t2, diff=round(t2 - t1, 4))
+        tox_diff = ScoreDiffItem(text1=t1, text2=t2, diff=round(t2 - t1, 4), supported=True)
         score_diffs["toxicity"] = tox_diff
 
     # Determine predictions differ
@@ -280,6 +342,65 @@ async def compare_texts(request: CompareTextsRequest):
            "Cross-language comparison: probability distributions reflect distinct language baseline thresholds.")
     )
 
+    # Persist both comparative text records to the database with user ownership
+    rec1 = ModerationRecord(
+        id=id1,
+        original_text=res1.original_text,
+        normalized_text=res1.text,
+        model_name=res1.model_name,
+        model_version=res1.model_version,
+        labels=[{"label": l.label, "score": l.score, "evidence": l.evidence} for l in res1.labels],
+        hate_speech_score=next((l.score for l in res1.labels if l.label == "hate_speech"), 0.0),
+        harassment_score=next((l.score for l in res1.labels if l.label == "harassment"), 0.0),
+        cyberbullying_score=next((l.score for l in res1.labels if l.label == "cyberbullying"), 0.0),
+        legitimate_score=next((l.score for l in res1.labels if l.label == "legitimate"), 0.0),
+        severity=res1.severity,
+        severity_reason=res1.severity_reason,
+        decision=res1.decision,
+        confidence_level=res1.confidence_level,
+        recommended_action=res1.recommended_action,
+        ambiguity_warning=res1.ambiguity_warning,
+        detected_language=res1.detected_language,
+        is_code_mixed=res1.is_code_mixed,
+        language_hint=request.language_hint1,
+        status="pending" if res1.decision != "no_action" else "reviewed",
+        platform=getattr(request, "platform", None) or "Compare Context",
+        user_id=current_user.id if current_user else None,
+        is_demo=False,
+        inference_timestamp=res1.inference_timestamp,
+        processing_time_ms=res1.processing_time_ms,
+    )
+    rec2 = ModerationRecord(
+        id=id2,
+        original_text=res2.original_text,
+        normalized_text=res2.text,
+        model_name=res2.model_name,
+        model_version=res2.model_version,
+        labels=[{"label": l.label, "score": l.score, "evidence": l.evidence} for l in res2.labels],
+        hate_speech_score=next((l.score for l in res2.labels if l.label == "hate_speech"), 0.0),
+        harassment_score=next((l.score for l in res2.labels if l.label == "harassment"), 0.0),
+        cyberbullying_score=next((l.score for l in res2.labels if l.label == "cyberbullying"), 0.0),
+        legitimate_score=next((l.score for l in res2.labels if l.label == "legitimate"), 0.0),
+        severity=res2.severity,
+        severity_reason=res2.severity_reason,
+        decision=res2.decision,
+        confidence_level=res2.confidence_level,
+        recommended_action=res2.recommended_action,
+        ambiguity_warning=res2.ambiguity_warning,
+        detected_language=res2.detected_language,
+        is_code_mixed=res2.is_code_mixed,
+        language_hint=request.language_hint2,
+        status="pending" if res2.decision != "no_action" else "reviewed",
+        platform=getattr(request, "platform", None) or "Compare Context",
+        user_id=current_user.id if current_user else None,
+        is_demo=False,
+        inference_timestamp=res2.inference_timestamp,
+        processing_time_ms=res2.processing_time_ms,
+    )
+    db.add(rec1)
+    db.add(rec2)
+    await db.commit()
+
     return CompareTextsResponse(
         text1_analysis=schema1,
         text2_analysis=schema2,
@@ -302,11 +423,17 @@ async def list_chat_sessions(
     """List manual-analysis chat sessions for authenticated user or anonymous workspace."""
     conditions = []
     if current_user:
-        conditions.append(or_(ChatSession.user_id == current_user.id, ChatSession.user_id.is_(None)))
+        if current_user.role == "admin":
+            pass  # Administrator overview
+        else:
+            conditions.append(ChatSession.user_id == current_user.id)
     else:
         conditions.append(ChatSession.user_id.is_(None))
 
-    stmt = select(ChatSession).where(and_(*conditions)).order_by(ChatSession.updated_at.desc())
+    stmt = select(ChatSession)
+    if conditions:
+        stmt = stmt.where(and_(*conditions))
+    stmt = stmt.order_by(ChatSession.updated_at.desc())
     res = await db.execute(stmt)
     sessions = res.scalars().all()
 
@@ -353,13 +480,21 @@ async def create_chat_session(
 
 
 @router.get("/sessions/{session_id}", response_model=ChatSessionDetailSchema)
-async def get_chat_session(session_id: str, db: AsyncSession = Depends(get_db)):
-    """Retrieve a specific chat session with its full transcript."""
+async def get_chat_session(
+    session_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """Retrieve a specific chat session with its full transcript with ownership enforcement."""
     stmt = select(ChatSession).where(ChatSession.id == session_id)
     res = await db.execute(stmt)
     session = res.scalar_one_or_none()
     if not session:
         raise HTTPException(status_code=404, detail="Chat session not found")
+
+    if session.user_id:
+        if not current_user or (current_user.role != "admin" and session.user_id != current_user.id):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to view this chat session.")
 
     return ChatSessionDetailSchema(
         id=session.id,
@@ -372,8 +507,13 @@ async def get_chat_session(session_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/sessions/{session_id}/messages", response_model=ChatSessionDetailSchema)
-async def add_chat_message(session_id: str, request: AddChatMessageRequest, db: AsyncSession = Depends(get_db)):
-    """Append a message to a chat session."""
+async def add_chat_message(
+    session_id: str,
+    request: AddChatMessageRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """Append a message to a chat session with ownership verification."""
     stmt = select(ChatSession).where(ChatSession.id == session_id)
     res = await db.execute(stmt)
     session = res.scalar_one_or_none()
@@ -381,9 +521,14 @@ async def add_chat_message(session_id: str, request: AddChatMessageRequest, db: 
         session = ChatSession(
             id=session_id,
             title=request.text[:40] + ("..." if len(request.text) > 40 else ""),
+            user_id=current_user.id if current_user else None,
             messages=[],
         )
         db.add(session)
+    else:
+        if session.user_id:
+            if not current_user or (current_user.role != "admin" and session.user_id != current_user.id):
+                raise HTTPException(status_code=403, detail="Forbidden: You do not own this chat session.")
 
     msg_id = str(uuid.uuid4())
     msg = {
@@ -416,13 +561,22 @@ async def add_chat_message(session_id: str, request: AddChatMessageRequest, db: 
 
 
 @router.delete("/sessions/{session_id}")
-async def delete_chat_session(session_id: str, db: AsyncSession = Depends(get_db)):
-    """Delete a chat session without deleting persisted moderation records."""
+async def delete_chat_session(
+    session_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """Delete a chat session with ownership verification without deleting persisted moderation records."""
     stmt = select(ChatSession).where(ChatSession.id == session_id)
     res = await db.execute(stmt)
     session = res.scalar_one_or_none()
     if not session:
         raise HTTPException(status_code=404, detail="Chat session not found")
+
+    if session.user_id:
+        if not current_user or (current_user.role != "admin" and session.user_id != current_user.id):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to delete this chat session.")
+
     await db.delete(session)
     await db.commit()
     return {"status": "deleted", "id": session_id}

@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
+from app.api.v1.auth import get_current_user_optional
+from app.models.user import User
 from app.models.moderation import ModerationRecord, HumanReview
 from app.models.feedback import AuditEvent
 from app.schemas.schemas import ModerationRecordSchema, ModerationDetailSchema, ReviewDecisionRequest
@@ -26,9 +28,15 @@ async def list_moderation_records(
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc"),
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """List moderation records with filtering and pagination."""
+    """List moderation records with account-isolated filtering and pagination."""
     query = select(ModerationRecord)
+    if current_user:
+        if current_user.role != 'admin':
+            query = query.where(ModerationRecord.user_id == current_user.id)
+    else:
+        query = query.where(ModerationRecord.user_id.is_(None))
     
     if status:
         query = query.where(ModerationRecord.status == status)
@@ -102,12 +110,20 @@ async def list_moderation_records(
 
 
 @router.get("/{record_id}")
-async def get_moderation_record(record_id: str, db: AsyncSession = Depends(get_db)):
-    """Get full detail for a moderation record."""
+async def get_moderation_record(
+    record_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    """Get full detail for a moderation record with account ownership verification."""
     result = await db.execute(select(ModerationRecord).where(ModerationRecord.id == record_id))
     record = result.scalars().first()
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
+
+    if record.user_id:
+        if not current_user or (current_user.role != 'admin' and record.user_id != current_user.id):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to view this record.")
     
     reviews_result = await db.execute(select(HumanReview).where(HumanReview.record_id == record_id))
     reviews = reviews_result.scalars().all()
@@ -166,14 +182,19 @@ async def submit_review_decision(
     record_id: str,
     request: ReviewDecisionRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """Submit a human moderator decision on a record."""
+    """Submit a human moderator decision on a record with ownership verification."""
     result = await db.execute(select(ModerationRecord).where(ModerationRecord.id == record_id))
     record = result.scalars().first()
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
 
-    # Update status
+    if record.user_id:
+        if not current_user or (current_user.role != 'admin' and record.user_id != current_user.id):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to review this record.")
+
+    # Update status and reconcile decision with human moderator adjudication
     status_map = {
         "approve": "reviewed",
         "dismiss": "dismissed",
@@ -181,6 +202,30 @@ async def submit_review_decision(
         "further_review": "pending",
     }
     record.status = status_map.get(request.action, "reviewed")
+
+    # Reconcile operational decision so Dashboard metrics and KPIs accurately reflect human moderation
+    if request.action == "approve":
+        record.decision = "no_action"
+        if request.corrected_severity:
+            record.severity = request.corrected_severity
+        else:
+            record.severity = "low"
+    elif request.action == "dismiss":
+        record.decision = "no_action"
+        record.severity = "low"
+    elif request.action == "escalate":
+        record.decision = "escalate"
+        if request.corrected_severity:
+            record.severity = request.corrected_severity
+        else:
+            record.severity = "high"
+    elif request.action in ("flag", "confirm_violation"):
+        record.decision = "flag_for_review"
+        record.status = "flagged"
+        if request.corrected_severity:
+            record.severity = request.corrected_severity
+        else:
+            record.severity = "high"
 
     # Create review record
     review = HumanReview(

@@ -6,7 +6,7 @@ import {
   ShieldAlert, Info, Clock, Globe, UserCheck
 } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts';
-import { feedbackApi } from '../api/client';
+import { feedbackApi, moderationApi } from '../api/client';
 import type { ErrorAnalysis, FeedbackRecord } from '../types';
 import { useToast } from '../App';
 import { useTranslation } from '../i18n/I18nContext';
@@ -71,13 +71,14 @@ export default function FeedbackAnalysis() {
         <Sector
           cx={cx}
           cy={cy}
-          innerRadius={innerRadius - 3}
-          outerRadius={outerRadius + 6}
+          innerRadius={innerRadius - 2}
+          outerRadius={outerRadius + 3}
           startAngle={startAngle}
           endAngle={endAngle}
           fill={fill}
+          cornerRadius={3}
           style={{
-            filter: `drop-shadow(0px 0px 8px ${fill}99)`,
+            filter: `drop-shadow(0px 2px 6px ${fill}55)`,
             transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
             cursor: 'pointer'
           }}
@@ -139,14 +140,36 @@ export default function FeedbackAnalysis() {
     });
   }, [feedbackList, selectedTypeFilter, selectedLangFilter, searchQuery]);
 
-  // Open Drawer for investigation
-  const openInvestigation = (item: FeedbackRecord) => {
-    setSelectedItem(item);
-    setDrawerExplanation(item.explanation || '');
-    if (item.is_confirmed) setDrawerDecision('correct');
-    else if (item.is_false_positive) setDrawerDecision('false_positive');
-    else if (item.is_false_negative) setDrawerDecision('false_negative');
-    else if (item.is_ambiguous) setDrawerDecision('ambiguous');
+  // Open Drawer for investigation with reliable comment text & metrics hydration
+  const openInvestigation = async (item: FeedbackRecord) => {
+    let targetItem: FeedbackRecord = { ...item };
+    if ((!targetItem.comment_text || targetItem.comment_text.trim() === '') && targetItem.record_id) {
+      try {
+        const detailResp = await moderationApi.getDetail(targetItem.record_id);
+        if (detailResp.data) {
+          targetItem = {
+            ...targetItem,
+            comment_text: detailResp.data.original_text || detailResp.data.normalized_text || targetItem.comment_text,
+            severity: detailResp.data.severity || targetItem.severity,
+            decision: detailResp.data.decision || targetItem.decision,
+            platform: detailResp.data.platform || targetItem.platform,
+            language: detailResp.data.detected_language || targetItem.language,
+            hate_speech_score: detailResp.data.hate_speech_score ?? targetItem.hate_speech_score,
+            harassment_score: detailResp.data.harassment_score ?? targetItem.harassment_score,
+            cyberbullying_score: detailResp.data.cyberbullying_score ?? targetItem.cyberbullying_score,
+            legitimate_score: detailResp.data.legitimate_score ?? targetItem.legitimate_score,
+          };
+        }
+      } catch (err) {
+        console.warn('Could not fetch moderation detail for record:', targetItem.record_id, err);
+      }
+    }
+    setSelectedItem(targetItem);
+    setDrawerExplanation(targetItem.explanation || '');
+    if (targetItem.is_confirmed) setDrawerDecision('correct');
+    else if (targetItem.is_false_positive) setDrawerDecision('false_positive');
+    else if (targetItem.is_false_negative) setDrawerDecision('false_negative');
+    else if (targetItem.is_ambiguous) setDrawerDecision('ambiguous');
     else setDrawerDecision(null);
   };
 
@@ -365,16 +388,20 @@ export default function FeedbackAnalysis() {
                 <span>No review decisions logged yet. Submit reviews in the Moderator Command Center to see live error distributions.</span>
               </div>
             ) : (
-              <div className="relative w-full h-44 flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="relative w-full h-44 flex items-center justify-center overflow-hidden">
+                <div key={activePieIndex >= 0 ? undefined : (analysis?.total_feedback || 0)} className="w-full h-full flex items-center justify-center donut-circle-container">
+                  <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieData}
                       cx="50%"
                       cy="50%"
+                      startAngle={90}
+                      endAngle={-270}
                       innerRadius={48}
                       outerRadius={68}
-                      paddingAngle={3}
+                      paddingAngle={2.5}
+                      cornerRadius={3}
                       dataKey="value"
                       activeIndex={activePieIndex}
                       activeShape={renderActiveShape}
@@ -382,7 +409,8 @@ export default function FeedbackAnalysis() {
                       onMouseLeave={() => setActivePieIndex(-1)}
                       cursor="pointer"
                       isAnimationActive={true}
-                      animationDuration={400}
+                      animationDuration={850}
+                      animationEasing="ease-out"
                     >
                       {pieData.map((entry, index) => (
                         <Cell
@@ -390,8 +418,8 @@ export default function FeedbackAnalysis() {
                           fill={entry.color}
                           stroke="#FFFFFF"
                           strokeWidth={2}
-                          opacity={activePieIndex === -1 || activePieIndex === index ? 1 : 0.4}
-                          style={{ transition: 'opacity 0.2s ease' }}
+                          opacity={activePieIndex === -1 || activePieIndex === index ? 1 : 0.45}
+                          style={{ transition: 'opacity 0.22s ease-out' }}
                         />
                       ))}
                     </Pie>
@@ -401,6 +429,7 @@ export default function FeedbackAnalysis() {
                     />
                   </PieChart>
                 </ResponsiveContainer>
+                </div>
 
                 {/* Dynamic Center Label */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center px-2">
@@ -597,8 +626,13 @@ export default function FeedbackAnalysis() {
             <thead className="bg-[#F8F9FE] text-[#858795] border-b border-[#E9EAF1] font-semibold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="py-3 px-3.5">Record ID</th>
+                <th className="py-3 px-3">Comment Text</th>
                 <th className="py-3 px-3">Language</th>
-                <th className="py-3 px-4">Reviewer Verdict</th>
+                <th className="py-3 px-3">Platform</th>
+                <th className="py-3 px-3">Severity</th>
+                <th className="py-3 px-3">Reviewer Verdict</th>
+                <th className="py-3 px-3">Human Review</th>
+                <th className="py-3 px-3">Status</th>
                 <th className="py-3 px-4">Explanation / Ground Truth</th>
                 <th className="py-3 px-3">Date</th>
                 <th className="py-3 px-3.5 text-right">Action</th>
@@ -608,14 +642,14 @@ export default function FeedbackAnalysis() {
               {loading ? (
                 [0, 1, 2, 3].map(i => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={6} className="py-4 px-4 bg-[#F8F9FE]/40">
+                    <td colSpan={11} className="py-4 px-4 bg-[#F8F9FE]/40">
                       <div className="h-4 bg-[#E9EAF1] rounded w-full" />
                     </td>
                   </tr>
                 ))
               ) : filteredList.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-[#858795] text-xs">
+                  <td colSpan={11} className="py-12 text-center text-[#858795] text-xs">
                     No human feedback records match the selected filters.
                   </td>
                 </tr>
@@ -626,15 +660,32 @@ export default function FeedbackAnalysis() {
                     className="hover:bg-[#F8F9FE] transition-colors group cursor-pointer"
                     onClick={() => openInvestigation(item)}
                   >
-                    <td className="py-3 px-3.5 font-mono text-[#6C5CE7] font-semibold">
+                    <td className="py-3 px-3.5 font-mono text-[#6C5CE7] font-semibold whitespace-nowrap">
                       {(item.record_id || item.id).slice(0, 8)}...
                     </td>
-                    <td className="py-3 px-3">
+                    <td className="py-3 px-3 max-w-[200px] truncate text-[#20212B] font-medium" title={item.comment_text || item.explanation || ''}>
+                      {item.comment_text || item.explanation || <span className="text-[#858795] italic">Direct sample</span>}
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap">
                       <span className="capitalize text-[10px] px-2.5 py-0.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] font-semibold text-[#6C5CE7]">
                         {item.language || 'English'}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
+                        {item.platform || 'direct'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                        item.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        item.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      }`}>
+                        {item.severity || 'low'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap">
                       {item.is_confirmed ? (
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" /> Confirmed
@@ -657,13 +708,25 @@ export default function FeedbackAnalysis() {
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-[#20212B] max-w-md truncate">
+                    <td className="py-3 px-3 whitespace-nowrap capitalize font-medium text-[#20212B]">
+                      {item.human_review ? item.human_review.replace(/_/g, ' ') : (item.is_confirmed ? 'Approved' : 'Audited')}
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize border ${
+                        item.status === 'reviewed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        item.status === 'flagged' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        'bg-[#F5F6FA] text-[#858795] border-[#E9EAF1]'
+                      }`}>
+                        {item.status || 'reviewed'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-[#20212B] max-w-xs truncate" title={item.explanation || ''}>
                       {item.explanation ? `"${item.explanation}"` : <span className="text-[#858795] italic">No notes provided</span>}
                     </td>
                     <td className="py-3 px-3 text-[#858795] text-[11px] tabular-nums whitespace-nowrap">
                       {new Date(item.created_at).toLocaleDateString()}
                     </td>
-                    <td className="py-3 px-3.5 text-right">
+                    <td className="py-3 px-3.5 text-right whitespace-nowrap">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -713,6 +776,95 @@ export default function FeedbackAnalysis() {
                 </button>
               </div>
 
+              {/* Original Target Comment Section */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#20212B]">
+                    Original Comment Content
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
+                      {selectedItem.platform || 'Direct'}
+                    </span>
+                    <span className="capitalize text-[10px] px-2 py-0.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] font-bold text-[#6C5CE7]">
+                      {selectedItem.language || 'English'}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] text-xs text-[#20212B] font-medium leading-relaxed max-h-40 overflow-y-auto break-words select-text shadow-inner">
+                  "{selectedItem.comment_text || selectedItem.explanation || 'No comment text recorded'}"
+                </div>
+              </div>
+
+              {/* Status & Decision Badges Strip */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                  selectedItem.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                  selectedItem.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}>
+                  Severity: {selectedItem.severity || 'low'}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white border border-[#E9EAF1] text-[#858795] capitalize">
+                  Decision: {(selectedItem.decision || selectedItem.status || 'no action').replace(/_/g, ' ')}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
+                  Status: {selectedItem.validation_status || selectedItem.status || 'reviewed'}
+                </span>
+                {selectedItem.created_at && (
+                  <span className="text-[10px] text-[#858795] font-mono flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-[#858795]" />
+                    {new Date(selectedItem.created_at).toLocaleString()}
+                  </span>
+                )}
+              </div>
+
+              {/* Category Scores Breakdown with Visual Bars */}
+              <div className="p-3.5 bg-[#FBFBFE] rounded-xl border border-[#E9EAF1] space-y-2.5 text-xs">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#858795]">
+                  <span>Model Category Scores</span>
+                  <span className="text-[10px] text-[#6C5CE7] lowercase font-semibold">calibrated multi-category</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  {[
+                    { label: 'Hate Speech', score: selectedItem.hate_speech_score ?? 0.0, isHarm: (selectedItem.hate_speech_score ?? 0) >= 0.4 },
+                    { label: 'Harassment', score: selectedItem.harassment_score ?? 0.0, isHarm: (selectedItem.harassment_score ?? 0) >= 0.4 },
+                    { label: 'Cyberbullying', score: selectedItem.cyberbullying_score ?? 0.0, isHarm: (selectedItem.cyberbullying_score ?? 0) >= 0.4 },
+                    { label: 'Legitimate', score: selectedItem.legitimate_score ?? 0.0, isHarm: false },
+                  ].map((cat) => {
+                    const pct = Math.round((cat.score || 0) * 100);
+                    return (
+                      <div key={cat.label} className="p-2 bg-white rounded-lg border border-[#E9EAF1] space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#858795] text-[10px] font-medium">{cat.label}:</span>
+                          <span className={`font-mono font-bold ${cat.isHarm ? 'text-rose-600' : 'text-[#20212B]'}`}>{pct}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-[#F0F1F5] rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              cat.label === 'Legitimate' ? 'bg-emerald-500' : cat.isHarm ? 'bg-rose-500' : 'bg-amber-400'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Reviewer Notes / Historical Ground Truth */}
+              {selectedItem.explanation && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#20212B]">
+                    Logged Reviewer Notes &amp; Rationale
+                  </span>
+                  <div className="p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] text-xs text-[#20212B] leading-relaxed max-h-24 overflow-y-auto">
+                    "{selectedItem.explanation}"
+                  </div>
+                </div>
+              )}
+
               {/* Case Metadata Strip */}
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1]">
@@ -726,11 +878,11 @@ export default function FeedbackAnalysis() {
               </div>
 
               {/* Linked Record Details */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-[#20212B]">
                   Linked Record Reference
                 </label>
-                <div className="p-3 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] font-mono text-xs text-[#20212B] flex items-center justify-between">
+                <div className="p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] font-mono text-[11px] text-[#20212B] flex items-center justify-between">
                   <span className="truncate">{selectedItem.record_id || selectedItem.id}</span>
                   <button
                     onClick={() => {

@@ -25,6 +25,8 @@ class LabelScoreSchema(BaseModel):
     label: str
     score: float
     evidence: list[str] = []
+    supported: bool = True
+    note: Optional[str] = None
 
 
 class ToxicityPredictionSchema(BaseModel):
@@ -102,6 +104,8 @@ class ScoreDiffItem(BaseModel):
     text1: float
     text2: float
     diff: float
+    supported: bool = True
+    note: Optional[str] = None
 
 
 class CompareTextsResponse(BaseModel):

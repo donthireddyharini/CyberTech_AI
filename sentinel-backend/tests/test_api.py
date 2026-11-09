@@ -7,56 +7,10 @@ import asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-# Override settings for testing
-import os
-os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test_sentinel.db"
-os.environ["DEMO_MODE"] = "false"
-
 from main import app
 from app.core.database import get_db, Base
 from app.nlp.engine import BaselineNLPEngine
-
-# Test database
-TEST_DB_URL = "sqlite+aiosqlite:///./test_sentinel.db"
-test_engine = create_async_engine(TEST_DB_URL, echo=False)
-TestSessionLocal = async_sessionmaker(bind=test_engine, class_=AsyncSession, expire_on_commit=False)
-
-
-async def override_get_db():
-    async with TestSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-
-
-app.dependency_overrides[get_db] = override_get_db
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session", autouse=True)
-async def setup_test_db():
-    """Create test tables."""
-    from app.models import moderation, evaluation, feedback, dataset, audit, user, social, chat_session  # noqa
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    import os
-    try:
-        os.remove("./test_sentinel.db")
-    except Exception:
-        pass
-
+from tests.conftest import test_engine, TestSessionLocal
 
 @pytest.fixture
 async def client():
@@ -952,6 +906,66 @@ async def test_monitoring_upload_csv(client):
     assert res["processed_count"] == 2
     assert res["duplicate_count"] == 1
     assert res["flagged_count"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_monitoring_preview_csv_and_async_upload(client):
+    """Tests POST /api/monitor/preview-csv, async background processing, and GET /api/monitor/csv-status."""
+    import asyncio
+    csv_content = (
+        "custom_comment_col,metadata\n"
+        "\"This is a great tutorial and very helpful!\",meta1\n"
+        "\"You are a dumb idiot, get lost!\",meta2\n"
+        "\"This is a great tutorial and very helpful!\",meta3\n"
+    )
+    files = {
+        "file": ("benchmark_test.csv", csv_content.encode("utf-8"), "text/csv")
+    }
+
+    # 1. Preview
+    preview_resp = await client.post("/api/monitor/preview-csv", files=files)
+    assert preview_resp.status_code == 200
+    prev_data = preview_resp.json()
+    assert prev_data["detected_column"] == "custom_comment_col"
+    assert "custom_comment_col" in prev_data["columns"]
+    assert prev_data["total_estimated_rows"] == 3
+
+    # 2. Async Upload
+    upload_files = {
+        "file": ("benchmark_test.csv", csv_content.encode("utf-8"), "text/csv")
+    }
+    data = {
+        "deduplicate": "true",
+        "comment_column": "custom_comment_col",
+        "platform_name": "Async Benchmark Test",
+        "async_job": "true"
+    }
+    upload_resp = await client.post("/api/monitor/upload-csv", files=upload_files, data=data)
+    assert upload_resp.status_code == 200
+    up_data = upload_resp.json()
+    assert "job_id" in up_data
+    assert up_data["status"] == "processing"
+    assert up_data["total_records"] == 2
+    assert up_data["duplicate_count"] == 1
+
+    job_id = up_data["job_id"]
+
+    # 3. Poll Status until completed
+    completed = False
+    for _ in range(20):
+        await asyncio.sleep(0.3)
+        status_resp = await client.get(f"/api/monitor/csv-status/{job_id}")
+        assert status_resp.status_code == 200
+        st = status_resp.json()
+        if st["status"] == "completed":
+            completed = True
+            assert st["processed_count"] == 2
+            assert st["flagged_count"] >= 1
+            assert st["approved_count"] >= 1
+            assert len(st["items"]) >= 1
+            break
+
+    assert completed, "Background CSV job did not reach completed state within timeout"
 
 
 @pytest.mark.asyncio

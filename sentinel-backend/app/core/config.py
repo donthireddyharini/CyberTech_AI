@@ -15,8 +15,12 @@ _env_files = (
 )
 
 
+_BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_DB_PATH = os.path.join(_BACKEND_DIR, "sentinel.db").replace("\\", "/")
+
+
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite+aiosqlite:///./sentinel.db"
+    DATABASE_URL: str = f"sqlite+aiosqlite:///{_DB_PATH}"
     SECRET_KEY: str = "sentinel-dev-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -34,7 +38,7 @@ class Settings(BaseSettings):
     INSTAGRAM_APP_SECRET: Optional[str] = None
 
     # Google Sign-In OAuth Configuration
-    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_ID: Optional[str] = "883218263318-89148rbi3f69lmc28mrchja5vdhltp27.apps.googleusercontent.com"
     GOOGLE_CLIENT_SECRET: Optional[str] = None
 
     @property

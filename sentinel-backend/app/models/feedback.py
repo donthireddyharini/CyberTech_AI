@@ -97,6 +97,7 @@ class DatasetRecord(Base):
     
     status: Mapped[str] = mapped_column(String(30), default="imported")  # uploaded/validated/imported/error
     validation_errors: Mapped[dict] = mapped_column(JSON, nullable=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 

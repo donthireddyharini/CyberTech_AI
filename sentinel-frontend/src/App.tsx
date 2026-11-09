@@ -4,7 +4,8 @@ import {
   Shield, LayoutDashboard, FlaskConical, ShieldAlert, Scale,
   MessageSquareWarning, ChevronLeft, ChevronRight,
   CheckCircle, Globe, LogOut, Calendar, Check,
-  Edit2, AlertCircle, X, Activity, Sparkles, Terminal, ChevronDown
+  Edit2, AlertCircle, X, Activity, Sparkles, Terminal, ChevronDown,
+  Radio, GitCompare
 } from 'lucide-react';
 import { healthApi } from './api/client';
 import type { Toast } from './types';
@@ -19,7 +20,9 @@ import LoginPage from './pages/LoginPage';
 
 // Pages
 import Dashboard from './pages/Dashboard';
+import SocialMediaIngestion from './pages/SocialMediaIngestion';
 import ContextLab from './pages/ContextLab';
+import CompareContext from './pages/CompareContext';
 import ModerationCenter from './pages/ModerationCenter';
 import FairnessEvaluation from './pages/FairnessEvaluation';
 import FeedbackAnalysis from './pages/FeedbackAnalysis';
@@ -63,10 +66,12 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
   );
 }
 
-// ─── Swapped & Ordered Navigation Items ─────────────────────────────────────────
+// ─── Navigation Items (Unified Consistent Design System) ────────────────────────
 const getNavItems = (t: (key: string, def?: string) => string) => [
   { path: '/', label: t('nav.dashboard', 'Dashboard'), icon: LayoutDashboard },
+  { path: '/social-ingestion', label: t('nav.socialIngestion', 'Social Media Ingestion'), icon: Radio },
   { path: '/context-lab', label: t('nav.contextLab', 'Context Intelligence Lab'), icon: FlaskConical },
+  { path: '/compare-context', label: t('nav.compareContext', 'Compare Context'), icon: GitCompare },
   { path: '/moderation', label: t('nav.moderation', 'Moderator Command Center'), icon: ShieldAlert },
   { path: '/fairness', label: t('nav.evaluations', 'Fairness & Evaluation'), icon: Scale },
   { path: '/feedback', label: t('nav.feedback', 'Feedback & Error Analysis'), icon: MessageSquareWarning },
@@ -135,13 +140,17 @@ function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
               key={item.path}
               to={item.path}
               title={collapsed ? item.label : undefined}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all relative ${
+              className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-[12.5px] transition-all duration-200 relative ${
+                collapsed ? 'justify-center' : ''
+              } ${
                 isActive
-                  ? 'bg-[#EEEAFE] text-[#6C5CE7] font-semibold shadow-xs'
-                  : 'text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA] font-medium'
+                  ? 'bg-[#EEEAFE] text-[#6C5CE7] font-bold shadow-xs border border-[#DDD6FE]'
+                  : 'text-[#20212B] hover:text-[#6C5CE7] hover:bg-[#EEEAFE]/50 font-semibold border border-transparent'
               }`}
             >
-              <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-[#6C5CE7]' : 'text-[#858795]'}`} />
+              <Icon className={`shrink-0 w-4.5 h-4.5 transition-colors ${
+                isActive ? 'text-[#6C5CE7]' : 'text-[#858795] group-hover:text-[#6C5CE7]'
+              }`} />
               {!collapsed && (
                 <div className="flex-1 flex items-center justify-between min-w-0">
                   <span className="truncate">{item.label}</span>
@@ -218,7 +227,9 @@ function TopNav({ collapsed, modelOnline }: { collapsed: boolean; modelOnline: b
   const getPageContext = () => {
     const p = location.pathname;
     if (p === '/') return { section: 'Workspace', page: 'Operational Dashboard' };
+    if (p.startsWith('/social-ingestion')) return { section: 'Workspace', page: 'Social Media Ingestion' };
     if (p.startsWith('/context-lab')) return { section: 'Workspace', page: 'Context Intelligence Lab' };
+    if (p.startsWith('/compare-context')) return { section: 'Workspace', page: 'Compare Context' };
     if (p.startsWith('/moderation')) return { section: 'Workspace', page: 'Moderator Command Center' };
     if (p.startsWith('/fairness')) return { section: 'Workspace', page: 'Fairness & Evaluation' };
     if (p.startsWith('/feedback')) return { section: 'Workspace', page: 'Feedback & Error Analysis' };
@@ -381,6 +392,7 @@ function TopNav({ collapsed, modelOnline }: { collapsed: boolean; modelOnline: b
 // ─── Main App Inner ───────────────────────────────────────────────────────────
 function AppInner() {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [modelOnline, setModelOnline] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -436,15 +448,19 @@ function AppInner() {
 
         <main className={`pt-16 transition-all duration-300 min-h-screen ${collapsed ? 'pl-16' : 'pl-64'} bg-[#F5F6FA]`}>
           <div className="p-6 md:p-8 max-w-[1700px] mx-auto">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/context-lab" element={<ContextLab />} />
-              <Route path="/moderation" element={<ModerationCenter />} />
-              <Route path="/fairness" element={<FairnessEvaluation />} />
-              <Route path="/feedback" element={<FeedbackAnalysis />} />
-              <Route path="/login" element={<Navigate to="/" replace />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+            <div key={location.pathname} className="page-enter">
+              <Routes location={location}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/social-ingestion" element={<SocialMediaIngestion />} />
+                <Route path="/context-lab" element={<ContextLab />} />
+                <Route path="/compare-context" element={<CompareContext />} />
+                <Route path="/moderation" element={<ModerationCenter />} />
+                <Route path="/fairness" element={<FairnessEvaluation />} />
+                <Route path="/feedback" element={<FeedbackAnalysis />} />
+                <Route path="/login" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
           </div>
         </main>
 

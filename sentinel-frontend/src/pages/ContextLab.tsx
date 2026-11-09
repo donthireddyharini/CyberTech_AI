@@ -1,341 +1,100 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  FlaskConical, Send, RotateCcw, AlertCircle,
-  Info, ArrowRight, Globe, ChevronDown, ChevronUp,
-  Layers, SplitSquareHorizontal, CheckCircle2,
-  TrendingUp, TrendingDown, Scale, ShieldAlert, Sparkles,
-  MessageSquare, PlusCircle, Trash2, Clock, Check,
-  ExternalLink, User, Bot, ShieldCheck
+  Send, RotateCcw, AlertCircle, Info, ArrowRight,
+  Globe, ChevronDown, CheckCircle2, TrendingUp,
+  ShieldAlert, Sparkles, MessageSquare, PlusCircle,
+  Trash2, Clock, Check, Mic, MicOff, Bot, User,
+  ShieldCheck, Loader2, Volume2, VolumeX, Radio
 } from 'lucide-react';
 import { analyzeApi } from '../api/client';
-import type { AnalyzeResponse, CompareTextsResponse, ChatMessage, ScoreDiffItem } from '../types';
+import type { AnalyzeResponse, ChatMessage } from '../types';
 import { useToast } from '../App';
 import { useContextLab } from '../context/ContextLabContext';
 
-// ─── 12 CULTURALLY APPROPRIATE COMPACT SAMPLE SCENARIOS ───────────────────────
-interface SampleScenario {
+// ─── EXACT SIX REQUESTED SUGGESTED SCENARIOS ─────────────────────────────────
+interface SuggestedScenario {
   id: string;
-  langLabel: string;
-  scenarioLabel: string;
+  language: string;
+  suggestion: string;
+  example: string;
   langHint: string;
-  text: string;
-  dotColor: string;
+  isHarmful: boolean;
 }
 
-const SAMPLE_SCENARIOS: SampleScenario[] = [
+const SUGGESTED_SCENARIOS: SuggestedScenario[] = [
   {
     id: 'en_civil',
-    langLabel: 'English',
-    scenarioLabel: 'Harmless / Civil',
+    language: 'English',
+    suggestion: 'Good / Civil',
+    example: 'Thank you for sharing this. I really appreciate your explanation.',
     langHint: 'english',
-    text: 'I appreciate this clear and well-structured breakdown of the topic, thank you for sharing.',
-    dotColor: 'bg-emerald-500',
-  },
-  {
-    id: 'en_mild',
-    langLabel: 'English',
-    scenarioLabel: 'Mild Insult',
-    langHint: 'english',
-    text: 'This is a completely ridiculous argument and you clearly do not understand how it works.',
-    dotColor: 'bg-amber-500',
+    isHarmful: false,
   },
   {
     id: 'en_harass',
-    langLabel: 'English',
-    scenarioLabel: 'Targeted Harassment',
+    language: 'English',
+    suggestion: 'Harassment',
+    example: 'You are useless, and nobody wants to hear your opinion.',
     langHint: 'english',
-    text: 'You are an absolute pathetic clown and nobody wants you posting here, just delete your account.',
-    dotColor: 'bg-rose-500',
-  },
-  {
-    id: 'en_threat',
-    langLabel: 'English',
-    scenarioLabel: 'Explicit Threat',
-    langHint: 'english',
-    text: 'I will find where you live and hurt you for what you posted.',
-    dotColor: 'bg-rose-600',
-  },
-  {
-    id: 'hi_civil',
-    langLabel: 'Hindi',
-    scenarioLabel: 'Harmless / Civil',
-    langHint: 'hindi',
-    text: 'यह बहुत ही सुंदर और उपयोगी व्याख्यान है, साझा करने के लिए आपका बहुत-बहुत धन्यवाद।',
-    dotColor: 'bg-emerald-500',
-  },
-  {
-    id: 'hi_hostile',
-    langLabel: 'Hindi',
-    scenarioLabel: 'Hostile / Harassment',
-    langHint: 'hindi',
-    text: 'तू बहुत ही घटिया और बदतमीज इंसान है, अपनी बकवास यहां बंद कर।',
-    dotColor: 'bg-rose-500',
+    isHarmful: true,
   },
   {
     id: 'te_civil',
-    langLabel: 'Telugu',
-    scenarioLabel: 'Harmless / Civil',
+    language: 'Telugu',
+    suggestion: 'Good / Civil',
+    example: 'చాలా మంచి సమాచారం పంచుకున్నారు. ధన్యవాదాలు.',
     langHint: 'telugu',
-    text: 'చాలా చక్కగా వివరించారు, ఈ సమాచారం అందరికీ ఎంతో ఉపయోగపడుతుంది.',
-    dotColor: 'bg-emerald-500',
+    isHarmful: false,
   },
   {
-    id: 'te_insult',
-    langLabel: 'Telugu',
-    scenarioLabel: 'Insult / Harassment',
+    id: 'te_harass',
+    language: 'Telugu',
+    suggestion: 'Harassment',
+    example: 'నీకు ఏమీ తెలియదు, నీ మాటలు ఎవరికీ అవసరం లేదు.',
     langHint: 'telugu',
-    text: 'నువ్వు చాలా పనికిరాని వెధవవి, అసలు మాట్లాడటం మానేయి.',
-    dotColor: 'bg-rose-500',
+    isHarmful: true,
   },
   {
-    id: 'kn_civil',
-    langLabel: 'Kannada',
-    scenarioLabel: 'Harmless / Civil',
-    langHint: 'kannada',
-    text: 'ತುಂಬಾ ಉಪಯುಕ್ತವಾದ ಮಾಹಿತಿ ಮತ್ತು ವಿವರಣೆ, ಹಂಚಿಕೊಂಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು.',
-    dotColor: 'bg-emerald-500',
+    id: 'hi_civil',
+    language: 'Hindi',
+    suggestion: 'Good / Civil',
+    example: 'आपने बहुत अच्छी जानकारी साझा की है। धन्यवाद।',
+    langHint: 'hindi',
+    isHarmful: false,
   },
   {
-    id: 'kn_insult',
-    langLabel: 'Kannada',
-    scenarioLabel: 'Insult / Harassment',
-    langHint: 'kannada',
-    text: 'ನೀನು ತುಂಬಾ ಕೆಟ್ಟವನು ಮತ್ತು ಅಸಹ್ಯ, ಇಲ್ಲಿಂದ ತೊಲಗು.',
-    dotColor: 'bg-rose-500',
-  },
-  {
-    id: 'hinglish_civil',
-    langLabel: 'Hinglish',
-    scenarioLabel: 'Harmless / Civil',
-    langHint: 'hinglish',
-    text: 'Yeh tutorial sach mein bahut accha aur helpful tha, great explanation.',
-    dotColor: 'bg-emerald-500',
-  },
-  {
-    id: 'hinglish_hostile',
-    langLabel: 'Hinglish',
-    scenarioLabel: 'Hostile / Harassment',
-    langHint: 'hinglish',
-    text: 'Tu ek number ka bekaar aur fraud aadmi hai, yahan se dafa ho ja.',
-    dotColor: 'bg-rose-500',
+    id: 'hi_harass',
+    language: 'Hindi',
+    suggestion: 'Harassment',
+    example: 'तुम्हें कुछ भी नहीं आता, तुम्हारी बात कोई नहीं सुनना चाहता।',
+    langHint: 'hindi',
+    isHarmful: true,
   },
 ];
 
-const LABEL_COLORS: Record<string, string> = {
-  hate_speech: '#FF7675',
-  harassment: '#FDCB6E',
-  cyberbullying: '#6C5CE7',
-  legitimate: '#00B894',
-};
-
-// ─── HELPER FORMATTER FOR PERCENTAGES (PREVENTS 0 FROM BECOMING '—') ─────────
-function formatScorePct(score: number | null | undefined): string {
-  if (score === null || score === undefined || isNaN(score)) {
-    return '0.0%';
-  }
-  return `${(score * 100).toFixed(1)}%`;
+// ─── VOICE ASSISTANCE MULTILINGUAL CONFIGURATION ─────────────────────────────
+export interface VoiceLangOption {
+  code: string;
+  name: string;
+  nativeName: string;
+  shortLabel: string;
+  defaultHint: string;
 }
 
-// ─── SCORE BAR COMPONENT ─────────────────────────────────────────────────────
-function ScoreBar({ label, score, color }: { label: string; score: number; color: string }) {
-  const safeScore = typeof score === 'number' && !isNaN(score) ? score : 0;
-  return (
-    <div>
-      <div className="flex justify-between text-xs mb-1">
-        <span className="text-[#858795] capitalize font-medium">{label.replace(/_/g, ' ')}</span>
-        <span className="text-[#20212B] tabular-nums font-bold">{formatScorePct(safeScore)}</span>
-      </div>
-      <div className="h-1.5 bg-[#F0F1F5] rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${Math.min(100, Math.max(0, safeScore * 100))}%`, background: color }}
-        />
-      </div>
-    </div>
-  );
-}
+const VOICE_LANGUAGES: VoiceLangOption[] = [
+  { code: 'en-IN', name: 'English (India)', nativeName: 'English', shortLabel: 'English', defaultHint: 'english' },
+  { code: 'te-IN', name: 'Telugu', nativeName: 'తెలుగు', shortLabel: 'తెలుగు', defaultHint: 'telugu' },
+  { code: 'hi-IN', name: 'Hindi', nativeName: 'हिन्दी', shortLabel: 'हिन्दी', defaultHint: 'hindi' },
+  { code: 'kn-IN', name: 'Kannada', nativeName: 'ಕನ್ನಡ', shortLabel: 'ಕನ್ನಡ', defaultHint: 'kannada' },
+  { code: 'en-US', name: 'English (US)', nativeName: 'US English', shortLabel: 'en-US', defaultHint: 'english' },
+];
 
-// ─── DETAILED EVALUATION RESPONSE CARD ───────────────────────────────────────
-function EvaluationResponseCard({ result }: { result: AnalyzeResponse }) {
-  const [showEvidence, setShowEvidence] = useState(false);
-
-  const severityColors: Record<string, string> = {
-    low: 'text-emerald-700 bg-emerald-50/80 border-emerald-200',
-    medium: 'text-amber-700 bg-amber-50/80 border-amber-200',
-    high: 'text-rose-700 bg-rose-50/80 border-rose-200',
-    uncertain: 'text-[#858795] bg-[#F5F6FA] border-[#E9EAF1]',
-  };
-
-  const decisionBadges: Record<string, { bg: string; text: string; border: string; label: string }> = {
-    no_action: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'No Action (Civil)' },
-    flag_for_review: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', label: 'Flag For Review' },
-    human_review: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Human Verification' },
-  };
-
-  const tox = result.toxicity_prediction;
-  const isToxic = tox?.is_toxic ?? false;
-  const toxScore = tox?.toxicity_score ?? 0;
-  const threshold = tox?.threshold ?? 0.40;
-  const confidence = tox?.confidence ?? 0.50;
-
-  return (
-    <div className="bg-white rounded-2xl border border-[#E9EAF1] p-5 shadow-xs space-y-4">
-      {/* Top Banner: Binary Model Verdict + Operational Severity + Decision */}
-      <div className="flex items-center justify-between flex-wrap gap-2.5 pb-3 border-b border-[#E9EAF1]">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Binary Model Classification Verdict */}
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-            isToxic
-              ? 'bg-rose-50 text-rose-700 border-rose-200'
-              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-          }`}>
-            {isToxic ? <AlertCircle className="w-3.5 h-3.5 text-rose-600" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-            <span>{isToxic ? 'Harmful / Toxic Content' : 'Civil / Non-Harmful Content'}</span>
-          </span>
-
-          {/* Operational Severity Badge */}
-          <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border capitalize ${
-            severityColors[result.severity] || severityColors.uncertain
-          }`}>
-            {result.severity} Severity
-          </span>
-        </div>
-
-        {/* Operational Decision Badge */}
-        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
-          decisionBadges[result.decision]?.bg || 'bg-slate-50'
-        } ${decisionBadges[result.decision]?.text || 'text-slate-700'} ${
-          decisionBadges[result.decision]?.border || 'border-slate-200'
-        }`}>
-          {decisionBadges[result.decision]?.label || result.decision.replace(/_/g, ' ')}
-        </span>
-      </div>
-
-      {/* Primary Model Metric: Calibrated Toxicity Score */}
-      <div className="p-3.5 bg-[#FBFBFE] rounded-xl border border-[#DDD6FE] space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 font-bold text-[#20212B]">
-            <Sparkles className="w-3.5 h-3.5 text-[#6C5CE7]" />
-            <span>Calibrated Toxicity Score (Offline Scikit-Learn):</span>
-          </div>
-          <span className={`text-base font-black tabular-nums ${isToxic ? 'text-rose-600' : 'text-emerald-600'}`}>
-            {formatScorePct(toxScore)}
-          </span>
-        </div>
-        <div className="h-2 bg-white rounded-full overflow-hidden border border-[#E9EAF1]">
-          <div
-            className={`h-full rounded-full transition-all duration-600 ${isToxic ? 'bg-rose-500' : 'bg-emerald-500'}`}
-            style={{ width: `${Math.min(100, Math.max(0, toxScore * 100))}%` }}
-          />
-        </div>
-        <div className="flex items-center justify-between text-[11px] text-[#858795]">
-          <span>Decision Cutoff Threshold: <strong className="text-[#20212B] font-mono">{(threshold * 100).toFixed(0)}%</strong></span>
-          <span>Model Confidence: <strong className="text-[#6C5CE7] font-mono">{(confidence * 100).toFixed(1)}%</strong></span>
-        </div>
-      </div>
-
-      {/* Operational Severity Reason */}
-      {result.severity_reason && (
-        <div className="text-xs text-[#858795] bg-[#F8F9FE] p-3 rounded-xl border border-[#E9EAF1]">
-          <strong className="text-[#20212B]">Operational Policy Rationale: </strong>
-          <span>{result.severity_reason}</span>
-        </div>
-      )}
-
-      {/* Multi-Label Semantic Category Scores */}
-      <div className="space-y-2 pt-1">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-[#858795]">
-          Semantic Category Breakdown
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {result.labels.map(l => (
-            <div key={l.label} className="p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1]">
-              <ScoreBar label={l.label} score={l.score} color={LABEL_COLORS[l.label] || '#6C5CE7'} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Metadata Strip: Detected Language, Latency, Model Checkpoint */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
-        <div className="p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1]">
-          <span className="text-[10px] text-[#858795] block uppercase font-semibold">Detected Script</span>
-          <span className="font-bold text-[#20212B] capitalize mt-0.5 block truncate">
-            {result.detected_language} {result.is_code_mixed ? '(Code-Mixed)' : ''}
-          </span>
-        </div>
-        <div className="p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1]">
-          <span className="text-[10px] text-[#858795] block uppercase font-semibold">Model Pipeline</span>
-          <span className="font-mono text-[11px] text-[#6C5CE7] font-bold mt-0.5 block truncate">
-            {result.model_name}
-          </span>
-        </div>
-        <div className="p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1]">
-          <span className="text-[10px] text-[#858795] block uppercase font-semibold">Inference Latency</span>
-          <span className="font-bold text-[#20212B] tabular-nums mt-0.5 block">
-            {result.processing_time_ms} ms
-          </span>
-        </div>
-        <div className="p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1]">
-          <span className="text-[10px] text-[#858795] block uppercase font-semibold">Model Status</span>
-          <span className="font-bold text-emerald-700 mt-0.5 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Local Offline</span>
-          </span>
-        </div>
-      </div>
-
-      {/* Recommended Enforcement Action */}
-      <div className="p-3 rounded-xl bg-[#EEEAFE]/50 border border-[#DDD6FE] text-xs">
-        <strong className="text-[#6C5CE7]">Recommended Action: </strong>
-        <span className="text-[#20212B]">{result.recommended_action}</span>
-      </div>
-
-      {/* Collapsible Evidence Tokens */}
-      {result.labels.some(l => l.evidence.length > 0) && (
-        <div className="pt-1">
-          <button
-            type="button"
-            onClick={() => setShowEvidence(!showEvidence)}
-            className="flex items-center gap-1.5 text-xs text-[#6C5CE7] hover:text-[#5B4BC4] font-semibold transition-colors cursor-pointer"
-          >
-            {showEvidence ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            <span>{showEvidence ? 'Hide' : 'Inspect'} Detected Token Evidence ({result.labels.reduce((acc, l) => acc + l.evidence.length, 0)})</span>
-          </button>
-          {showEvidence && (
-            <div className="mt-2 p-3 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] space-y-2 animate-in fade-in duration-200">
-              {result.labels.filter(l => l.evidence.length > 0).map(l => (
-                <div key={l.label}>
-                  <span className="text-[10px] text-[#858795] uppercase font-mono">{l.label.replace(/_/g, ' ')} tokens:</span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {l.evidence.map((tok, i) => (
-                      <span key={i} className="px-2 py-0.5 bg-white border border-[#DDD6FE] rounded text-[11px] text-[#6C5CE7] font-mono font-semibold">
-                        "{tok}"
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── MAIN CONTEXT INTELLIGENCE LAB COMPONENT ─────────────────────────────────
 export default function ContextLab() {
   const { addToast } = useToast();
   const {
-    mode,
-    setMode,
-    text,
-    setText,
-    languageHint,
-    setLanguageHint,
+    text, setText,
+    languageHint, setLanguageHint,
     platform,
-    setPlatform,
     sessions,
     activeSessionId,
     currentSession,
@@ -344,771 +103,905 @@ export default function ContextLab() {
     selectSession,
     deleteSession,
     addMessageToActiveSession,
-    compareText1,
-    setCompareText1,
-    compareText2,
-    setCompareText2,
-    compareLang1,
-    setCompareLang1,
-    compareLang2,
-    setCompareLang2,
-    compareResult,
-    setCompareResult,
-    clearCompare,
   } = useContextLab();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
 
-  // Scroll to latest message smoothly when new message arrives
+  // Dedicated Voice Recognition Language (Initialized to match hint or Indian English default)
+  const [voiceLanguage, setVoiceLanguage] = useState<string>(() => {
+    if (languageHint === 'telugu') return 'te-IN';
+    if (languageHint === 'hindi') return 'hi-IN';
+    if (languageHint === 'kannada') return 'kn-IN';
+    if (languageHint === 'english' || languageHint === 'hinglish') return 'en-IN';
+    return 'en-IN';
+  });
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const silenceTimerRef = useRef<any>(null);
+
+  // Current active voice language config object
+  const currentVoiceConfig = VOICE_LANGUAGES.find((v) => v.code === voiceLanguage) || VOICE_LANGUAGES[0];
+
+  // Initialize Speech Recognition capability check & cleanup on unmount
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setSpeechSupported(false);
+    }
+
+    return () => {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // ignore
+        }
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Sync voiceLanguage when user changes the model languageHint dropdown
+  const handleLanguageHintChange = (newHint: string) => {
+    setLanguageHint(newHint);
+    if (newHint === 'telugu') setVoiceLanguage('te-IN');
+    else if (newHint === 'hindi') setVoiceLanguage('hi-IN');
+    else if (newHint === 'kannada') setVoiceLanguage('kn-IN');
+    else if (newHint === 'english' || newHint === 'hinglish') setVoiceLanguage('en-IN');
+  };
+
+  // Auto-scroll message feed to bottom when new messages arrive
   useEffect(() => {
     if (currentSession?.messages && currentSession.messages.length > 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [currentSession?.messages?.length]);
+  }, [currentSession?.messages?.length, analyzing]);
 
-  // Execute Single Comment Inference
-  const executeAnalysis = async (commentText: string, langHint?: string, originPlat?: string) => {
-    if (!commentText.trim()) {
-      addToast('Please enter a comment to analyze.', 'warning');
+  // Stop active voice recognition safely
+  const stopListening = () => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // ignore
+      }
+    }
+    setIsListening(false);
+    setInterimTranscript('');
+  };
+
+  // Start or Toggle Voice Input with specific BCP-47 language tag
+  const startListening = (langCode: string) => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      addToast('Speech Recognition is not supported in this browser. Please use Google Chrome or Microsoft Edge.', 'warning');
       return;
     }
-    setLoading(true);
-    setError(null);
+
+    // Stop any existing instance
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+      recognition.lang = langCode;
+
+      const targetVoice = VOICE_LANGUAGES.find((v) => v.code === langCode) || VOICE_LANGUAGES[0];
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setInterimTranscript('');
+        if (!languageHint || languageHint === 'english' || languageHint === targetVoice.defaultHint) {
+          setLanguageHint(targetVoice.defaultHint);
+        }
+        addToast(`Microphone active. Listening in ${targetVoice.name} (${targetVoice.nativeName}). Speak clearly...`, 'info');
+      };
+
+      recognition.onresult = (event: any) => {
+        // Reset silence timer on every voice result
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+        }
+        // Auto-stop after 3.5 seconds of silence
+        silenceTimerRef.current = setTimeout(() => {
+          stopListening();
+          addToast('Voice captured. Review your comment and submit.', 'success');
+        }, 3500);
+
+        let finalTranscript = '';
+        let interim = '';
+
+        // Accumulate complete sentence across all results (avoids losing previous words)
+        for (let i = 0; i < event.results.length; ++i) {
+          const item = event.results[i];
+          if (item.isFinal) {
+            finalTranscript += item[0].transcript + ' ';
+          } else {
+            interim += item[0].transcript;
+          }
+        }
+
+        const combined = (finalTranscript + interim).trim();
+        setInterimTranscript(interim);
+
+        if (combined) {
+          setText(combined);
+
+          // Automatic script detection to route the backend model accurately
+          if (/[ఀ-౿]/.test(combined)) {
+            // Telugu Unicode block
+            setLanguageHint('telugu');
+          } else if (/[ऀ-ॿ]/.test(combined)) {
+            // Devanagari (Hindi) Unicode block
+            setLanguageHint('hindi');
+          } else if (/[ಀ-೿]/.test(combined)) {
+            // Kannada Unicode block
+            setLanguageHint('kannada');
+          } else if (targetVoice.defaultHint && targetVoice.defaultHint !== 'english') {
+            // Latin script transcribed for regional voice language
+            setLanguageHint(targetVoice.defaultHint);
+          }
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        stopListening();
+        if (event.error === 'not-allowed') {
+          addToast('Microphone permission was denied. Please allow microphone access in your browser settings.', 'error');
+        } else if (event.error === 'no-speech') {
+          addToast(`No speech detected for ${targetVoice.name}. Please speak clearly into your microphone.`, 'warning');
+        } else if (event.error === 'language-not-supported') {
+          addToast(`Voice language ${langCode} is not installed in your browser. Falling back to Indian English (en-IN).`, 'warning');
+          setVoiceLanguage('en-IN');
+        } else if (event.error !== 'aborted') {
+          addToast(`Voice input error: ${event.error}`, 'error');
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        setInterimTranscript('');
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = null;
+        }
+      };
+
+      recognition.start();
+    } catch (err: any) {
+      stopListening();
+      addToast(err.message || 'Failed to start microphone speech recognition.', 'error');
+    }
+  };
+
+  // Toggle Voice Input handler
+  const toggleVoiceInput = (overrideLangCode?: string) => {
+    if (isListening) {
+      stopListening();
+      addToast('Voice input stopped.', 'info');
+    } else {
+      const target = overrideLangCode || voiceLanguage;
+      startListening(target);
+    }
+  };
+
+  // Switch voice language and seamlessly restart recognition if currently listening
+  const switchVoiceLang = (newCode: string, defaultHint?: string) => {
+    setVoiceLanguage(newCode);
+    const target = VOICE_LANGUAGES.find((v) => v.code === newCode);
+    const hintToSet = defaultHint || target?.defaultHint;
+    if (hintToSet) {
+      setLanguageHint(hintToSet);
+    }
+    if (isListening) {
+      stopListening();
+      setTimeout(() => {
+        startListening(newCode);
+      }, 150);
+    }
+  };
+
+  // ─── TEXT-TO-SPEECH (READ ALOUD) FOR AI RESPONSES ─────────────────────────
+  const speakMessage = (msgId: string, textToSpeak: string, detectedLang?: string) => {
+    if (!('speechSynthesis' in window)) {
+      addToast('Text-to-speech is not supported in this browser.', 'warning');
+      return;
+    }
+
+    if (speakingMessageId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    // Clean text: strip markdown symbols, URLs, etc.
+    const cleanText = textToSpeak
+      .replace(/[#*_~`]/g, '')
+      .replace(/\[.*?\]/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .trim();
+
+    if (!cleanText) return;
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+
+    const langKey = (detectedLang || languageHint || 'english').toLowerCase();
+    let targetLangCode = 'en-IN';
+    if (langKey.includes('telugu')) targetLangCode = 'te-IN';
+    else if (langKey.includes('hindi')) targetLangCode = 'hi-IN';
+    else if (langKey.includes('kannada')) targetLangCode = 'kn-IN';
+    else if (langKey.includes('hinglish') || langKey.includes('english')) targetLangCode = 'en-IN';
+
+    utterance.lang = targetLangCode;
+
+    // Pick matching voice
+    const voices = window.speechSynthesis.getVoices();
+    const matchingVoice =
+      voices.find((v) => v.lang.toLowerCase() === targetLangCode.toLowerCase()) ||
+      voices.find((v) => v.lang.toLowerCase().startsWith(targetLangCode.split('-')[0])) ||
+      voices.find((v) => v.lang.toLowerCase().includes('in')) ||
+      voices[0];
+
+    if (matchingVoice) {
+      utterance.voice = matchingVoice;
+    }
+
+    utterance.onstart = () => {
+      setSpeakingMessageId(msgId);
+    };
+    utterance.onend = () => {
+      setSpeakingMessageId(null);
+    };
+    utterance.onerror = () => {
+      setSpeakingMessageId(null);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const buildSpeechSummary = (res: AnalyzeResponse): string => {
+    const lang = res.detected_language ? res.detected_language.toUpperCase() : 'English';
+    const decision =
+      res.decision === 'flag_for_review'
+        ? 'Flagged for moderation review'
+        : res.decision === 'human_review'
+        ? 'Escalated to human moderator'
+        : 'Approved as legitimate content';
+
+    const tox = res.toxicity_prediction ? Math.round(res.toxicity_prediction.toxicity_score * 100) : 0;
+    const reason = res.severity_reason ? ` Reason: ${res.severity_reason}.` : '';
+
+    return `Moderation Analysis in ${lang}. Result: ${decision}. Severity level is ${res.severity}, with toxicity probability of ${tox} percent.${reason}`;
+  };
+
+  // Execute Single Comment Inference & Append to Conversation
+  const handleAnalyze = async (overrideText?: string, overrideHint?: string) => {
+    if (analyzing) return;
+    const targetText = (overrideText !== undefined ? overrideText : text).trim();
+    let targetHint = (overrideHint !== undefined ? overrideHint : languageHint).trim();
+
+    if (!targetText) {
+      addToast('Please enter a comment to analyze or select a suggested scenario.', 'warning');
+      return;
+    }
+
+    // Dynamic Indic script detection to route accurately and prevent stale hints
+    if (/[ऀ-ॿ]/.test(targetText)) {
+      targetHint = 'hindi';
+      setLanguageHint('hindi');
+    } else if (/[ఀ-౿]/.test(targetText)) {
+      targetHint = 'telugu';
+      setLanguageHint('telugu');
+    } else if (/[ಀ-೿]/.test(targetText)) {
+      targetHint = 'kannada';
+      setLanguageHint('kannada');
+    }
+
+    setAnalyzing(true);
     try {
       const resp = await analyzeApi.analyze({
-        text: commentText.trim(),
-        language_hint: langHint || undefined,
-        platform: originPlat || 'manual',
+        text: targetText,
+        language_hint: targetHint || undefined,
+        platform: platform || 'Context Lab Chatbot',
       });
 
-      // Append to the active session conversation transcript
-      await addMessageToActiveSession(commentText.trim(), langHint, originPlat || 'manual', resp.data);
+      const analysisResult: AnalyzeResponse = resp.data;
 
-      addToast('Comment analyzed and saved to current session.', 'success');
+      // Append to active chat transcript and persist
+      await addMessageToActiveSession(
+        targetText,
+        targetHint || undefined,
+        platform || 'Context Lab Chatbot',
+        analysisResult
+      );
+
+      setText('');
+      setInterimTranscript('');
+      addToast('Comment analyzed and added to conversation.', 'success');
     } catch (err: any) {
-      const msg = err.message || 'Analysis failed.';
-      setError(msg);
-      addToast(msg, 'error');
+      addToast(err.message || 'Analysis failed. Please check backend connection.', 'error');
     } finally {
-      setLoading(false);
+      setAnalyzing(false);
     }
   };
 
-  // Click-to-Analyze for Sample Scenario Chips
-  const handleSelectScenario = async (scenario: SampleScenario) => {
-    setSelectedScenarioId(scenario.id);
-    setText(scenario.text);
+  // Suggested Scenario Click Behavior: Auto-submit example and run real inference
+  const handleScenarioClick = async (scenario: SuggestedScenario) => {
+    if (analyzing) return;
+    setText(scenario.example);
     setLanguageHint(scenario.langHint);
-    await executeAnalysis(scenario.text, scenario.langHint, 'manual');
-  };
-
-  // Manual Submit button click
-  const handleManualSubmit = async () => {
-    setSelectedScenarioId(null);
-    await executeAnalysis(text, languageHint, platform || 'manual');
-  };
-
-  // Clear single form
-  const handleClearForm = () => {
-    setText('');
-    setLanguageHint('');
-    setPlatform('');
-    setSelectedScenarioId(null);
-    setError(null);
-  };
-
-  // Start a fresh New Chat session
-  const handleNewChat = async () => {
-    try {
-      await newChat();
-      setSelectedScenarioId(null);
-      setError(null);
-      addToast('Started a new intelligence chat session.', 'info');
-    } catch {
-      addToast('Failed to initialize new session.', 'error');
-    }
-  };
-
-  // Handle Two-Text Comparative Inference
-  const handleCompareTexts = async () => {
-    if (!compareText1.trim() || !compareText2.trim()) {
-      addToast('Please enter both Input Text 1 and Input Text 2 to compare.', 'warning');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    setCompareResult(null);
-    try {
-      const resp = await analyzeApi.compareTexts({
-        text1: compareText1.trim(),
-        text2: compareText2.trim(),
-        language_hint1: compareLang1 || undefined,
-        language_hint2: compareLang2 || undefined,
-      });
-      setCompareResult(resp.data);
-      addToast('Comparative inference completed successfully.', 'success');
-    } catch (err: any) {
-      const msg = err.message || 'Comparative inference failed.';
-      setError(msg);
-      addToast(msg, 'error');
-    } finally {
-      setLoading(false);
-    }
+    if (scenario.langHint === 'telugu') setVoiceLanguage('te-IN');
+    else if (scenario.langHint === 'hindi') setVoiceLanguage('hi-IN');
+    else if (scenario.langHint === 'kannada') setVoiceLanguage('kn-IN');
+    else setVoiceLanguage('en-IN');
+    await handleAnalyze(scenario.example, scenario.langHint);
   };
 
   return (
-    <div className="space-y-8 max-w-screen-2xl page-enter pb-16">
-      {/* ── Page Header ── */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] shadow-xs">
-            <FlaskConical className="w-5 h-5 text-[#6C5CE7]" />
+    <div className="flex flex-col lg:flex-row gap-5 h-[calc(100vh-6rem)] pb-3 page-enter">
+      
+      {/* ── Left Sidebar: Dedicated Conversation History ── */}
+      <aside className="w-full lg:w-72 bg-white rounded-2xl border border-[#E9EAF1] p-4 flex flex-col shadow-xs shrink-0 h-auto lg:h-full">
+        {/* + New Chat Action */}
+        <button
+          type="button"
+          onClick={async () => {
+            await newChat();
+            addToast('Started a new conversation session.', 'info');
+          }}
+          disabled={loadingSession}
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-md shadow-[#6C5CE7]/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+        >
+          <PlusCircle className="w-4 h-4" />
+          <span>New Chat Session</span>
+        </button>
+
+        {/* Previous Conversations Header */}
+        <div className="mt-4 mb-2 flex items-center justify-between text-[11px] font-bold text-[#858795] uppercase tracking-wider px-1">
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-[#6C5CE7]" />
+            <span>Chat Sessions ({sessions.length})</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-[#20212B] tracking-tight">Context Intelligence Lab</h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE]">
-                Offline Inference
-              </span>
+          {loadingSession && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6C5CE7]" />}
+        </div>
+
+        {/* Scrollable Sessions List */}
+        <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 min-h-[140px] max-h-[300px] lg:max-h-none">
+          {sessions.length === 0 ? (
+            <div className="p-4 text-center text-xs text-[#858795] bg-[#F8F9FE] rounded-xl border border-dashed border-[#E9EAF1] mt-2">
+              <MessageSquare className="w-5 h-5 mx-auto mb-1 text-[#858795]/50" />
+              <span>No saved chats yet. Start typing to begin.</span>
             </div>
-            <p className="text-xs text-[#858795] mt-0.5">
-              Interactive session moderation, scenario benchmarking, and empirical two-text comparative evaluation.
-            </p>
-          </div>
-        </div>
+          ) : (
+            sessions.map((s) => {
+              const isActive = s.id === activeSessionId;
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => selectSession(s.id)}
+                  className={`group relative p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-start justify-between gap-2 ${
+                    isActive
+                      ? 'bg-[#EEEAFE] border-[#DDD6FE] text-[#6C5CE7] font-bold shadow-xs'
+                      : 'bg-white hover:bg-[#F8F9FE] border-[#E9EAF1] text-[#20212B]'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-semibold text-xs leading-snug">
+                      {s.title || 'Untitled Conversation'}
+                    </div>
+                    <div className="text-[10px] text-[#858795] mt-1 flex items-center gap-1.5">
+                      <span>{s.message_count} {s.message_count === 1 ? 'msg' : 'msgs'}</span>
+                      <span>•</span>
+                      <span>
+                        {new Date(s.updated_at).toLocaleDateString([], {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                  </div>
 
-        {/* Mode Toggle */}
-        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#E9EAF1] shadow-xs">
-          <button
-            type="button"
-            onClick={() => {
-              setMode('single');
-              setError(null);
-            }}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              mode === 'single'
-                ? 'bg-[#6C5CE7] text-white shadow-xs'
-                : 'text-[#858795] hover:text-[#20212B]'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Single Analysis &amp; Chat</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode('compare');
-              setError(null);
-            }}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              mode === 'compare'
-                ? 'bg-[#6C5CE7] text-white shadow-xs'
-                : 'text-[#858795] hover:text-[#20212B]'
-            }`}
-          >
-            <SplitSquareHorizontal className="w-3.5 h-3.5" />
-            <span>Compare Context (Two Texts)</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Global Error Notice */}
-      {error && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 animate-in fade-in duration-200">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* ═════════════════════════════════════════════════════════════════════════
-          MODE 1: SINGLE ANALYSIS & CONVERSATIONAL INTELLIGENCE CHAT SESSION
-          ═════════════════════════════════════════════════════════════════════════ */}
-      {mode === 'single' && (
-        <div className="space-y-6">
-          {/* ── Active Session Bar with New Chat and History Selector ── */}
-          <div className="bg-white p-4 rounded-2xl border border-[#E9EAF1] shadow-xs flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#EEEAFE] flex items-center justify-center text-[#6C5CE7]">
-                <MessageSquare className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#20212B]">
-                    {currentSession?.title || 'Active Intelligence Session'}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
-                    {currentSession?.messages?.length || 0} analyses
-                  </span>
-                </div>
-                <div className="text-[11px] text-[#858795] flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 text-[#858795]" />
-                  <span>
-                    Started {currentSession?.created_at ? new Date(currentSession.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'now'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              {/* Previous Sessions Dropdown */}
-              {sessions.length > 0 && (
-                <div className="relative">
-                  <select
-                    value={activeSessionId || ''}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        selectSession(e.target.value);
+                  {/* Delete Conversation Button */}
+                  <button
+                    type="button"
+                    title="Delete session"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Delete this conversation history?')) {
+                        await deleteSession(s.id);
+                        addToast('Session removed.', 'info');
                       }
                     }}
-                    className="px-3 py-1.5 rounded-xl border border-[#E9EAF1] bg-[#F8F9FE] hover:bg-white text-xs text-[#20212B] font-medium transition-colors focus:outline-none focus:border-[#6C5CE7] cursor-pointer"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-[#858795] hover:text-rose-600 transition-opacity rounded"
                   >
-                    <option value="" disabled>Switch to previous session...</option>
-                    {sessions.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.title} ({s.message_count} msgs)
-                      </option>
-                    ))}
-                  </select>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              )}
-
-              {/* + New Chat Button */}
-              <button
-                type="button"
-                onClick={handleNewChat}
-                disabled={loading || loadingSession}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4BC4] text-white text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>New Chat</span>
-              </button>
-            </div>
-          </div>
-
-          {/* ── Main Input Form with Embedded Sample Scenarios ── */}
-          <div className="bg-white p-6 rounded-2xl border border-[#E9EAF1] shadow-xs space-y-4">
-            {/* 1. Target Comment Text */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold text-[#20212B]">
-                  Target Comment Text *
-                </label>
-                <span className="text-[10px] text-[#858795] font-mono">
-                  {text.length} / 10,000 characters
-                </span>
-              </div>
-              <textarea
-                value={text}
-                onChange={e => {
-                  setText(e.target.value);
-                  setSelectedScenarioId(null);
-                }}
-                rows={3}
-                maxLength={10000}
-                className="w-full px-4 py-3 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs md:text-sm text-[#20212B] placeholder-[#858795] focus:bg-white focus:outline-none focus:border-[#6C5CE7] transition-colors"
-                placeholder="Type or paste any manual social comment to analyze, or click any sample scenario below..."
-              />
-            </div>
-
-            {/* ── COMPACT SAMPLE SCENARIOS SECTION (BETWEEN TEXT & LANGUAGE HINT) ── */}
-            <div className="space-y-2 pt-1 pb-1 border-y border-[#F0F1F5]">
-              <div className="flex items-center justify-between flex-wrap gap-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#20212B]">
-                  <Sparkles className="w-3.5 h-3.5 text-[#6C5CE7]" />
-                  <span>Sample Scenarios (Click to test instantly):</span>
-                </div>
-                <span className="text-[10px] text-[#858795]">
-                  Selects language &amp; automatically runs real inference
-                </span>
-              </div>
-
-              {/* 12 Scenario Chips Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {SAMPLE_SCENARIOS.map(sc => {
-                  const isSelected = selectedScenarioId === sc.id;
-                  return (
-                    <button
-                      key={sc.id}
-                      type="button"
-                      onClick={() => handleSelectScenario(sc)}
-                      disabled={loading}
-                      title={sc.text}
-                      className={`text-left p-2 rounded-xl border text-xs transition-all cursor-pointer flex flex-col justify-between gap-1 shadow-2xs hover:shadow-xs active:scale-98 disabled:opacity-60 ${
-                        isSelected
-                          ? 'bg-[#EEEAFE] border-[#6C5CE7] text-[#20212B] ring-1 ring-[#6C5CE7]'
-                          : 'bg-[#F8F9FE] border-[#E9EAF1] text-[#20212B] hover:bg-white hover:border-[#DDD6FE]'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="text-[10px] font-bold text-[#6C5CE7] uppercase tracking-wide">
-                          {sc.langLabel}
-                        </span>
-                        <span className={`w-1.5 h-1.5 rounded-full ${sc.dotColor}`} />
-                      </div>
-                      <span className="text-[11px] font-semibold text-[#20212B] truncate leading-tight">
-                        {sc.scenarioLabel}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 2. Language Hint & Platform Origin */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <div>
-                <label className="block text-[11px] font-semibold text-[#858795] mb-1">
-                  Language Hint (Optional Override)
-                </label>
-                <select
-                  value={languageHint}
-                  onChange={e => setLanguageHint(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] focus:outline-none focus:border-[#6C5CE7] cursor-pointer"
-                >
-                  <option value="">Auto-Detect Script &amp; Language</option>
-                  <optgroup label="Calibrated Local Model checkouts">
-                    <option value="english">English (enhanced_word_char_v2)</option>
-                    <option value="hindi">Hindi (hindi_word_char_v1)</option>
-                    <option value="telugu">Telugu (telugu_generalization_v3)</option>
-                    <option value="kannada">Kannada (kannada_word_char_v2)</option>
-                    <option value="hinglish">Hinglish / Code-Mixed (hinglish_contextual_v2)</option>
-                  </optgroup>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#858795] mb-1">
-                  Platform Origin (Tagging)
-                </label>
-                <input
-                  type="text"
-                  value={platform}
-                  onChange={e => setPlatform(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] placeholder-[#858795] focus:bg-white focus:outline-none focus:border-[#6C5CE7] transition-colors"
-                  placeholder="manual (or YouTube, Instagram, etc.)"
-                  maxLength={50}
-                />
-              </div>
-            </div>
-
-            {/* Actions Bar */}
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={handleManualSubmit}
-                disabled={loading || !text.trim()}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all disabled:opacity-50 cursor-pointer active:scale-95"
-              >
-                {loading ? (
-                  <>
-                    <RotateCcw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Running Inference...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Analyze Comment</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleClearForm}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#F5F6FA] hover:bg-[#E9EAF1] border border-[#E9EAF1] text-[#858795] hover:text-[#20212B] text-xs font-medium transition-colors cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Clear Form</span>
-              </button>
-            </div>
-          </div>
-
-          {/* ── Threaded Chat Transcript of Current Session ── */}
-          <div className="space-y-5">
-            <div className="flex items-center justify-between pb-1">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#20212B]">
-                <MessageSquare className="w-4 h-4 text-[#6C5CE7]" />
-                <span>Session Conversation Transcript</span>
-              </div>
-              <span className="text-[11px] text-[#858795]">
-                Analyses persist across tab navigation and browser sessions
-              </span>
-            </div>
-
-            {/* Empty State when no analyses in session */}
-            {(!currentSession?.messages || currentSession.messages.length === 0) && (
-              <div className="bg-white p-8 rounded-2xl border border-dashed border-[#DDD6FE] text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center mx-auto shadow-xs">
-                  <Bot className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-[#20212B]">No analyses in this session yet</h3>
-                  <p className="text-xs text-[#858795] max-w-md mx-auto">
-                    Type a custom message above and click <strong>Analyze Comment</strong>, or click any of the <strong>Sample Scenarios</strong> to test real multilingual model responses.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Conversation Feed */}
-            {currentSession?.messages && currentSession.messages.map((msg, idx) => (
-              <div key={msg.id || idx} className="space-y-3 page-enter">
-                {/* User Input Bubble */}
-                <div className="flex items-start gap-3 justify-end">
-                  <div className="max-w-2xl bg-[#EEEAFE]/60 border border-[#DDD6FE] p-4 rounded-2xl rounded-tr-xs text-xs space-y-1.5">
-                    <div className="flex items-center justify-between gap-4 text-[10px] text-[#858795]">
-                      <span className="font-bold text-[#6C5CE7] flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        <span>Submitted Comment #{idx + 1}</span>
-                      </span>
-                      <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
-                    </div>
-                    <p className="text-[#20212B] font-medium text-xs leading-relaxed whitespace-pre-wrap">
-                      "{msg.text}"
-                    </p>
-                    <div className="flex items-center gap-2 text-[10px] text-[#858795] pt-0.5">
-                      {msg.language_hint && (
-                        <span className="bg-white px-2 py-0.5 rounded border border-[#E9EAF1]">
-                          Hint: {msg.language_hint}
-                        </span>
-                      )}
-                      <span className="bg-white px-2 py-0.5 rounded border border-[#E9EAF1]">
-                        Source: {msg.platform || 'manual'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Model Response Card */}
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#6C5CE7] text-white flex items-center justify-center shrink-0 mt-1 shadow-xs">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <EvaluationResponseCard result={msg.result} />
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <div ref={messagesEndRef} />
-          </div>
+              );
+            })
+          )}
         </div>
-      )}
 
-      {/* ═════════════════════════════════════════════════════════════════════════
-          MODE 2: REAL TWO-TEXT COMPARATIVE INFERENCE WORKSPACE
-          ═════════════════════════════════════════════════════════════════════════ */}
-      {mode === 'compare' && (
-        <div className="space-y-6">
-          {/* Two Inputs Panels Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Input Text 1 */}
-            <div className="bg-white p-6 space-y-4 rounded-2xl border border-[#E9EAF1] shadow-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E9EAF1]">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#20212B]">
-                  <span className="w-5 h-5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center text-[11px] font-bold">1</span>
-                  <span>Input Text 1 (Primary Message)</span>
-                </div>
-                <span className="text-[10px] text-[#858795] font-mono">{compareText1.length} / 10,000</span>
-              </div>
+        {/* Multilingual Voice Indicator Pill in Sidebar */}
+        <div className="mt-3 p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] text-[11px] text-[#858795] flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Radio className="w-3.5 h-3.5 text-[#6C5CE7]" />
+            <span className="font-semibold text-[#20212B]">Voice Lang:</span>
+            <span className="text-[#6C5CE7] font-bold">{currentVoiceConfig.nativeName}</span>
+          </div>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-white font-mono text-[#858795] border border-[#E9EAF1]">
+            {currentVoiceConfig.code}
+          </span>
+        </div>
+      </aside>
 
-              <div>
-                <textarea
-                  value={compareText1}
-                  onChange={e => setCompareText1(e.target.value)}
-                  rows={4}
-                  maxLength={10000}
-                  className="w-full px-4 py-3 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] placeholder-[#858795] focus:bg-white focus:outline-none focus:border-[#6C5CE7] transition-colors"
-                  placeholder="Enter the first comment or baseline text..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#858795] mb-1">
-                  Language Hint 1 (Optional)
-                </label>
-                <select
-                  value={compareLang1}
-                  onChange={e => setCompareLang1(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] focus:outline-none focus:border-[#6C5CE7] cursor-pointer"
-                >
-                  <option value="">Auto-Detect Script &amp; Language</option>
-                  <option value="english">English</option>
-                  <option value="hindi">Hindi</option>
-                  <option value="telugu">Telugu</option>
-                  <option value="kannada">Kannada</option>
-                  <option value="hinglish">Hinglish / Code-Mixed</option>
-                </select>
-              </div>
+      {/* ── Main Chat Area ── */}
+      <section className="flex-1 bg-white rounded-2xl border border-[#E9EAF1] shadow-xs flex flex-col overflow-hidden h-full">
+        {/* Chat Header */}
+        <header className="px-5 py-3.5 border-b border-[#E9EAF1] bg-[#FDFDFF] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#6C5CE7] text-white flex items-center justify-center shadow-xs">
+              <Bot className="w-4 h-4 text-white" />
             </div>
-
-            {/* Input Text 2 */}
-            <div className="bg-white p-6 space-y-4 rounded-2xl border border-[#E9EAF1] shadow-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E9EAF1]">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#20212B]">
-                  <span className="w-5 h-5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center text-[11px] font-bold">2</span>
-                  <span>Input Text 2 (Comparison / Variant Message)</span>
-                </div>
-                <span className="text-[10px] text-[#858795] font-mono">{compareText2.length} / 10,000</span>
-              </div>
-
-              <div>
-                <textarea
-                  value={compareText2}
-                  onChange={e => setCompareText2(e.target.value)}
-                  rows={4}
-                  maxLength={10000}
-                  className="w-full px-4 py-3 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] placeholder-[#858795] focus:bg-white focus:outline-none focus:border-[#6C5CE7] transition-colors"
-                  placeholder="Enter the second comment or variant text..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#858795] mb-1">
-                  Language Hint 2 (Optional)
-                </label>
-                <select
-                  value={compareLang2}
-                  onChange={e => setCompareLang2(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] focus:outline-none focus:border-[#6C5CE7] cursor-pointer"
-                >
-                  <option value="">Auto-Detect Script &amp; Language</option>
-                  <option value="english">English</option>
-                  <option value="hindi">Hindi</option>
-                  <option value="telugu">Telugu</option>
-                  <option value="kannada">Kannada</option>
-                  <option value="hinglish">Hinglish / Code-Mixed</option>
-                </select>
-              </div>
+            <div>
+              <h2 className="text-sm font-bold text-[#20212B] flex items-center gap-2">
+                <span>Context Intelligence Lab</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                  Offline ML Ready
+                </span>
+              </h2>
+              <p className="text-[11px] text-[#858795]">
+                {currentSession?.title || 'Interactive Multilingual Content Moderation Assistant'}
+              </p>
             </div>
           </div>
 
-          {/* Action Bar */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleCompareTexts}
-              disabled={loading || !compareText1.trim() || !compareText2.trim()}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all disabled:opacity-50 cursor-pointer active:scale-95"
-            >
-              {loading ? (
-                <>
-                  <RotateCcw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Executing Independent Inferences...</span>
-                </>
-              ) : (
-                <>
-                  <Scale className="w-3.5 h-3.5" />
-                  <span>Compare &amp; Analyze</span>
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={clearCompare}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#F5F6FA] hover:bg-[#E9EAF1] border border-[#E9EAF1] text-[#858795] hover:text-[#20212B] text-xs font-medium transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Clear</span>
-            </button>
-          </div>
-
-          {/* ── COMPARATIVE RESULTS VIEW (PROMINENT AT TOP) ── */}
-          {compareResult && (
-            <div className="space-y-6 page-enter">
-              {/* SIDE-BY-SIDE SUMMARY PREDICTION CARDS (TEXT 1 vs TEXT 2) */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Text 1 Card */}
-                <div className="bg-white p-5 rounded-2xl border border-[#E9EAF1] shadow-xs space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E9EAF1]">
-                    <div className="flex items-center gap-2 font-bold text-xs text-[#20212B]">
-                      <span className="w-5 h-5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center text-[10px]">1</span>
-                      <span>Text 1 Prediction Result</span>
-                    </div>
-                    <span className="text-[10px] text-[#858795] capitalize">{compareResult.text1_analysis.detected_language}</span>
-                  </div>
-                  <div className="p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] text-xs font-medium text-[#20212B] italic">
-                    "{compareResult.text1_analysis.original_text}"
-                  </div>
-                  <EvaluationResponseCard result={compareResult.text1_analysis} />
-                </div>
-
-                {/* Text 2 Card */}
-                <div className="bg-white p-5 rounded-2xl border border-[#DDD6FE] shadow-xs space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E9EAF1]">
-                    <div className="flex items-center gap-2 font-bold text-xs text-[#20212B]">
-                      <span className="w-5 h-5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center text-[10px]">2</span>
-                      <span>Text 2 Prediction Result</span>
-                    </div>
-                    <span className="text-[10px] text-[#858795] capitalize">{compareResult.text2_analysis.detected_language}</span>
-                  </div>
-                  <div className="p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] text-xs font-medium text-[#20212B] italic">
-                    "{compareResult.text2_analysis.original_text}"
-                  </div>
-                  <EvaluationResponseCard result={compareResult.text2_analysis} />
-                </div>
-              </div>
-
-              {/* Relative Harm Synthesis Card */}
-              <div className="bg-white p-6 rounded-2xl border border-[#DDD6FE] shadow-xs space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9EAF1]">
-                  <div className="flex items-center gap-2">
-                    <Scale className="w-5 h-5 text-[#6C5CE7]" />
-                    <h3 className="text-sm font-bold text-[#20212B]">
-                      Comparative Synthesis &amp; Relative Harm Assessment
-                    </h3>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                    compareResult.predictions_differ
-                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}>
-                    {compareResult.predictions_differ ? 'Predictions Differ' : 'Predictions Concordant'}
+          {/* Top Right Corner: Active Speech Recognition Voice Language */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 pl-2.5 sm:pl-3 rounded-xl bg-[#F8F9FE] border border-[#DDD6FE] shadow-xs">
+              <div className="flex items-center gap-1.5">
+                {isListening ? (
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
                   </span>
-                </div>
-
-                <div className="p-4 rounded-xl bg-[#EEEAFE]/50 border border-[#DDD6FE] text-xs text-[#20212B] space-y-1.5">
-                  <div className="font-bold text-[#6C5CE7] flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4" />
-                    <span>Relative Harm Assessment:</span>
-                  </div>
-                  <p className="text-xs leading-relaxed font-medium">
-                    {compareResult.relative_harm_assessment}
-                  </p>
-                  <p className="text-[11px] text-[#858795] pt-1">
-                    {compareResult.comparability_notice}
-                  </p>
-                </div>
-
-                {/* Score Differences Table (Toxicity First, then Categories) */}
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-[#858795] uppercase tracking-wider">
-                    Score Variations Breakdown (Input 2 vs Input 1)
-                  </div>
-                  <div className="overflow-x-auto rounded-xl border border-[#E9EAF1]">
-                    <table className="w-full text-xs text-left">
-                      <thead className="bg-[#F8F9FE] text-[#858795] border-b border-[#E9EAF1] font-semibold uppercase text-[10px]">
-                        <tr>
-                          <th className="py-2.5 px-3.5">Metric / Category</th>
-                          <th className="py-2.5 px-3">Input Text 1</th>
-                          <th className="py-2.5 px-3">Input Text 2</th>
-                          <th className="py-2.5 px-3">Variation (Δ)</th>
-                          <th className="py-2.5 px-4">Relative Interpretation</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#F0F1F5]">
-                        {/* 1. Primary Row: Calibrated Toxicity Score */}
-                        {(() => {
-                          const tDiff = compareResult.toxicity_difference || compareResult.score_differences?.toxicity;
-                          const t1 = tDiff?.text1 ?? (compareResult.text1_analysis.toxicity_prediction?.toxicity_score || 0);
-                          const t2 = tDiff?.text2 ?? (compareResult.text2_analysis.toxicity_prediction?.toxicity_score || 0);
-                          const delta = tDiff?.diff ?? (t2 - t1);
-                          return (
-                            <tr className="bg-[#FBFBFE] font-medium hover:bg-[#EEEAFE]/30 transition-colors">
-                              <td className="py-3 px-3.5 font-bold text-[#6C5CE7] flex items-center gap-1.5">
-                                <Sparkles className="w-3.5 h-3.5 text-[#6C5CE7]" />
-                                <span>Overall Toxicity Probability</span>
-                              </td>
-                              <td className="py-3 px-3 font-mono tabular-nums text-[#20212B] font-bold">
-                                {formatScorePct(t1)}
-                              </td>
-                              <td className="py-3 px-3 font-mono tabular-nums text-[#20212B] font-bold">
-                                {formatScorePct(t2)}
-                              </td>
-                              <td className="py-3 px-3 font-mono tabular-nums">
-                                <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${
-                                  Math.abs(delta) < 0.01
-                                    ? 'bg-[#F5F6FA] text-[#858795]'
-                                    : delta > 0
-                                    ? 'bg-rose-50 text-rose-700'
-                                    : 'bg-emerald-50 text-emerald-700'
-                                }`}>
-                                  {delta > 0 ? '+' : ''}{(delta * 100).toFixed(1)}%
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-[11px] text-[#858795]">
-                                {Math.abs(delta) < 0.01
-                                  ? 'Equivalent toxicity scores'
-                                  : delta > 0
-                                  ? 'Elevated toxicity detected in Text 2'
-                                  : 'Elevated toxicity detected in Text 1'}
-                              </td>
-                            </tr>
-                          );
-                        })()}
-
-                        {/* 2. Semantic Category Rows */}
-                        {['hate_speech', 'harassment', 'cyberbullying', 'legitimate'].map((label) => {
-                          const item = compareResult.score_differences[label] || {
-                            text1: compareResult.text1_analysis.labels.find(l => l.label === label)?.score || 0,
-                            text2: compareResult.text2_analysis.labels.find(l => l.label === label)?.score || 0,
-                            diff: (compareResult.text2_analysis.labels.find(l => l.label === label)?.score || 0) -
-                                  (compareResult.text1_analysis.labels.find(l => l.label === label)?.score || 0),
-                          };
-                          const delta = item.diff;
-                          const isHarm = label !== 'legitimate';
-
-                          return (
-                            <tr key={label} className="hover:bg-[#F8F9FE] transition-colors">
-                              <td className="py-3 px-3.5 font-bold text-[#20212B] capitalize">
-                                {label.replace(/_/g, ' ')}
-                              </td>
-                              <td className="py-3 px-3 font-mono tabular-nums text-[#858795]">
-                                {formatScorePct(item.text1)}
-                              </td>
-                              <td className="py-3 px-3 font-mono tabular-nums font-semibold text-[#20212B]">
-                                {formatScorePct(item.text2)}
-                              </td>
-                              <td className="py-3 px-3 font-mono tabular-nums">
-                                <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${
-                                  Math.abs(delta) < 0.005
-                                    ? 'bg-[#F5F6FA] text-[#858795]'
-                                    : delta > 0
-                                    ? isHarm ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'
-                                    : isHarm ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                                }`}>
-                                  {delta > 0 ? '+' : ''}{(delta * 100).toFixed(1)}%
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-[11px] text-[#858795]">
-                                {Math.abs(delta) < 0.005
-                                  ? 'Equally scored between both inputs'
-                                  : delta > 0
-                                  ? isHarm ? 'Higher indicator in Text 2' : 'Higher civility indicator in Text 2'
-                                  : isHarm ? 'Higher indicator in Text 1' : 'Higher civility indicator in Text 1'}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Limitations & Calibration Notice */}
-                {compareResult.limitations && compareResult.limitations.length > 0 && (
-                  <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-900 space-y-1">
-                    <div className="font-bold flex items-center gap-1.5 text-amber-800">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      <span>Model Calibration &amp; Cross-Lingual Limitations:</span>
-                    </div>
-                    {compareResult.limitations.map((lim, idx) => (
-                      <p key={idx} className="text-[11px] leading-relaxed">
-                        • {lim}
-                      </p>
-                    ))}
-                  </div>
+                ) : (
+                  <Mic className="w-3.5 h-3.5 text-[#6C5CE7]" />
                 )}
+                <span className="text-[11px] font-bold text-[#20212B] whitespace-nowrap">
+                  Voice Lang:
+                </span>
+              </div>
+
+              {/* Interactive Speech Recognition Voice Language Selector */}
+              <select
+                value={voiceLanguage}
+                onChange={(e) => {
+                  const target = VOICE_LANGUAGES.find((v) => v.code === e.target.value);
+                  switchVoiceLang(e.target.value, target?.defaultHint);
+                }}
+                className={`py-1 px-2 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none transition-colors ${
+                  isListening
+                    ? 'bg-rose-50 text-rose-800 border-rose-300'
+                    : 'bg-white text-[#6C5CE7] border-[#DDD6FE] hover:border-[#6C5CE7]'
+                }`}
+                title="Active speech recognition voice language model"
+              >
+                {VOICE_LANGUAGES.map((v) => (
+                  <option key={v.code} value={v.code}>
+                    {v.nativeName} ({v.name}) • {v.code}
+                  </option>
+                ))}
+              </select>
+
+              {/* Quick mic toggle button directly in the top right header */}
+              <button
+                type="button"
+                onClick={() => toggleVoiceInput()}
+                title={isListening ? "Stop voice input" : `Start speaking in ${currentVoiceConfig.nativeName} (${currentVoiceConfig.code})`}
+                className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  isListening
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse'
+                    : 'bg-[#EEEAFE] hover:bg-[#DDD6FE] text-[#6C5CE7]'
+                }`}
+              >
+                {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* ── Scrollable Message Feed ── */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-[#FBFBFE]">
+          {/* Welcome Card if no messages in active session */}
+          {(!currentSession?.messages || currentSession.messages.length === 0) && (
+            <div className="max-w-2xl mx-auto py-6 space-y-6 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center mx-auto shadow-xs">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-[#20212B]">
+                  Welcome to CyberTech AI Context Intelligence Lab
+                </h3>
+                <p className="text-xs text-[#858795] max-w-md mx-auto">
+                  Inspect real-time toxicity, hate speech, cyberbullying, and severity nuances across English, Telugu, Hindi, and Kannada local models.
+                </p>
+              </div>
+
+              {/* Six Predefined Suggested Scenarios */}
+              <div className="space-y-2 text-left pt-2">
+                <div className="text-[11px] font-bold text-[#858795] uppercase tracking-wider text-center">
+                  Try one of our verified examples:
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  {SUGGESTED_SCENARIOS.map((scenario) => (
+                    <button
+                      key={scenario.id}
+                      type="button"
+                      onClick={() => handleScenarioClick(scenario)}
+                      className="p-3 text-left rounded-xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7] hover:bg-[#F8F9FE] transition-all shadow-xs group cursor-pointer flex flex-col justify-between"
+                    >
+                      <div className="text-xs text-[#20212B] font-medium leading-relaxed group-hover:text-[#6C5CE7] transition-colors">
+                        "{scenario.example}"
+                      </div>
+                      <div className="mt-2 text-[10px] text-[#858795] flex items-center justify-between">
+                        <span className="font-semibold capitalize text-[#6C5CE7]">{scenario.language}</span>
+                        <span className="flex items-center gap-1 group-hover:translate-x-0.5 transition-transform text-[#6C5CE7] font-semibold">
+                          <span>Analyze</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
+
+          {/* Render Active Session Messages */}
+          {currentSession?.messages?.map((msg: ChatMessage, idx: number) => {
+            const res = msg.result || (msg as any).analysis_result;
+            const isFlagged = res && (res.decision !== 'no_action');
+            const isHigh = res && res.severity === 'high';
+            const isMed = res && res.severity === 'medium';
+            const isSpeakingThis = speakingMessageId === (msg.id || String(idx));
+
+            return (
+              <div key={msg.id || idx} className="space-y-3.5">
+                {/* 1. User Message Chat Bubble (Right-aligned) */}
+                <div className="flex items-start justify-end gap-2.5 max-w-2xl ml-auto">
+                  <div className="space-y-1 text-right">
+                    <div className="text-[10px] text-[#858795] font-semibold flex items-center justify-end gap-1.5">
+                      <span>You</span>
+                      <span>•</span>
+                      <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      {msg.language_hint && (
+                        <span className="text-[9px] bg-[#EEEAFE] text-[#6C5CE7] px-1.5 py-0.2 rounded font-semibold capitalize">
+                          Hint: {msg.language_hint}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3.5 rounded-2xl rounded-tr-none bg-[#6C5CE7] text-white text-xs font-medium shadow-sm leading-relaxed text-left inline-block">
+                      {msg.text}
+                    </div>
+                  </div>
+                  <div className="w-7 h-7 rounded-full bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center text-xs font-bold shrink-0 mt-3 border border-[#DDD6FE]">
+                    <User className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+
+                {/* 2. CyberTech AI Assistant Response Card (Left-aligned) */}
+                {res && (
+                  <div className="flex items-start gap-2.5 max-w-2xl mr-auto">
+                    <div className="w-7 h-7 rounded-full bg-[#6C5CE7] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-3 shadow-xs">
+                      <Bot className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="space-y-1.5 flex-1">
+                      {/* Top status bar with Listen / Speak aloud button */}
+                      <div className="text-[10px] text-[#858795] font-semibold flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span>CyberTech AI</span>
+                          <span>•</span>
+                          <span className="capitalize text-[#6C5CE7] font-bold">{res.detected_language}</span>
+                          <span>•</span>
+                          <span>{res.processing_time_ms ? `${res.processing_time_ms.toFixed(1)}ms` : '< 3ms'}</span>
+                        </div>
+
+                        {/* Read Aloud Voice Button */}
+                        <button
+                          type="button"
+                          onClick={() => speakMessage(msg.id || String(idx), buildSpeechSummary(res), res.detected_language)}
+                          title={isSpeakingThis ? 'Stop voice playback' : 'Listen to audio explanation'}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                            isSpeakingThis
+                              ? 'bg-rose-100 text-rose-700 ring-1 ring-rose-300 animate-pulse'
+                              : 'bg-[#EEEAFE] text-[#6C5CE7] hover:bg-[#DDD6FE]'
+                          }`}
+                        >
+                          {isSpeakingThis ? (
+                            <>
+                              <VolumeX className="w-3.5 h-3.5" />
+                              <span>Stop Audio</span>
+                            </>
+                          ) : (
+                            <>
+                              <Volume2 className="w-3.5 h-3.5" />
+                              <span>Listen</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Prediction & Scores Card */}
+                      <div className="p-4 rounded-2xl rounded-tl-none bg-white border border-[#E9EAF1] shadow-xs space-y-3 text-xs text-[#20212B]">
+                        {/* Status Badges */}
+                        <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-[#E9EAF1]">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                              isHigh ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                              isMed ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                              'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}>
+                              Severity: {res.severity}
+                            </span>
+
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                              isFlagged
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}>
+                              {res.decision === 'flag_for_review' ? 'Flagged for Review' :
+                               res.decision === 'human_review' ? 'Escalated to Human' :
+                               'Approved / Legitimate'}
+                            </span>
+                          </div>
+
+                          {res.toxicity_prediction && (
+                            <span className={`font-mono text-xs font-bold ${res.toxicity_prediction.is_toxic ? 'text-rose-600' : 'text-emerald-600'}`}>
+                              Toxicity: {(res.toxicity_prediction.toxicity_score * 100).toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Category Probability Scores */}
+                        <div className="space-y-1.5">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-[#858795]">
+                            Category Probability Scores:
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(res.labels || []).map((l: any) => {
+                              const isUnsupported = l.supported === false;
+                              const pct = Math.round(l.score * 100);
+                              const isHarm = !isUnsupported && l.label !== 'legitimate' && pct >= 40;
+                              return (
+                                <div key={l.label} className="p-2 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] space-y-1">
+                                  <div className="flex items-center justify-between text-[11px]">
+                                    <span className="capitalize font-semibold text-[#858795]">{l.label.replace(/_/g, ' ')}</span>
+                                    {isUnsupported ? (
+                                      <span className="inline-flex items-center gap-1">
+                                        <span className="text-[10px] text-[#858795] font-normal italic">Not available</span>
+                                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#E9EAF1] text-[#858795] font-semibold">Unrated</span>
+                                      </span>
+                                    ) : (
+                                      <span className={`font-mono font-bold ${isHarm ? 'text-rose-600' : 'text-[#20212B]'}`}>{pct}%</span>
+                                    )}
+                                  </div>
+                                  <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full transition-all ${
+                                        isUnsupported
+                                          ? 'bg-gray-300'
+                                          : l.label === 'legitimate' ? 'bg-emerald-500' : isHarm ? 'bg-rose-500' : 'bg-amber-400'
+                                      }`}
+                                      style={{ width: isUnsupported ? '0%' : `${pct}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Explanation Reason */}
+                        {res.severity_reason && (
+                          <div className="text-[11px] text-[#858795] pt-1">
+                            <span className="font-semibold text-[#20212B]">Reason: </span>
+                            <span>{res.severity_reason}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Loading Indicator when inference is running */}
+          {analyzing && (
+            <div className="flex items-center gap-2.5 text-xs text-[#858795] animate-pulse">
+              <div className="w-7 h-7 rounded-full bg-[#6C5CE7] text-white flex items-center justify-center text-xs font-bold">
+                <Bot className="w-3.5 h-3.5" />
+              </div>
+              <div className="p-3 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6C5CE7]" />
+                <span>Running regional multilingual model inference...</span>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
         </div>
-      )}
+
+        {/* ── Fixed Bottom Input Area (Message Input, Voice Assistance & Send Control) ── */}
+        <footer className="p-4 border-t border-[#E9EAF1] bg-white space-y-2.5">
+          {/* Voice Listening Active Indicator Banner */}
+          {isListening && (
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-rose-50 via-purple-50 to-indigo-50 border border-rose-200 text-xs shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
+                </span>
+                <Mic className="w-4 h-4 text-rose-600 animate-bounce" />
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-rose-950 font-bold">
+                    Listening in {currentVoiceConfig.name} ({currentVoiceConfig.nativeName}):
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-200 text-rose-800 font-mono font-bold">
+                    {currentVoiceConfig.code}
+                  </span>
+                </div>
+              </div>
+
+              {/* Language Switch Pills right inside the listening banner */}
+              <div className="flex items-center flex-wrap gap-1.5">
+                <span className="text-[#858795] text-[10px] font-semibold uppercase tracking-wider mr-1">Switch:</span>
+                {VOICE_LANGUAGES.map((v) => (
+                  <button
+                    key={v.code}
+                    type="button"
+                    onClick={() => switchVoiceLang(v.code, v.defaultHint)}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                      voiceLanguage === v.code
+                        ? 'bg-[#6C5CE7] text-white shadow-xs'
+                        : 'bg-white text-[#20212B] hover:bg-slate-50 border border-[#E9EAF1]'
+                    }`}
+                  >
+                    {v.nativeName}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={stopListening}
+                  className="ml-1 px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] shadow-xs cursor-pointer transition-colors"
+                >
+                  Done Speaking
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Real-time Interim Voice Speech Feedback if speaking */}
+          {isListening && interimTranscript && (
+            <div className="px-3 py-1.5 rounded-xl bg-purple-50/70 border border-purple-100 text-xs text-purple-900 flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600">Live:</span>
+              <span className="italic">"{interimTranscript}"</span>
+            </div>
+          )}
+
+          {/* Input Controls Row */}
+          <div className="flex items-center gap-2">
+            {/* Language Hint Dropdown */}
+            <select
+              value={languageHint}
+              onChange={(e) => handleLanguageHintChange(e.target.value)}
+              className="px-2.5 py-2.5 rounded-xl border border-[#E9EAF1] bg-[#F8F9FE] text-xs text-[#20212B] font-semibold focus:outline-none focus:border-[#6C5CE7] cursor-pointer shrink-0"
+              title="Override language model route"
+            >
+              <option value="">Auto-Detect</option>
+              <option value="english">English</option>
+              <option value="hindi">Hindi (हिन्दी)</option>
+              <option value="telugu">Telugu (తెలుగు)</option>
+              <option value="kannada">Kannada (ಕನ್ನಡ)</option>
+              <option value="hinglish">Hinglish</option>
+            </select>
+
+
+
+            {/* Main Text Input with Embedded Voice Mic Control */}
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={text}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setText(val);
+                  if (/[ऀ-ॿ]/.test(val)) {
+                    setLanguageHint('hindi');
+                  } else if (/[ఀ-౿]/.test(val)) {
+                    setLanguageHint('telugu');
+                  } else if (/[ಀ-೿]/.test(val)) {
+                    setLanguageHint('kannada');
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAnalyze();
+                  }
+                }}
+                placeholder={
+                  isListening
+                    ? `Listening in ${currentVoiceConfig.nativeName}... speak now`
+                    : `Type a comment or tap mic to speak in ${currentVoiceConfig.nativeName}...`
+                }
+                disabled={analyzing}
+                className="w-full pl-3.5 pr-10 py-2.5 text-xs rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-[#20212B] placeholder-[#858795] focus:outline-none focus:border-[#6C5CE7] focus:bg-white transition-all"
+              />
+
+              {/* Voice Assistance Button (Mic) */}
+              <button
+                type="button"
+                onClick={() => toggleVoiceInput()}
+                title={
+                  speechSupported
+                    ? isListening
+                      ? 'Stop voice input'
+                      : `Speak comment in ${currentVoiceConfig.name} (${currentVoiceConfig.nativeName} - ${currentVoiceConfig.code})`
+                    : 'Speech recognition not supported in this browser'
+                }
+                className={`absolute right-2 top-2 p-1.5 rounded-lg transition-all cursor-pointer ${
+                  isListening
+                    ? 'text-rose-600 bg-rose-100 animate-pulse ring-2 ring-rose-400'
+                    : 'text-[#858795] hover:text-[#6C5CE7] hover:bg-[#EEEAFE]'
+                }`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {/* Send Control */}
+            <button
+              type="button"
+              onClick={() => handleAnalyze()}
+              disabled={analyzing || !text.trim()}
+              className="flex items-center justify-center p-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] disabled:opacity-40 text-white transition-all shadow-md shadow-[#6C5CE7]/25 cursor-pointer active:scale-95 shrink-0"
+              title="Submit for inference"
+            >
+              {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </button>
+          </div>
+        </footer>
+      </section>
     </div>
   );
 }

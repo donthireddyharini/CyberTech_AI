@@ -113,6 +113,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       localStorage.removeItem('sentinel_token');
       localStorage.removeItem('sentinel_user');
+      // Clear account-specific cache to enforce zero cross-account data leakage
+      try {
+        const keysToRemove = Object.keys(localStorage).filter(
+          (k) =>
+            k.startsWith('cybertech_') ||
+            k.startsWith('sentinel_active_')
+        );
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+      } catch {}
       setToken(null);
       setUser(null);
     }

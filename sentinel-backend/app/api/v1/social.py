@@ -24,14 +24,14 @@ router = APIRouter()
 
 class YouTubeFetchRequest(BaseModel):
     video_input: str = Field(..., description="YouTube video URL or 11-char Video ID")
-    max_comments: int = Field(50, ge=5, le=100)
+    max_comments: int = Field(50, ge=1, le=500, description="Custom comment count to retrieve (e.g. 10, 50, 100, 250, 500)")
     include_replies: bool = Field(True, description="Whether to include comment replies")
     order: str = Field("relevance", description="'relevance' or 'time'")
 
 
 class InstagramFetchRequest(BaseModel):
     media_input: str = Field(..., description="Instagram Post / Reel URL or Media ID")
-    max_comments: int = Field(25, ge=5, le=100)
+    max_comments: int = Field(50, ge=1, le=500, description="Custom comment count to retrieve (e.g. 10, 50, 100, 250, 500)")
     include_replies: bool = Field(True, description="Whether to include comment replies")
 
 
@@ -97,7 +97,8 @@ async def fetch_youtube_comments(
         comments=comments,
         platform="youtube",
         target_input=payload.video_input,
-        user_id=user_id
+        user_id=user_id,
+        requested_count=payload.max_comments
     )
     result["metadata"] = meta
     return result
@@ -141,7 +142,8 @@ async def fetch_instagram_comments(
         comments=comments,
         platform="instagram",
         target_input=payload.media_input,
-        user_id=user_id
+        user_id=user_id,
+        requested_count=payload.max_comments
     )
     result["metadata"] = meta
     return result
@@ -151,10 +153,16 @@ async def fetch_instagram_comments(
 async def get_sync_history(
     platform: Optional[str] = Query(None),
     limit: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
 ):
-    """Returns recent social sync runs."""
+    """Returns recent social sync runs filtered by authenticated account."""
     q = select(SocialSyncLog)
+    if current_user:
+        if current_user.role != "admin":
+            q = q.where(SocialSyncLog.user_id == current_user.id)
+    else:
+        q = q.where(SocialSyncLog.user_id.is_(None))
     if platform:
         q = q.where(SocialSyncLog.platform == platform)
     q = q.order_by(desc(SocialSyncLog.created_at)).limit(limit)
@@ -181,15 +189,24 @@ async def get_sync_history(
 
 
 @router.get("/stats")
-async def get_social_stats(db: AsyncSession = Depends(get_db)):
-    """Returns aggregated platform distribution and intelligence statistics."""
+async def get_social_stats(
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """Returns aggregated platform distribution and intelligence statistics filtered by authenticated account."""
     from sqlalchemy import func, case
     q = select(
         ModerationRecord.platform,
         func.count(ModerationRecord.id).label("total"),
         func.sum(case((ModerationRecord.decision != "no_action", 1), else_=0)).label("flagged"),
         func.sum(case((ModerationRecord.decision == "no_action", 1), else_=0)).label("approved")
-    ).group_by(ModerationRecord.platform)
+    )
+    if current_user:
+        if current_user.role != "admin":
+            q = q.where(ModerationRecord.user_id == current_user.id)
+    else:
+        q = q.where(ModerationRecord.user_id.is_(None))
+    q = q.group_by(ModerationRecord.platform)
 
     res = await db.execute(q)
     rows = res.all()

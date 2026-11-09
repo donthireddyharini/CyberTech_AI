@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
-  Scale, Play, AlertCircle, CheckCircle2, FileText,
-  BarChart2, ShieldCheck, Download, RefreshCw, Sparkles,
-  Check, Info, HelpCircle, ShieldAlert, ChevronRight,
-  TrendingUp, Award, AlertTriangle, ExternalLink, Globe,
-  Activity, Layers, Filter, CheckCircle
+  Scale, Play, AlertCircle, FileText,
+  BarChart2, Download, RefreshCw,
+  Check, TrendingUp, Globe,
+  Activity, Youtube, Instagram,
+  Upload, MessageSquare, Database
 } from 'lucide-react';
 import { evaluationApi } from '../api/client';
-import type { EvaluationRun } from '../types';
+import type { EvaluationRun, SourceReportResponse } from '../types';
 import { useToast } from '../App';
 import { useTranslation } from '../i18n/I18nContext';
 
@@ -17,6 +17,16 @@ export default function FairnessEvaluation() {
   const [loading, setLoading] = useState(true);
   const [runningEval, setRunningEval] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  // Source-Specific Report State
+  const [selectedSource, setSelectedSource] = useState<'all' | 'youtube' | 'instagram' | 'csv' | 'manual'>('all');
+  const [sourceReportData, setSourceReportData] = useState<SourceReportResponse | null>(null);
+  const [loadingSourceReport, setLoadingSourceReport] = useState(false);
+  const [downloadingCsv, setDownloadingCsv] = useState(false);
+  const [downloadingJson, setDownloadingJson] = useState(false);
+  const [sourcePage, setSourcePage] = useState(1);
+  const [sourcePageSize, setSourcePageSize] = useState(15);
+
   const { addToast } = useToast();
   const { t } = useTranslation();
 
@@ -35,9 +45,43 @@ export default function FairnessEvaluation() {
     }
   };
 
+  const fetchSourceReport = async (src: string) => {
+    setLoadingSourceReport(true);
+    try {
+      const resp = await evaluationApi.sourceReport(src);
+      setSourceReportData(resp.data);
+    } catch (err: any) {
+      console.warn('Could not load source report records:', err);
+      setSourceReportData(null);
+    } finally {
+      setLoadingSourceReport(false);
+    }
+  };
+
   useEffect(() => {
     fetchRuns();
+    fetchSourceReport(selectedSource);
   }, []);
+
+  const handleSourceChange = (src: 'all' | 'youtube' | 'instagram' | 'csv' | 'manual') => {
+    setSelectedSource(src);
+    setSourcePage(1);
+    fetchSourceReport(src);
+  };
+
+  const handleDownloadSourceReport = async (format: 'csv' | 'json') => {
+    if (format === 'csv') setDownloadingCsv(true);
+    else setDownloadingJson(true);
+    try {
+      await evaluationApi.downloadSourceReport(selectedSource, format);
+      addToast(`${selectedSource.toUpperCase()} ${format.toUpperCase()} report downloaded successfully.`, 'success');
+    } catch (err: any) {
+      addToast(err.message || `Failed to export ${format.toUpperCase()} report`, 'error');
+    } finally {
+      if (format === 'csv') setDownloadingCsv(false);
+      else setDownloadingJson(false);
+    }
+  };
 
   const handleTriggerEvaluation = async () => {
     setRunningEval(true);
@@ -56,7 +100,7 @@ export default function FairnessEvaluation() {
     setDownloadingPdf(true);
     try {
       await evaluationApi.downloadPdf();
-      addToast('Publication-grade Research Report PDF downloaded successfully.', 'success');
+      addToast('Evaluation PDF report downloaded successfully.', 'success');
     } catch (err: any) {
       addToast(err.message || 'Failed to generate PDF report', 'error');
     } finally {
@@ -72,192 +116,138 @@ export default function FairnessEvaluation() {
   const threshold = om.threshold !== undefined ? Number(om.threshold).toFixed(2) : '0.40';
 
   return (
-    <div className="space-y-8 max-w-screen-2xl page-enter pb-16">
+    <div className="space-y-6 max-w-screen-2xl page-enter pb-16">
       
       {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 1: EVALUATION OVERVIEW
+          SECTION 1: OVERVIEW & HIGH-LEVEL KPIS (SCORES ONLY)
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="bg-white p-6 relative overflow-hidden rounded-2xl border border-[#E9EAF1] shadow-xs">
-        <div className="relative z-10 flex items-start justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] shadow-xs">
+      <div className="bg-white p-5 rounded-2xl border border-[#E9EAF1] shadow-xs">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] shadow-xs">
               <Scale className="w-5 h-5 text-[#6C5CE7]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-[#20212B] tracking-tight">
-                  {t('eval.title', 'Fairness & Model Evaluation Studio')}
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE]">
-                  Held-Out Benchmark Splits
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  100% Offline Scikit-Learn
-                </span>
-              </div>
-              <p className="text-xs text-[#858795] mt-1 max-w-3xl leading-relaxed">
-                {t('eval.subtitle', 'Rigorous offline model evaluation across held-out regional corpora with publication-grade research reporting.')}
-              </p>
+              <h1 className="text-lg font-bold text-[#20212B] tracking-tight">
+                {t('eval.title', 'Fairness & Model Evaluation')}
+              </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={handleTriggerEvaluation}
-              disabled={runningEval}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all active:scale-95 disabled:opacity-50"
-            >
-              <Play className={`w-3.5 h-3.5 ${runningEval ? 'animate-spin' : ''}`} />
-              <span>{runningEval ? 'Evaluating...' : 'Run Benchmark'}</span>
-            </button>
-          </div>
+          <button
+            onClick={handleTriggerEvaluation}
+            disabled={runningEval}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all active:scale-95 disabled:opacity-50"
+          >
+            <Play className={`w-3.5 h-3.5 ${runningEval ? 'animate-spin' : ''}`} />
+            <span>{runningEval ? 'Evaluating...' : 'Run Benchmark'}</span>
+          </button>
         </div>
 
-        {/* High-Level KPI Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mt-6 pt-5 border-t border-[#E9EAF1]">
-          {/* Overall Accuracy */}
+        {/* High-Level KPI Summary Cards - Scores Only */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mt-5 pt-5 border-t border-[#E9EAF1]">
           <div className="p-3.5 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1]">
             <span className="text-[10px] uppercase font-bold text-[#858795] block tracking-wider">Overall Accuracy</span>
             <div className="text-2xl font-black text-[#20212B] mt-1 tabular-nums">{accuracy}%</div>
-            <span className="text-[10px] text-emerald-600 font-medium block mt-0.5">Held-out test split</span>
           </div>
 
-          {/* Macro F1 */}
           <div className="p-3.5 bg-[#FBFBFE] rounded-xl border border-[#DDD6FE]">
             <span className="text-[10px] uppercase font-bold text-[#6C5CE7] block tracking-wider">Macro F1 Score</span>
             <div className="text-2xl font-black text-[#6C5CE7] mt-1 tabular-nums">{f1}%</div>
-            <span className="text-[10px] text-[#6C5CE7] font-medium block mt-0.5">Equal category weighting</span>
           </div>
 
-          {/* Coverage / Recall */}
           <div className="p-3.5 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1]">
             <span className="text-[10px] uppercase font-bold text-[#858795] block tracking-wider">Safety Recall</span>
             <div className="text-2xl font-black text-[#20212B] mt-1 tabular-nums">{recall}%</div>
-            <span className="text-[10px] text-[#858795] font-medium block mt-0.5">Harm coverage rate</span>
           </div>
 
-          {/* Fairness Ratio */}
           <div className="p-3.5 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1]">
             <span className="text-[10px] uppercase font-bold text-[#858795] block tracking-wider">Fairness Parity</span>
             <div className="text-2xl font-black text-[#20212B] mt-1 tabular-nums">0.92</div>
-            <span className="text-[10px] text-purple-600 font-medium block mt-0.5">Cross-script balance</span>
           </div>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 2: CORE EVALUATION METRICS
+          SECTION 2: CORE EVALUATION METRICS & SEVERITY PERFORMANCE (SCORES ONLY)
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="bg-white p-6 space-y-6 rounded-2xl border border-[#E9EAF1] shadow-xs">
-        <div className="flex items-start justify-between flex-wrap gap-2 pb-4 border-b border-[#E9EAF1]">
-          <div>
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#6C5CE7]" />
-              <h2 className="text-base font-bold text-[#20212B]">
-                {selectedRun ? selectedRun.run_name : 'Primary Held-Out Benchmark Run'}
-              </h2>
-              {selectedRun && (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  {selectedRun.status}
-                </span>
-              )}
-            </div>
+      <div className="bg-white p-5 space-y-5 rounded-2xl border border-[#E9EAF1] shadow-xs">
+        <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E9EAF1]">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-[#6C5CE7]" />
+            <h2 className="text-sm font-bold text-[#20212B]">
+              {selectedRun ? selectedRun.run_name : 'Primary Benchmark Run'}
+            </h2>
+            {selectedRun && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {selectedRun.status}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Empirical Core Metrics Strip */}
+        {/* Empirical Core Metrics Strip - Scores Only */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-          {/* Accuracy */}
           <div className="p-3.5 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] text-center">
             <span className="text-[10px] uppercase font-semibold text-[#858795] block">Accuracy</span>
             <div className="text-xl font-black text-[#20212B] mt-1 tabular-nums">{accuracy}%</div>
-            <span className="text-[10px] text-[#858795] mt-0.5 block">Total Agreement</span>
           </div>
 
-          {/* Precision */}
           <div className="p-3.5 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] text-center">
             <span className="text-[10px] uppercase font-semibold text-[#858795] block">Precision</span>
             <div className="text-xl font-black text-[#20212B] mt-1 tabular-nums">{precision}%</div>
-            <span className="text-[10px] text-emerald-600 mt-0.5 block">Alert Purity</span>
           </div>
 
-          {/* Recall */}
           <div className="p-3.5 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] text-center">
             <span className="text-[10px] uppercase font-semibold text-[#858795] block">Recall</span>
             <div className="text-xl font-black text-[#20212B] mt-1 tabular-nums">{recall}%</div>
-            <span className="text-[10px] text-[#6C5CE7] mt-0.5 block">Safety Coverage</span>
           </div>
 
-          {/* Macro F1 */}
           <div className="p-3.5 bg-[#FBFBFE] rounded-xl border border-[#DDD6FE] text-center">
             <span className="text-[10px] uppercase font-semibold text-[#6C5CE7] block">Macro F1</span>
             <div className="text-xl font-black text-[#6C5CE7] mt-1 tabular-nums">{f1}%</div>
-            <span className="text-[10px] text-[#6C5CE7] mt-0.5 block">Harmonic Mean</span>
           </div>
 
-          {/* Decision Threshold */}
           <div className="p-3.5 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] text-center">
             <span className="text-[10px] uppercase font-semibold text-[#858795] block">Threshold</span>
             <div className="text-xl font-black text-amber-600 mt-1 tabular-nums">{threshold}</div>
-            <span className="text-[10px] text-[#858795] mt-0.5 block">Calibrated Cutoff</span>
           </div>
         </div>
 
-        {/* Severity & Category Performance Breakdown */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          {/* Performance by Severity */}
-          <div className="p-4 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#20212B] flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-[#6C5CE7]" />
-              <span>Classification Efficacy by Severity Level</span>
-            </h4>
-            <div className="space-y-2.5 text-xs">
-              <div>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="font-semibold text-rose-700">High Severity (Explicit Hate Speech / Severe Threats)</span>
-                  <span className="font-bold text-[#20212B] tabular-nums">96.8% Precision • 94.2% Recall</span>
-                </div>
-                <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-[#E9EAF1]">
-                  <div className="h-full bg-rose-500 rounded-full" style={{ width: '95%' }} />
-                </div>
+        {/* Severity Classification Efficacy - Scores Only */}
+        <div className="p-4 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] space-y-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#20212B]">
+            <TrendingUp className="w-3.5 h-3.5 text-[#6C5CE7]" />
+            <span>Severity Level Efficacy</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
+            <div className="bg-white p-3 rounded-xl border border-[#E9EAF1] space-y-2">
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="font-semibold text-rose-700">High Severity</span>
+                <span className="font-bold text-[#20212B] tabular-nums">96.8% Prec • 94.2% Rec</span>
               </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="font-semibold text-amber-700">Medium Severity (Targeted Harassment / Bullying)</span>
-                  <span className="font-bold text-[#20212B] tabular-nums">88.5% Precision • 84.1% Recall</span>
-                </div>
-                <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-[#E9EAF1]">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: '86%' }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="font-semibold text-emerald-700">Low Severity (Uncivil Discourse / Boundary Sarcasm)</span>
-                  <span className="font-bold text-[#20212B] tabular-nums">82.1% Precision • 78.4% Recall</span>
-                </div>
-                <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-[#E9EAF1]">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '80%' }} />
-                </div>
+              <div className="w-full h-2 bg-[#F5F6FA] rounded-full overflow-hidden border border-[#E9EAF1]">
+                <div className="h-full bg-rose-500 rounded-full" style={{ width: '95%' }} />
               </div>
             </div>
-          </div>
 
-          {/* Research Benchmark Methodology Protocols */}
-          <div className="p-4 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#20212B] flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-[#6C5CE7]" />
-              <span>Research Evaluation Protocols</span>
-            </h4>
-            <div className="space-y-2 text-[11px] text-[#858795] leading-relaxed">
-              <div className="p-2.5 rounded-lg bg-white border border-[#E9EAF1]">
-                <strong className="text-[#20212B]">Macro-Weighted Evaluation Rationale: </strong>
-                CyberTech AI prioritizes macro-F1 over micro-F1 to guarantee that severe but lower-frequency categories (such as explicit Hate Speech) receive equal mathematical representation compared to civil discourse.
+            <div className="bg-white p-3 rounded-xl border border-[#E9EAF1] space-y-2">
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="font-semibold text-amber-700">Medium Severity</span>
+                <span className="font-bold text-[#20212B] tabular-nums">88.5% Prec • 84.1% Rec</span>
               </div>
-              <div className="p-2.5 rounded-lg bg-white border border-[#E9EAF1]">
-                <strong className="text-[#20212B]">Strict Held-Out Split Isolation: </strong>
-                All metrics are evaluated exclusively on isolated test splits with 100% offline local inference, guaranteeing zero test set leakage and zero external API dependencies.
+              <div className="w-full h-2 bg-[#F5F6FA] rounded-full overflow-hidden border border-[#E9EAF1]">
+                <div className="h-full bg-amber-500 rounded-full" style={{ width: '86%' }} />
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-[#E9EAF1] space-y-2">
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="font-semibold text-emerald-700">Low Severity</span>
+                <span className="font-bold text-[#20212B] tabular-nums">82.1% Prec • 78.4% Rec</span>
+              </div>
+              <div className="w-full h-2 bg-[#F5F6FA] rounded-full overflow-hidden border border-[#E9EAF1]">
+                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '80%' }} />
               </div>
             </div>
           </div>
@@ -272,52 +262,44 @@ export default function FairnessEvaluation() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 3: MULTILINGUAL BENCHMARK & CROSS-SCRIPT FAIRNESS ANALYSIS
+          SECTION 3: MULTILINGUAL BENCHMARK TABLE (SCORES ONLY)
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="bg-white p-6 space-y-5 rounded-2xl border border-[#E9EAF1] shadow-xs">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <h3 className="text-sm font-bold text-[#20212B] flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[#6C5CE7]" />
-              <span>Multilingual Benchmark &amp; Cross-Script Fairness Analysis</span>
-            </h3>
-            <p className="text-xs text-[#858795] mt-0.5">
-              Empirically compare detection efficacy across Indic, Dravidian, and Latin scripts to ensure algorithmic fairness.
-            </p>
-          </div>
+      <div className="bg-white p-5 space-y-4 rounded-2xl border border-[#E9EAF1] shadow-xs">
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-[#6C5CE7]" />
+          <h3 className="text-sm font-bold text-[#20212B]">Multilingual Benchmark &amp; Cross-Script Fairness</h3>
         </div>
 
-        {/* Multilingual Evaluation Table */}
+        {/* Multilingual Evaluation Table: languages, accuracy, F1, fairness status, sample counts */}
         <div className="overflow-x-auto rounded-xl border border-[#E9EAF1]">
           <table className="w-full text-xs text-left">
             <thead className="bg-[#F8F9FE] text-[#858795] border-b border-[#E9EAF1] font-semibold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="py-2.5 px-3.5">Language / Script</th>
-                <th className="py-2.5 px-3">Held-Out Samples</th>
-                <th className="py-2.5 px-3">Accuracy</th>
-                <th className="py-2.5 px-3">Macro F1</th>
-                <th className="py-2.5 px-3">Threshold</th>
-                <th className="py-2.5 px-3">Fairness Status</th>
-                <th className="py-2.5 px-4">Evaluation Audit Rationale</th>
+                <th className="py-2.5 px-3 text-right">Held-Out Samples</th>
+                <th className="py-2.5 px-3 text-right">Accuracy</th>
+                <th className="py-2.5 px-3 text-right">Macro F1</th>
+                <th className="py-2.5 px-3 text-right">Threshold</th>
+                <th className="py-2.5 px-3 text-center">Fairness Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0F1F5]">
               {[
-                { lang: 'English', script: 'Latin', count: '2,979', acc: '90.9%', f1: '70.9%', thresh: '0.40', fairness: 'Parity Met', note: 'Jigsaw Civil Comments test split; balanced coverage across toxic nuances.' },
-                { lang: 'Hindi', script: 'Devanagari', count: '860', acc: '96.7%', f1: '96.6%', thresh: '0.50', fairness: 'Parity Met', note: 'High hostility discrimination on social media discourse corpus.' },
-                { lang: 'Telugu', script: 'Telugu', count: '7,036', acc: '98.0%', f1: '30.4%', thresh: '0.26', fairness: 'Monitored', note: 'Direct insult fix verified; highly imbalanced real-world corpus.' },
-                { lang: 'Kannada', script: 'Kannada', count: '297', acc: '79.8%', f1: '69.7%', thresh: '0.32', fairness: 'Parity Met', note: 'OffenseVal Dravidian corpus; robust interpersonal insult detection.' },
-                { lang: 'Hinglish', script: 'Code-Mixed', count: '8,866', acc: '69.4%', f1: '71.5%', thresh: '0.27', fairness: 'Parity Met', note: 'PRISM conversational context union; accounts for phonetic spellings.' },
+                { lang: 'English', script: 'Latin', count: '2,979', acc: '90.9%', f1: '70.9%', thresh: '0.40', fairness: 'Parity Met' },
+                { lang: 'Hindi', script: 'Devanagari', count: '860', acc: '96.7%', f1: '96.6%', thresh: '0.50', fairness: 'Parity Met' },
+                { lang: 'Telugu', script: 'Telugu', count: '7,036', acc: '98.0%', f1: '30.4%', thresh: '0.26', fairness: 'Monitored' },
+                { lang: 'Kannada', script: 'Kannada', count: '297', acc: '79.8%', f1: '69.7%', thresh: '0.32', fairness: 'Parity Met' },
+                { lang: 'Hinglish', script: 'Code-Mixed', count: '8,866', acc: '69.4%', f1: '71.5%', thresh: '0.27', fairness: 'Parity Met' },
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-[#F8F9FE] transition-colors">
                   <td className="py-3 px-3.5 font-bold text-[#20212B]">
                     {row.lang} <span className="text-[10px] text-[#858795]">({row.script})</span>
                   </td>
-                  <td className="py-3 px-3 text-[#6C5CE7] font-semibold tabular-nums">{row.count}</td>
-                  <td className="py-3 px-3 text-[#20212B] font-semibold tabular-nums">{row.acc}</td>
-                  <td className="py-3 px-3 text-[#6C5CE7] font-semibold tabular-nums">{row.f1}</td>
-                  <td className="py-3 px-3 text-amber-600 font-semibold tabular-nums">{row.thresh}</td>
-                  <td className="py-3 px-3">
+                  <td className="py-3 px-3 text-right text-[#6C5CE7] font-semibold tabular-nums">{row.count}</td>
+                  <td className="py-3 px-3 text-right text-[#20212B] font-semibold tabular-nums">{row.acc}</td>
+                  <td className="py-3 px-3 text-right text-[#6C5CE7] font-semibold tabular-nums">{row.f1}</td>
+                  <td className="py-3 px-3 text-right text-amber-600 font-semibold tabular-nums">{row.thresh}</td>
+                  <td className="py-3 px-3 text-center">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                       row.fairness === 'Parity Met' 
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
@@ -326,7 +308,6 @@ export default function FairnessEvaluation() {
                       {row.fairness}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-[#858795] text-[11px]">{row.note}</td>
                 </tr>
               ))}
             </tbody>
@@ -335,89 +316,34 @@ export default function FairnessEvaluation() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 4: DATASET / LANGUAGE EVALUATION DETAILS
+          SECTION 4: EVALUATION HISTORY & PDF EXPORT (COMPACT & BALANCED)
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="bg-white p-6 space-y-4 rounded-2xl border border-[#E9EAF1] shadow-xs">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <h3 className="text-sm font-bold text-[#20212B] flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#6C5CE7]" />
-              <span>Dataset Split &amp; Script-Specific Evaluation Details</span>
-            </h3>
-            <p className="text-xs text-[#858795] mt-0.5">
-              Auditing data integrity and tokenization nuances across standardized evaluation splits.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="p-4 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] space-y-2">
-            <div className="flex items-center gap-2 font-bold text-[#20212B]">
-              <span className="w-2 h-2 rounded-full bg-[#6C5CE7]" />
-              <span>Latin Script Tokenization</span>
-            </div>
-            <p className="text-[11px] text-[#858795] leading-relaxed">
-              Standard BPE and WordPiece subword tokenization with lowercasing and punctuation normalization. Exhibits optimal performance on standard English comments.
-            </p>
-            <div className="text-[10px] text-[#6C5CE7] font-semibold pt-1">Split: Jigsaw Civil Comments (10% held-out)</div>
-          </div>
-
-          <div className="p-4 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] space-y-2">
-            <div className="flex items-center gap-2 font-bold text-[#20212B]">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Devanagari &amp; Indic Scripts</span>
-            </div>
-            <p className="text-[11px] text-[#858795] leading-relaxed">
-              Unicode NFC normalized representations handling Nukta diacritics and virama conjuncts. Mitigates segmentation divergence across Hindi and Marathi text.
-            </p>
-            <div className="text-[10px] text-emerald-600 font-semibold pt-1">Split: HASOC &amp; Social Discourse Corpus</div>
-          </div>
-
-          <div className="p-4 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] space-y-2">
-            <div className="flex items-center gap-2 font-bold text-[#20212B]">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              <span>Code-Mixed Transliteration</span>
-            </div>
-            <p className="text-[11px] text-[#858795] leading-relaxed">
-              Phonetic character n-gram hashing resilient to colloquial phonetic variants (e.g. 'kya' vs 'kyaa', 'bhai' vs 'bhaiya'). Preserves semantic context without dictionary lookups.
-            </p>
-            <div className="text-[10px] text-amber-600 font-semibold pt-1">Split: PRISM Dravidian &amp; Hinglish Union</div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SECTIONS 5 & 6: EVALUATION HISTORY & PDF REPORT CONTROLS
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         
-        {/* Section 5: Evaluation History (2 Cols) */}
-        <div className="lg:col-span-2 bg-white p-6 space-y-4 rounded-2xl border border-[#E9EAF1] shadow-xs">
+        {/* Evaluation History (2 Cols) */}
+        <div className="lg:col-span-2 bg-white p-5 space-y-4 rounded-2xl border border-[#E9EAF1] shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BarChart2 className="w-4 h-4 text-[#6C5CE7]" />
-              <h3 className="text-sm font-bold text-[#20212B]">Evaluation History &amp; Benchmarks</h3>
+              <h3 className="text-sm font-bold text-[#20212B]">Evaluation History</h3>
             </div>
             <span className="text-xs text-[#6C5CE7] font-semibold tabular-nums bg-[#EEEAFE] px-2.5 py-0.5 rounded-full border border-[#DDD6FE]">
-              {runs.length} Recorded Runs
+              {runs.length} {runs.length === 1 ? 'Run' : 'Runs'}
             </span>
           </div>
-          <p className="text-xs text-[#858795]">
-            Select any prior evaluation run to inspect its held-out empirical snapshot across models and test splits.
-          </p>
 
           {loading ? (
-            <div className="space-y-2 py-4">
+            <div className="space-y-2 py-2">
               {[0, 1, 2].map(i => (
-                <div key={i} className="h-14 w-full bg-[#F5F6FA] rounded-xl animate-pulse" />
+                <div key={i} className="h-12 w-full bg-[#F5F6FA] rounded-xl animate-pulse" />
               ))}
             </div>
           ) : runs.length === 0 ? (
-            <div className="py-8 text-center text-xs text-[#858795]">
-              No evaluation runs recorded yet. Click "Run Benchmark" to execute an evaluation.
+            <div className="py-6 text-center text-xs text-[#858795]">
+              No evaluation runs recorded.
             </div>
           ) : (
-            <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
               {runs.map(r => {
                 const isSelected = selectedRun?.id === r.id;
                 const runAcc = (r.overall_metrics as any)?.accuracy;
@@ -426,7 +352,7 @@ export default function FairnessEvaluation() {
                   <button
                     key={r.id}
                     onClick={() => setSelectedRun(r)}
-                    className={`w-full text-left p-3.5 rounded-xl border transition-all text-xs card-interactive flex items-center justify-between ${
+                    className={`w-full text-left p-3 rounded-xl border transition-all text-xs card-interactive flex items-center justify-between ${
                       isSelected
                         ? 'bg-[#EEEAFE] border-[#6C5CE7] text-[#20212B] shadow-xs'
                         : 'bg-[#F8F9FE] border-[#E9EAF1] text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA]'
@@ -437,8 +363,8 @@ export default function FairnessEvaluation() {
                         <span>{r.run_name}</span>
                         {isSelected && <Check className="w-3.5 h-3.5 text-[#6C5CE7]" />}
                       </div>
-                      <div className="text-[11px] text-[#858795] mt-1">
-                        {r.dataset_name || 'Standard Benchmark Splits'} • <span className="font-mono">{r.total_samples.toLocaleString()} samples</span>
+                      <div className="text-[11px] text-[#858795] mt-0.5">
+                        {r.dataset_name || 'Standard Benchmark'} • <span className="font-mono">{r.total_samples.toLocaleString()} samples</span>
                       </div>
                     </div>
 
@@ -461,32 +387,30 @@ export default function FairnessEvaluation() {
           )}
         </div>
 
-        {/* Section 6: PDF Report Controls (1 Col) */}
-        <div className="bg-white p-6 space-y-4 rounded-2xl border border-[#E9EAF1] shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
+        {/* Academic PDF Report Export (1 Col) */}
+        <div className="bg-white p-5 rounded-2xl border border-[#E9EAF1] shadow-xs flex flex-col justify-between space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
               <Download className="w-4 h-4 text-[#6C5CE7]" />
-              <h3 className="text-sm font-bold text-[#20212B]">PDF Research Reporting</h3>
+              <h3 className="text-sm font-bold text-[#20212B]">Evaluation Export</h3>
             </div>
-            <p className="text-xs text-[#858795] leading-relaxed">
-              Export an official publication-grade research report compiling model hyperparameters, held-out split metrics, cross-script disparity analysis, and demographic parity proofs.
-            </p>
-
-            <div className="mt-4 p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] space-y-2 text-[11px] text-[#858795]">
-              <div className="flex items-center gap-1.5 font-semibold text-[#20212B]">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Academic Verification Standard</span>
+            <div className="p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#858795]">Accuracy</span>
+                <span className="font-bold text-[#20212B]">{accuracy}%</span>
               </div>
-              <ul className="space-y-1 list-disc list-inside">
-                <li>IEEE/ACM report layout standard</li>
-                <li>Zero LLM inference dependency audit</li>
-                <li>Full Indic &amp; Dravidian benchmark logs</li>
-                <li>Cryptographic timestamp &amp; version hash</li>
-              </ul>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#858795]">Macro F1</span>
+                <span className="font-bold text-[#6C5CE7]">{f1}%</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#858795]">Format</span>
+                <span className="font-mono text-[11px] text-[#20212B]">PDF Report</span>
+              </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-[#E9EAF1]">
+          <div>
             <button
               onClick={handleDownloadPdf}
               disabled={downloadingPdf}
@@ -495,18 +419,240 @@ export default function FairnessEvaluation() {
               {downloadingPdf ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Compiling PDF Report...</span>
+                  <span>Generating PDF...</span>
                 </>
               ) : (
                 <>
                   <Download className="w-3.5 h-3.5" />
-                  <span>{t('eval.downloadPdf', 'Download Fairness & Evaluation PDF')}</span>
+                  <span>Download Evaluation PDF</span>
                 </>
               )}
             </button>
           </div>
         </div>
 
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SECTION 5: SOURCE-SPECIFIC RESEARCH REPORTS & AUDIT RECORDS
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="bg-white p-5 space-y-5 rounded-2xl border border-[#E9EAF1] shadow-xs">
+        <div className="flex items-center justify-between flex-wrap gap-4 pb-3 border-b border-[#E9EAF1]">
+          <div className="flex items-center gap-2">
+            <Database className="w-4 h-4 text-[#6C5CE7]" />
+            <h2 className="text-sm font-bold text-[#20212B]">
+              Source Reports &amp; Audit Records
+            </h2>
+          </div>
+
+          {/* Source Tabs */}
+          <div className="flex items-center gap-1.5 p-1 bg-[#F5F6FA] rounded-xl border border-[#E9EAF1] flex-wrap text-xs">
+            {[
+              { id: 'all', label: 'All Sources', icon: Database },
+              { id: 'youtube', label: 'YouTube', icon: Youtube },
+              { id: 'instagram', label: 'Instagram', icon: Instagram },
+              { id: 'csv', label: 'CSV Import', icon: Upload },
+              { id: 'manual', label: 'Context Lab / Chatbot', icon: MessageSquare },
+            ].map(tab => {
+              const Icon = tab.icon;
+              const isSelected = selectedSource === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleSourceChange(tab.id as any)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+                    isSelected
+                      ? 'bg-white text-[#6C5CE7] shadow-xs font-semibold'
+                      : 'text-[#858795] hover:text-[#20212B]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Source Metric Overview and Download Actions */}
+        <div className="flex items-center justify-between flex-wrap gap-4 p-4 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1]">
+          <div className="flex items-center gap-6 flex-wrap">
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-[#858795] font-semibold">Source</span>
+              <div className="text-sm font-bold text-[#20212B] capitalize">
+                {selectedSource === 'all' ? 'All Sources' : selectedSource === 'manual' ? 'Context Lab / Chatbot' : selectedSource}
+              </div>
+            </div>
+            <div className="h-7 w-[1px] bg-[#E9EAF1] hidden sm:block" />
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-[#858795] font-semibold">Total Records</span>
+              <div className="text-sm font-bold text-[#6C5CE7] tabular-nums">
+                {loadingSourceReport ? '...' : (sourceReportData?.total_records ?? 0)}
+              </div>
+            </div>
+            <div className="h-7 w-[1px] bg-[#E9EAF1] hidden sm:block" />
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-[#858795] font-semibold">Flagged Count</span>
+              <div className="text-sm font-bold text-rose-600 tabular-nums">
+                {loadingSourceReport ? '...' : (sourceReportData?.flagged_count ?? 0)}
+              </div>
+            </div>
+            <div className="h-7 w-[1px] bg-[#E9EAF1] hidden sm:block" />
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-[#858795] font-semibold">Approved Count</span>
+              <div className="text-sm font-bold text-emerald-600 tabular-nums">
+                {loadingSourceReport ? '...' : (sourceReportData?.approved_count ?? 0)}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleDownloadSourceReport('csv')}
+              disabled={downloadingCsv || (sourceReportData?.total_records ?? 0) === 0}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-[#F8F9FE] border border-[#E9EAF1] text-[#20212B] text-xs font-semibold shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Download className={`w-3.5 h-3.5 text-[#6C5CE7] ${downloadingCsv ? 'animate-spin' : ''}`} />
+              <span>Download CSV</span>
+            </button>
+            <button
+              onClick={() => handleDownloadSourceReport('json')}
+              disabled={downloadingJson || (sourceReportData?.total_records ?? 0) === 0}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-semibold shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Download className={`w-3.5 h-3.5 text-white ${downloadingJson ? 'animate-spin' : ''}`} />
+              <span>Download JSON</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Empty State vs Table Display */}
+        {loadingSourceReport ? (
+          <div className="p-8 text-center text-xs text-[#858795] flex items-center justify-center gap-2">
+            <RefreshCw className="w-4 h-4 animate-spin text-[#6C5CE7]" />
+            <span>Loading records...</span>
+          </div>
+        ) : !sourceReportData || sourceReportData.total_records === 0 ? (
+          <div className="py-10 px-6 text-center border-2 border-dashed border-[#E9EAF1] rounded-2xl bg-[#FBFBFE] space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center mx-auto">
+              <FileText className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-bold text-[#20212B]">
+              No Stored Records Found
+            </h4>
+            <p className="text-xs text-[#858795]">
+              No persisted moderation records found for <span className="font-semibold text-[#20212B] uppercase">{selectedSource}</span>.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-[#E9EAF1]">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#F8F9FE] text-[#858795] text-[11px] font-semibold border-b border-[#E9EAF1]">
+                <tr>
+                  <th className="py-2.5 px-3.5">Comment Text</th>
+                  <th className="py-2.5 px-3">Source</th>
+                  <th className="py-2.5 px-3">Language</th>
+                  <th className="py-2.5 px-3">Prediction</th>
+                  <th className="py-2.5 px-3">Category Scores</th>
+                  <th className="py-2.5 px-3">Severity</th>
+                  <th className="py-2.5 px-3">Decision</th>
+                  <th className="py-2.5 px-3.5">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E9EAF1] bg-white">
+                {sourceReportData.records.slice((sourcePage - 1) * sourcePageSize, sourcePage * sourcePageSize).map(record => (
+                  <tr key={record.id} className="hover:bg-[#F8F9FE]/70 transition-colors">
+                    <td className="py-2.5 px-3.5 max-w-xs truncate text-[#20212B] font-medium" title={record.comment_text}>
+                      {record.comment_text}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
+                        {record.source}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap capitalize text-[#20212B]">
+                      {record.detected_language}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap capitalize font-medium">
+                      {record.model_prediction}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#858795]">
+                        <span title="Hate Speech" className="text-rose-600 font-semibold">H: {record.category_scores?.hate_speech ? (record.category_scores.hate_speech * 100).toFixed(0) : '0'}%</span>
+                        <span>•</span>
+                        <span title="Harassment" className="text-amber-600 font-semibold">Har: {record.category_scores?.harassment ? (record.category_scores.harassment * 100).toFixed(0) : '0'}%</span>
+                        <span>•</span>
+                        <span title="Legitimate" className="text-emerald-600 font-semibold">Leg: {record.category_scores?.legitimate ? (record.category_scores.legitimate * 100).toFixed(0) : '0'}%</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                        record.operational_severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        record.operational_severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      }`}>
+                        {record.operational_severity}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap capitalize font-semibold text-[#20212B]">
+                      {record.moderation_decision?.replace(/_/g, ' ')}
+                    </td>
+                    <td className="py-2.5 px-3.5 whitespace-nowrap text-[11px] text-[#858795] font-mono">
+                      {record.analysis_timestamp ? new Date(record.analysis_timestamp).toLocaleString() : 'N/A'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {sourceReportData.records.length > 0 && (
+              <div className="p-3 bg-[#F8F9FE] border-t border-[#E9EAF1] flex items-center justify-between flex-wrap gap-3 text-xs text-[#858795]">
+                <div className="flex items-center gap-2">
+                  <span>
+                    Showing <strong className="text-[#20212B] font-mono">{(sourcePage - 1) * sourcePageSize + 1}</strong>–<strong className="text-[#20212B] font-mono">{Math.min(sourcePage * sourcePageSize, sourceReportData.records.length)}</strong> of <strong className="text-[#20212B] font-mono">{sourceReportData.records.length}</strong> records
+                  </span>
+                  <span className="text-[#DDD6FE]">•</span>
+                  <label className="flex items-center gap-1 text-[11px]">
+                    <span>Per page:</span>
+                    <select
+                      value={sourcePageSize}
+                      onChange={(e) => {
+                        setSourcePageSize(Number(e.target.value));
+                        setSourcePage(1);
+                      }}
+                      className="px-2 py-0.5 rounded border border-[#E9EAF1] bg-white text-[#20212B] font-semibold text-[11px] cursor-pointer"
+                    >
+                      <option value={10}>10</option>
+                      <option value={15}>15</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSourcePage(p => Math.max(1, p - 1))}
+                    disabled={sourcePage === 1}
+                    className="px-2.5 py-1 rounded-lg border border-[#E9EAF1] bg-white hover:bg-[#F0F1F5] text-[#20212B] disabled:opacity-40 cursor-pointer text-xs font-semibold shadow-2xs"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-2 font-mono text-[11px] font-bold text-[#6C5CE7]">
+                    Page {sourcePage} of {Math.ceil(sourceReportData.records.length / sourcePageSize) || 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSourcePage(p => Math.min(Math.ceil(sourceReportData.records.length / sourcePageSize), p + 1))}
+                    disabled={sourcePage >= Math.ceil(sourceReportData.records.length / sourcePageSize)}
+                    className="px-2.5 py-1 rounded-lg border border-[#E9EAF1] bg-white hover:bg-[#F0F1F5] text-[#20212B] disabled:opacity-40 cursor-pointer text-xs font-semibold shadow-2xs"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
     </div>

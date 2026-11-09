@@ -73,7 +73,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
   // Instagram Inputs
   const [igMediaInput, setIgMediaInput] = useState('');
-  const [igMaxComments, setIgMaxComments] = useState(25);
+  const [igMaxComments, setIgMaxComments] = useState(50);
   const [igIncludeReplies, setIgIncludeReplies] = useState(true);
 
   // Filters

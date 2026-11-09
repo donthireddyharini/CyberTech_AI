@@ -289,6 +289,11 @@ export interface DatasetValidation {
 export interface FeedbackRecord {
   id: string;
   record_id: string | null;
+  comment_text?: string | null;
+  severity?: string | null;
+  platform?: string | null;
+  human_review?: string | null;
+  status?: string | null;
   is_false_positive: boolean;
   is_false_negative: boolean;
   is_ambiguous: boolean;
@@ -297,7 +302,38 @@ export interface FeedbackRecord {
   model_version: string | null;
   validation_status: string;
   explanation: string | null;
+  decision?: string | null;
+  hate_speech_score?: number | null;
+  harassment_score?: number | null;
+  cyberbullying_score?: number | null;
+  legitimate_score?: number | null;
   created_at: string;
+}
+
+export interface SourceReportRecord {
+  id: string;
+  comment_text: string;
+  source: string;
+  detected_language: string;
+  model_prediction: string;
+  category_scores: {
+    hate_speech: number;
+    harassment: number;
+    cyberbullying: number;
+    legitimate: number;
+  };
+  operational_severity: string;
+  moderation_decision: string;
+  analysis_timestamp: string | null;
+}
+
+export interface SourceReportResponse {
+  source: string;
+  total_records: number;
+  flagged_count: number;
+  approved_count: number;
+  records: SourceReportRecord[];
+  message: string;
 }
 
 export interface ErrorAnalysis {
@@ -413,9 +449,11 @@ export interface SocialIngestionResult {
   sync_id: string;
   platform: string;
   target_input: string;
+  requested_count?: number;
   total_fetched: number;
   newly_ingested: number;
   duplicate_count: number;
+  failed_count?: number;
   flagged_count: number;
   approved_count: number;
   records: Array<{

@@ -46,6 +46,20 @@ def get_local_day_bounds_utc(tz: Optional[ZoneInfo] = None, target_date: Optiona
     return start_utc, end_utc
 
 
+def get_violation_condition():
+    """
+    Standard, authoritative definition of an operational violation across CyberTech AI:
+    - Content explicitly flagged or escalated by the decision policy, OR
+    - Status marked as 'flagged' by human or automated triage, OR
+    - Severity elevated to 'high' or 'medium' harm bands.
+    """
+    return or_(
+        ModerationRecord.decision.in_(["flag_for_review", "escalate", "human_review", "flagged"]),
+        ModerationRecord.status == "flagged",
+        ModerationRecord.severity.in_(["high", "medium"])
+    )
+
+
 def _get_date_bounds(filter_val: str, start_date: Optional[str] = None, end_date: Optional[str] = None):
     """Calculate datetime bounds based on the specified filter and local application timezone."""
     normalized = (filter_val or "all").lower().strip()
@@ -118,7 +132,10 @@ async def dashboard_summary(
 
     # Multi-tenant scoping: Include user's own records as well as shared unassigned operational records.
     if current_user:
-        conditions.append(or_(ModerationRecord.user_id == current_user.id, ModerationRecord.user_id.is_(None)))
+        if current_user.role == 'admin':
+            pass  # Admin overview
+        else:
+            conditions.append(ModerationRecord.user_id == current_user.id)
     else:
         conditions.append(ModerationRecord.user_id.is_(None))
 
@@ -133,49 +150,39 @@ async def dashboard_summary(
         elif p_clean in ("twitter", "x"):
             conditions.append(func.lower(ModerationRecord.platform).in_(["x", "twitter"]))
         elif p_clean in ("csv", "csv_upload"):
-            conditions.append(func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]))
+            conditions.append(or_(
+                func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]),
+                func.lower(ModerationRecord.platform).like("%csv%"),
+                func.lower(ModerationRecord.platform).like("imported%")
+            ))
         else:
             conditions.append(func.lower(ModerationRecord.platform) == p_clean)
 
     where_clause = and_(*conditions) if conditions else True
 
-    # 1. Total analyzed comments
-    total = (await db.execute(
-        select(func.count(ModerationRecord.id)).where(where_clause)
-    )).scalar() or 0
+    # 1-5. High-speed single-query conditional aggregation for total, flagged, pending, and high_priority
+    summary_stmt = select(
+        func.count(ModerationRecord.id).label("total"),
+        func.sum(
+            case((get_violation_condition(), 1), else_=0)
+        ).label("flagged"),
+        func.sum(
+            case((ModerationRecord.status == "pending", 1), else_=0)
+        ).label("pending"),
+        func.sum(
+            case((ModerationRecord.severity == "high", 1), else_=0)
+        ).label("high_priority")
+    ).where(where_clause)
 
-    # 2. Flagged predictions
-    flagged = (await db.execute(
-        select(func.count(ModerationRecord.id)).where(
-            and_(
-                where_clause,
-                or_(
-                    ModerationRecord.decision.in_(["flag_for_review", "escalate"]),
-                    ModerationRecord.status == "flagged",
-                    ModerationRecord.severity.in_(["high", "medium"])
-                )
-            )
-        )
-    )).scalar() or 0
+    summary_row = (await db.execute(summary_stmt)).one()
+    total = summary_row[0] or 0
+    flagged = summary_row[1] or 0
+    pending = summary_row[2] or 0
+    high_priority = summary_row[3] or 0
 
-    # 3. Non-flagged predictions
     non_flagged = max(0, total - flagged)
     violation_rate = round((flagged / total * 100.0), 2) if total > 0 else 0.0
     clean_rate = round((non_flagged / total * 100.0), 2) if total > 0 else 0.0
-
-    # 4. Pending review
-    pending = (await db.execute(
-        select(func.count(ModerationRecord.id)).where(
-            and_(where_clause, ModerationRecord.status == "pending")
-        )
-    )).scalar() or 0
-
-    # 5. High-priority cases
-    high_priority = (await db.execute(
-        select(func.count(ModerationRecord.id)).where(
-            and_(where_clause, ModerationRecord.severity == "high")
-        )
-    )).scalar() or 0
 
     # 6. Analyzed today (grounded strictly in created_at within local day boundary converted to UTC)
     today_start_utc, today_end_utc = get_local_day_bounds_utc()
@@ -184,7 +191,10 @@ async def dashboard_summary(
         ModerationRecord.created_at <= today_end_utc,
     ]
     if current_user:
-        today_conditions.append(or_(ModerationRecord.user_id == current_user.id, ModerationRecord.user_id.is_(None)))
+        if current_user.role == 'admin':
+            pass
+        else:
+            today_conditions.append(ModerationRecord.user_id == current_user.id)
     else:
         today_conditions.append(ModerationRecord.user_id.is_(None))
 
@@ -195,7 +205,10 @@ async def dashboard_summary(
     # 7. Completed dataset runs and samples processed
     run_conditions = [DatasetRun.status == "completed"]
     if current_user:
-        run_conditions.append(or_(DatasetRun.user_id == current_user.id, DatasetRun.user_id.is_(None)))
+        if current_user.role == 'admin':
+            pass
+        else:
+            run_conditions.append(DatasetRun.user_id == current_user.id)
     else:
         run_conditions.append(DatasetRun.user_id.is_(None))
     if start_dt and end_dt:
@@ -248,7 +261,10 @@ async def dashboard_distributions(
     conditions = []
 
     if current_user:
-        conditions.append(or_(ModerationRecord.user_id == current_user.id, ModerationRecord.user_id.is_(None)))
+        if current_user.role == 'admin':
+            pass  # Admin overview
+        else:
+            conditions.append(ModerationRecord.user_id == current_user.id)
     else:
         conditions.append(ModerationRecord.user_id.is_(None))
     if start_dt and end_dt:
@@ -265,70 +281,107 @@ async def dashboard_distributions(
         elif p_clean in ("twitter", "x"):
             conditions.append(func.lower(ModerationRecord.platform).in_(["x", "twitter"]))
         elif p_clean in ("csv", "csv_upload"):
-            conditions.append(func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]))
+            conditions.append(or_(
+                func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]),
+                func.lower(ModerationRecord.platform).like("%csv%"),
+                func.lower(ModerationRecord.platform).like("imported%")
+            ))
         else:
             conditions.append(func.lower(ModerationRecord.platform) == p_clean)
 
     where_clause = and_(*conditions) if conditions else True
 
-    # Severity distribution
+    # Severity distribution (proper key accumulation without overwriting)
     sev_result = await db.execute(
         select(ModerationRecord.severity, func.count(ModerationRecord.id))
         .where(where_clause)
         .group_by(ModerationRecord.severity)
     )
-    severity_dist = {k or "low": v for k, v in dict(sev_result.all()).items()}
-
-    # Category distribution
-    records_result = await db.execute(
-        select(
-            ModerationRecord.hate_speech_score,
-            ModerationRecord.harassment_score,
-            ModerationRecord.cyberbullying_score,
-            ModerationRecord.legitimate_score,
-        ).where(where_clause)
-    )
-    records = records_result.all()
-    category_dist = {"hate_speech": 0, "harassment": 0, "cyberbullying": 0, "legitimate": 0}
-    for r in records:
-        scores = {
-            "hate_speech": r[0] or 0.0,
-            "harassment": r[1] or 0.0,
-            "cyberbullying": r[2] or 0.0,
-            "legitimate": r[3] or 0.0
-        }
-        best = max(scores, key=scores.get)
-        if scores[best] > 0.2:
-            category_dist[best] += 1
+    severity_dist: dict[str, int] = {"low": 0, "medium": 0, "high": 0, "critical": 0}
+    for row in sev_result.all():
+        s_key = (row[0] or "low").lower().strip()
+        cnt = row[1] or 0
+        if s_key in severity_dist:
+            severity_dist[s_key] += cnt
         else:
-            category_dist["legitimate"] += 1
+            severity_dist["low"] += cnt
 
-    # Language distribution
+    # Category distribution (strictly mutually exclusive partitioning: guarantees sum == total)
+    dominant_cat = case(
+        (
+            and_(
+                ModerationRecord.hate_speech_score > 0.2,
+                ModerationRecord.hate_speech_score >= ModerationRecord.harassment_score,
+                ModerationRecord.hate_speech_score >= ModerationRecord.cyberbullying_score,
+                ModerationRecord.hate_speech_score >= ModerationRecord.legitimate_score
+            ),
+            "hate_speech"
+        ),
+        (
+            and_(
+                ModerationRecord.harassment_score > 0.2,
+                ModerationRecord.harassment_score >= ModerationRecord.cyberbullying_score,
+                ModerationRecord.harassment_score >= ModerationRecord.legitimate_score
+            ),
+            "harassment"
+        ),
+        (
+            and_(
+                ModerationRecord.cyberbullying_score > 0.2,
+                ModerationRecord.cyberbullying_score >= ModerationRecord.legitimate_score
+            ),
+            "cyberbullying"
+        ),
+        else_="legitimate"
+    )
+
+    cat_stmt = select(
+        func.sum(case((dominant_cat == "hate_speech", 1), else_=0)).label("hate_speech"),
+        func.sum(case((dominant_cat == "harassment", 1), else_=0)).label("harassment"),
+        func.sum(case((dominant_cat == "cyberbullying", 1), else_=0)).label("cyberbullying"),
+        func.sum(case((dominant_cat == "legitimate", 1), else_=0)).label("legitimate")
+    ).where(where_clause)
+
+    cat_row = (await db.execute(cat_stmt)).one()
+    category_dist = {
+        "hate_speech": int(cat_row[0] or 0),
+        "harassment": int(cat_row[1] or 0),
+        "cyberbullying": int(cat_row[2] or 0),
+        "legitimate": int(cat_row[3] or 0),
+    }
+
+    # Language distribution (proper key accumulation without collision)
     lang_result = await db.execute(
         select(ModerationRecord.detected_language, func.count(ModerationRecord.id))
         .where(where_clause)
         .group_by(ModerationRecord.detected_language)
     )
-    lang_dist = {k or "english": v for k, v in dict(lang_result.all()).items()}
+    lang_dist: dict[str, int] = {}
+    for row in lang_result.all():
+        l_key = (row[0] or "english").lower().strip()
+        cnt = row[1] or 0
+        lang_dist[l_key] = lang_dist.get(l_key, 0) + cnt
 
-    # Platform distribution (across all platforms for the current scope)
+    # Platform distribution (strictly reconciled with active scope & filter)
     plat_result = await db.execute(
         select(ModerationRecord.platform, func.count(ModerationRecord.id))
-        .where(base_where_clause)
+        .where(where_clause)
         .group_by(ModerationRecord.platform)
     )
-    raw_plat_dist = dict(plat_result.all())
     platform_dist = {
         "youtube": 0,
         "instagram": 0,
         "manual": 0,
         "csv_upload": 0,
     }
-    for k, v in raw_plat_dist.items():
-        key = (k or "manual").lower().strip()
+    for row in plat_result.all():
+        key = (row[0] or "manual").lower().strip()
+        v = row[1] or 0
         if key in ("instagram", "ig"):
             platform_dist["instagram"] += v
-        elif key in ("csv", "csv_upload", "batch_file"):
+        elif key in ("youtube", "yt"):
+            platform_dist["youtube"] += v
+        elif key in ("csv", "csv_upload", "batch_file") or "csv" in key or key.startswith("imported"):
             platform_dist["csv_upload"] += v
         elif key in ("twitter", "x"):
             platform_dist["instagram"] += v
@@ -381,7 +434,10 @@ async def dashboard_timeline(
         ModerationRecord.created_at <= end_dt
     ]
     if current_user:
-        conditions.append(or_(ModerationRecord.user_id == current_user.id, ModerationRecord.user_id.is_(None)))
+        if current_user.role == 'admin':
+            pass  # Admin overview
+        else:
+            conditions.append(ModerationRecord.user_id == current_user.id)
     else:
         conditions.append(ModerationRecord.user_id.is_(None))
 
@@ -392,7 +448,11 @@ async def dashboard_timeline(
         elif p_clean in ("twitter", "x"):
             conditions.append(func.lower(ModerationRecord.platform).in_(["x", "twitter"]))
         elif p_clean in ("csv", "csv_upload"):
-            conditions.append(func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]))
+            conditions.append(or_(
+                func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]),
+                func.lower(ModerationRecord.platform).like("%csv%"),
+                func.lower(ModerationRecord.platform).like("imported%")
+            ))
         else:
             conditions.append(func.lower(ModerationRecord.platform) == p_clean)
 
@@ -400,29 +460,10 @@ async def dashboard_timeline(
         func.date(ModerationRecord.created_at).label("day"),
         func.count(ModerationRecord.id).label("total"),
         func.sum(
-            case(
-                (
-                    or_(
-                        ModerationRecord.decision == "flag_for_review",
-                        ModerationRecord.decision == "human_review",
-                        ModerationRecord.severity.in_(["high", "medium"])
-                    ),
-                    1
-                ),
-                else_=0
-            )
+            case((get_violation_condition(), 1), else_=0)
         ).label("flagged"),
         func.sum(
-            case(
-                (
-                    and_(
-                        ModerationRecord.decision == "no_action",
-                        ModerationRecord.severity.in_(["low", "none"])
-                    ),
-                    1
-                ),
-                else_=0
-            )
+            case((get_violation_condition(), 0), else_=1)
         ).label("approved")
     ).where(and_(*conditions)).group_by(func.date(ModerationRecord.created_at)).order_by("day")
 
@@ -466,7 +507,10 @@ async def recent_activity(
     conditions = []
 
     if current_user:
-        conditions.append(or_(ModerationRecord.user_id == current_user.id, ModerationRecord.user_id.is_(None)))
+        if current_user.role == 'admin':
+            pass  # Admin overview
+        else:
+            conditions.append(ModerationRecord.user_id == current_user.id)
     else:
         conditions.append(ModerationRecord.user_id.is_(None))
     if start_dt and end_dt:
@@ -480,7 +524,11 @@ async def recent_activity(
         elif p_clean in ("twitter", "x"):
             conditions.append(func.lower(ModerationRecord.platform).in_(["x", "twitter"]))
         elif p_clean in ("csv", "csv_upload"):
-            conditions.append(func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]))
+            conditions.append(or_(
+                func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]),
+                func.lower(ModerationRecord.platform).like("%csv%"),
+                func.lower(ModerationRecord.platform).like("imported%")
+            ))
         else:
             conditions.append(func.lower(ModerationRecord.platform) == p_clean)
 
@@ -524,7 +572,10 @@ async def review_queue(
     """Get pending items for the review queue."""
     conditions = [ModerationRecord.status == "pending"]
     if current_user:
-        conditions.append(or_(ModerationRecord.user_id == current_user.id, ModerationRecord.user_id.is_(None)))
+        if current_user.role == 'admin':
+            pass  # Admin overview
+        else:
+            conditions.append(ModerationRecord.user_id == current_user.id)
     else:
         conditions.append(ModerationRecord.user_id.is_(None))
 
@@ -535,7 +586,11 @@ async def review_queue(
         elif p_clean in ("twitter", "x"):
             conditions.append(func.lower(ModerationRecord.platform).in_(["x", "twitter"]))
         elif p_clean in ("csv", "csv_upload"):
-            conditions.append(func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]))
+            conditions.append(or_(
+                func.lower(ModerationRecord.platform).in_(["csv", "csv_upload", "batch_file"]),
+                func.lower(ModerationRecord.platform).like("%csv%"),
+                func.lower(ModerationRecord.platform).like("imported%")
+            ))
         else:
             conditions.append(func.lower(ModerationRecord.platform) == p_clean)
 
@@ -576,7 +631,10 @@ async def list_dashboard_dataset_runs(
     """List completed dataset detection runs for dashboard summary."""
     conditions = []
     if current_user:
-        conditions.append(or_(DatasetRun.user_id == current_user.id, DatasetRun.user_id.is_(None)))
+        if current_user.role == 'admin':
+            pass
+        else:
+            conditions.append(DatasetRun.user_id == current_user.id)
     else:
         conditions.append(DatasetRun.user_id.is_(None))
 

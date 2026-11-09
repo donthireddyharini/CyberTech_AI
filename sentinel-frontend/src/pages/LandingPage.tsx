@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import {
   Shield, Lock, Cpu, Globe, CheckCircle2, ArrowRight,
-  Sparkles, Terminal, Activity, FileText, ChevronRight, X, AlertTriangle, Eye, Menu
+  Sparkles, Activity, FileText, ChevronRight, X, AlertTriangle, Eye, Menu
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/I18nContext';
 import { analyzeApi } from '../api/client';
 import { GoogleLoginButton } from '../components/GoogleLoginButton';
+import { ScrollReveal } from '../components/ScrollReveal';
 import type { AnalyzeResponse } from '../types';
 
 export default function LandingPage() {
@@ -104,36 +105,6 @@ export default function LandingPage() {
     }
   };
 
-  const DEMO_ACCOUNTS = [
-    { label: 'Faculty Evaluator', role: 'Evaluator', email: 'evaluator@cybertech.ai', pass: 'DemoPassword2026!' },
-    { label: 'Lead Admin', role: 'Admin', email: 'admin@cybertech.ai', pass: 'CyberTech2026!' },
-    { label: 'Safety Moderator', role: 'Moderator', email: 'moderator@cybertech.ai', pass: 'Moderator2026!' },
-  ];
-
-  const fillCredentials = (acc: typeof DEMO_ACCOUNTS[0]) => {
-    setAuthMode('login');
-    setEmail(acc.email);
-    setPassword(acc.pass);
-    setAuthError('');
-  };
-
-  const handleQuickDemoLogin = async () => {
-    setAuthError('');
-    setAuthLoading(true);
-    try {
-      try {
-        await login({ email: 'evaluator@cybertech.ai', password: 'DemoPassword2026!' });
-      } catch {
-        await login({ email: 'admin@cybertech.ai', password: 'CyberTech2026!' });
-      }
-      setAuthModalOpen(false);
-    } catch (err: any) {
-      setAuthError(err.message || 'Quick demo login failed.');
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
   const handleRunDemo = async (textToRun = demoText, langHint = demoLanguageHint) => {
     setDemoAnalyzing(true);
     try {
@@ -167,9 +138,6 @@ export default function LandingPage() {
           <div>
             <div className="text-base font-black tracking-tight text-[#20212B] flex items-center gap-2">
               <span>CyberTech AI</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE] font-mono font-bold">
-                Enterprise AI
-              </span>
             </div>
             <div className="text-xs text-[#858795] font-medium">Content Moderation Intelligence</div>
           </div>
@@ -323,74 +291,91 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section id="hero" className="scroll-mt-24 relative z-10 pt-20 pb-20 px-6 max-w-6xl mx-auto text-center">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] text-[#6C5CE7] text-xs font-semibold mb-8 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-[#6C5CE7]" />
-          <span>Strict Offline Machine Learning Architecture • Zero External APIs</span>
-        </div>
+        <ScrollReveal delay={0} duration={600}>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] text-[#6C5CE7] text-xs font-semibold mb-8 shadow-xs hover:border-[#6C5CE7]/50 transition-colors">
+            <Sparkles className="w-3.5 h-3.5 text-[#6C5CE7]" />
+            <span>Strict Offline Machine Learning Architecture • Zero External APIs</span>
+          </div>
+        </ScrollReveal>
 
-        <h1 className="text-4xl sm:text-6xl font-black text-[#20212B] tracking-tight leading-tight max-w-4xl mx-auto">
-          Understand Harmful Content.{' '}
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#6C5CE7] via-[#5B4CD9] to-[#00CEC9]">
-            Build Safer Digital Spaces.
-          </span>
-        </h1>
+        <ScrollReveal delay={120} duration={650}>
+          <h1 className="text-4xl sm:text-6xl font-black text-[#20212B] tracking-tight leading-tight max-w-4xl mx-auto">
+            Understand Harmful Content.{' '}
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#6C5CE7] via-[#5B4CD9] to-[#00CEC9]">
+              Build Safer Digital Spaces.
+            </span>
+          </h1>
+        </ScrollReveal>
 
-        <p className="mt-6 text-base sm:text-lg text-[#858795] max-w-3xl mx-auto leading-relaxed font-normal">
-          High-performance, context-aware content moderation engineered specifically for Indic languages, code-mixed text, and cultural nuance. Built with verified machine learning models and 100% local inference.
-        </p>
+        <ScrollReveal delay={220} duration={650}>
+          <p className="mt-6 text-base sm:text-lg text-[#858795] max-w-3xl mx-auto leading-relaxed font-normal">
+            High-performance, context-aware content moderation engineered specifically for Indic languages, code-mixed text, and cultural nuance. Built with verified machine learning models and 100% local inference.
+          </p>
+        </ScrollReveal>
 
         {/* CTA Buttons */}
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <button
-            onClick={() => {
-              setAuthMode('login');
-              setAuthModalOpen(true);
-            }}
-            className="px-8 py-3.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white font-semibold text-sm shadow-md shadow-[#6C5CE7]/25 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-2"
-          >
-            <span>{t('action.getStarted', 'Enter Moderation Dashboard')}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+        <ScrollReveal delay={300} duration={650}>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <button
+              onClick={() => {
+                setAuthMode('login');
+                setAuthModalOpen(true);
+              }}
+              className="px-8 py-3.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white font-semibold text-sm shadow-md shadow-[#6C5CE7]/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center gap-2 cursor-pointer"
+            >
+              <span>{t('action.getStarted', 'Enter Moderation Dashboard')}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
 
-          <button
-            onClick={() => {
-              setDemoModalOpen(true);
-              handleRunDemo();
-            }}
-            className="px-7 py-3.5 rounded-xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 text-[#20212B] font-semibold text-sm shadow-xs transition-all flex items-center gap-2 hover:bg-[#FBFBFE]"
-          >
-            <Eye className="w-4 h-4 text-[#6C5CE7]" />
-            <span>{t('action.tryDemo', 'Try Interactive Live Demo')}</span>
-          </button>
-        </div>
+            <button
+              onClick={() => {
+                setDemoModalOpen(true);
+                handleRunDemo();
+              }}
+              className="px-7 py-3.5 rounded-xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 text-[#20212B] font-semibold text-sm shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center gap-2 hover:bg-[#FBFBFE] cursor-pointer"
+            >
+              <Eye className="w-4 h-4 text-[#6C5CE7]" />
+              <span>{t('action.tryDemo', 'Try Interactive Live Demo')}</span>
+            </button>
+          </div>
+        </ScrollReveal>
 
-        {/* Key Feature Highlights Pill Row */}
+        {/* Key Feature Highlights Pill Row with Staggered Scroll Reveal */}
         <div className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto">
-          <div className="p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left">
-            <div className="text-2xl font-black text-[#20212B]">5+</div>
-            <div className="text-xs text-[#6C5CE7] font-semibold">Languages Supported</div>
-            <div className="text-[11px] text-[#858795] mt-1">Telugu, Hindi, Kannada, Hinglish, English</div>
-          </div>
-          <div className="p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left">
-            <div className="text-2xl font-black text-[#20212B]">&lt; 50ms</div>
-            <div className="text-xs text-[#00B894] font-semibold">Local Inference Latency</div>
-            <div className="text-[11px] text-[#858795] mt-1">Direct memory pipelines with zero network delays</div>
-          </div>
-          <div className="p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left">
-            <div className="text-2xl font-black text-[#20212B]">100%</div>
-            <div className="text-xs text-[#0984E3] font-semibold">Data Privacy & Sovereignty</div>
-            <div className="text-[11px] text-[#858795] mt-1">Zero cloud APIs, zero leaks, 100% offline</div>
-          </div>
-          <div className="p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left">
-            <div className="text-2xl font-black text-[#20212B]">Active</div>
-            <div className="text-xs text-[#FDCB6E] font-semibold">Human-in-the-Loop</div>
-            <div className="text-[11px] text-[#858795] mt-1">4-way feedback loop for continuous refinement</div>
-          </div>
+          <ScrollReveal delay={380} duration={600} className="h-full">
+            <div className="h-full p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+              <div className="text-2xl font-black text-[#20212B]">5+</div>
+              <div className="text-xs text-[#6C5CE7] font-semibold">Languages Supported</div>
+              <div className="text-[11px] text-[#858795] mt-1">Telugu, Hindi, Kannada, Hinglish, English</div>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={480} duration={600} className="h-full">
+            <div className="h-full p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+              <div className="text-2xl font-black text-[#20212B]">&lt; 50ms</div>
+              <div className="text-xs text-[#00B894] font-semibold">Local Inference Latency</div>
+              <div className="text-[11px] text-[#858795] mt-1">Direct memory pipelines with zero network delays</div>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={580} duration={600} className="h-full">
+            <div className="h-full p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+              <div className="text-2xl font-black text-[#20212B]">100%</div>
+              <div className="text-xs text-[#0984E3] font-semibold">Data Privacy & Sovereignty</div>
+              <div className="text-[11px] text-[#858795] mt-1">Zero cloud APIs, zero leaks, 100% offline</div>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={680} duration={600} className="h-full">
+            <div className="h-full p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+              <div className="text-2xl font-black text-[#20212B]">Active</div>
+              <div className="text-xs text-[#FDCB6E] font-semibold">Human-in-the-Loop</div>
+              <div className="text-[11px] text-[#858795] mt-1">4-way feedback loop for continuous refinement</div>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* Product Preview Card */}
+      {/* Product Preview Card with Scroll Reveal */}
       <section id="demo-preview" className="scroll-mt-24 relative z-10 px-6 max-w-5xl mx-auto mb-20">
+        <ScrollReveal delay={100} duration={700}>
         <div className="rounded-2xl border border-[#E9EAF1] bg-white p-2 shadow-xl shadow-slate-200/50">
           <div className="rounded-xl bg-[#FBFBFE] p-6 border border-[#E9EAF1]">
             <div className="flex items-center justify-between pb-4 border-b border-[#E9EAF1]">
@@ -459,49 +444,59 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+        </ScrollReveal>
       </section>
 
       {/* Core Features Section */}
       <section id="features" className="scroll-mt-24 relative z-10 py-16 px-6 max-w-6xl mx-auto border-t border-[#E9EAF1]">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl font-black text-[#20212B] tracking-tight">
-            Engineered for Cultural Nuance and High Precision
-          </h2>
-          <p className="mt-3 text-[#858795] text-sm max-w-2xl mx-auto">
-            Standard moderation models fail when faced with regional slang, phonetic typing, and code-mixing. CyberTech AI addresses these real-world challenges.
-          </p>
-        </div>
+        <ScrollReveal delay={0} duration={600}>
+          <div className="text-center mb-14">
+            <h2 className="text-3xl font-black text-[#20212B] tracking-tight">
+              Engineered for Cultural Nuance and High Precision
+            </h2>
+            <p className="mt-3 text-[#858795] text-sm max-w-2xl mx-auto">
+              Standard moderation models fail when faced with regional slang, phonetic typing, and code-mixing. CyberTech AI addresses these real-world challenges.
+            </p>
+          </div>
+        </ScrollReveal>
 
+        {/* Grouped Feature Cards with Staggered Scroll Reveal */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all group shadow-xs">
-            <div className="w-12 h-12 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] mb-5 group-hover:scale-105 transition-transform">
-              <Cpu className="w-6 h-6" />
+          <ScrollReveal delay={100} duration={650} className="h-full">
+            <div className="h-full p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all duration-300 group shadow-xs">
+              <div className="w-12 h-12 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] mb-5 group-hover:scale-105 transition-transform">
+                <Cpu className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-[#20212B] mb-2">Context Intelligence Lab</h3>
+              <p className="text-xs text-[#858795] leading-relaxed">
+                Disentangles apparent hostility from colloquial banter. Evaluates preceding and following context to eliminate unwarranted false positives.
+              </p>
             </div>
-            <h3 className="text-base font-bold text-[#20212B] mb-2">Context Intelligence Lab</h3>
-            <p className="text-xs text-[#858795] leading-relaxed">
-              Disentangles apparent hostility from colloquial banter. Evaluates preceding and following context to eliminate unwarranted false positives.
-            </p>
-          </div>
+          </ScrollReveal>
 
-          <div id="multilingual" className="scroll-mt-24 p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all group shadow-xs">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-[#6C5CE7] mb-5 group-hover:scale-105 transition-transform">
-              <Globe className="w-6 h-6" />
+          <ScrollReveal delay={250} duration={650} className="h-full">
+            <div id="multilingual" className="h-full scroll-mt-24 p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all duration-300 group shadow-xs">
+              <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-[#6C5CE7] mb-5 group-hover:scale-105 transition-transform">
+                <Globe className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-[#20212B] mb-2">Multilingual & Code-Mixed</h3>
+              <p className="text-xs text-[#858795] leading-relaxed">
+                Custom specialized word and character n-gram pipelines for Telugu, Hindi, Kannada, Hinglish, and English, retaining full Unicode fidelity.
+              </p>
             </div>
-            <h3 className="text-base font-bold text-[#20212B] mb-2">Multilingual & Code-Mixed</h3>
-            <p className="text-xs text-[#858795] leading-relaxed">
-              Custom specialized word and character n-gram pipelines for Telugu, Hindi, Kannada, Hinglish, and English, retaining full Unicode fidelity.
-            </p>
-          </div>
+          </ScrollReveal>
 
-          <div id="architecture" className="scroll-mt-24 p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all group shadow-xs">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-5 group-hover:scale-105 transition-transform">
-              <Lock className="w-6 h-6" />
+          <ScrollReveal delay={400} duration={650} className="h-full">
+            <div id="architecture" className="h-full scroll-mt-24 p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all duration-300 group shadow-xs">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-5 group-hover:scale-105 transition-transform">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-[#20212B] mb-2">100% Offline & Private</h3>
+              <p className="text-xs text-[#858795] leading-relaxed">
+                Zero dependency on third-party cloud LLMs or paid APIs. Complete institutional privacy and compliance with university research standards.
+              </p>
             </div>
-            <h3 className="text-base font-bold text-[#20212B] mb-2">100% Offline & Private</h3>
-            <p className="text-xs text-[#858795] leading-relaxed">
-              Zero dependency on third-party cloud LLMs or paid APIs. Complete institutional privacy and compliance with university research standards.
-            </p>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -664,36 +659,11 @@ export default function LandingPage() {
             </div>
 
             {/* Divider */}
-            <div className="relative flex items-center justify-center mb-4">
+            <div className="relative flex items-center justify-center mb-5">
               <div className="border-t border-[#E9EAF1] w-full" />
               <span className="bg-white px-3 text-[10px] font-semibold text-[#858795] uppercase tracking-wider relative">
                 Or continue with email
               </span>
-            </div>
-
-            {/* Quick-Fill Demo Chips */}
-            <div className="bg-[#F8F9FE] p-3 rounded-xl border border-[#E9EAF1] space-y-1.5 mb-4">
-              <div className="text-[11px] font-semibold text-[#858795] flex items-center justify-between">
-                <span>Pre-Configured Accounts:</span>
-                <span className="text-[10px] text-[#6C5CE7]">Click to auto-fill</span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {DEMO_ACCOUNTS.map((acc) => (
-                  <button
-                    key={acc.email}
-                    type="button"
-                    onClick={() => fillCredentials(acc)}
-                    className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer text-center truncate ${
-                      email === acc.email
-                        ? 'bg-[#6C5CE7] text-white border-[#6C5CE7] shadow-xs'
-                        : 'bg-white text-[#20212B] border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:bg-[#F3F4FD]'
-                    }`}
-                    title={`${acc.label} (${acc.email})`}
-                  >
-                    {acc.role}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <form onSubmit={handleAuthSubmit} className="space-y-4">
@@ -744,18 +714,6 @@ export default function LandingPage() {
               </button>
             </form>
 
-            {/* Quick Demo Access Button */}
-            <div className="mt-4 pt-4 border-t border-[#E9EAF1]">
-              <button
-                onClick={handleQuickDemoLogin}
-                disabled={authLoading}
-                className="w-full py-2.5 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] hover:bg-[#E3DCFE] text-[#6C5CE7] text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Terminal className="w-3.5 h-3.5 text-[#6C5CE7]" />
-                <span>One-Click Faculty / Evaluator Demo Sign In</span>
-              </button>
-            </div>
-
             {/* Toggle auth mode */}
             <div className="mt-4 text-center text-xs text-[#858795]">
               {authMode === 'login' ? (
@@ -790,17 +748,19 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* Footer */}
+      {/* Footer with Scroll Reveal */}
       <footer className="relative z-10 border-t border-[#E9EAF1] py-10 px-6 max-w-6xl mx-auto text-center text-xs text-[#858795]">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <Shield className="w-4 h-4 text-[#6C5CE7]" />
-          <span className="font-bold text-[#20212B]">CyberTech AI Intelligence Platform</span>
-          <span>•</span>
-          <span className="font-medium">Multi-Platform Social Media Moderation &amp; Local Inference</span>
-        </div>
-        <p>
-          Offline Machine Learning &amp; Cultural Context Moderation. Zero external cloud LLM dependencies.
-        </p>
+        <ScrollReveal delay={50} duration={500}>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Shield className="w-4 h-4 text-[#6C5CE7]" />
+            <span className="font-bold text-[#20212B]">CyberTech AI Intelligence Platform</span>
+            <span>•</span>
+            <span className="font-medium">Multi-Platform Social Media Moderation &amp; Local Inference</span>
+          </div>
+          <p>
+            Offline Machine Learning &amp; Cultural Context Moderation. Zero external cloud LLM dependencies.
+          </p>
+        </ScrollReveal>
       </footer>
     </div>
   );

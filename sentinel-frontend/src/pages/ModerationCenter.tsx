@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import {
   ShieldAlert, Search, Filter, CheckCircle, XCircle, AlertTriangle,
   Clock, Download, ChevronLeft, ChevronRight, X, ExternalLink,
-  Send, Sparkles, RefreshCw, CheckCircle2, MessageSquare, ThumbsUp,
-  ThumbsDown, HelpCircle, Layers, ArrowRight,
-  Youtube, Instagram, Share2, Upload, FileText
+  RefreshCw, MessageSquare, ThumbsUp, ThumbsDown, HelpCircle,
+  Youtube, Instagram, Upload, FileText, FileSpreadsheet, Layers, PlusCircle
 } from 'lucide-react';
-import { moderationApi, feedbackApi, analyzeApi } from '../api/client';
-import type { ModerationRecord, ModerationDetail, AnalyzeResponse } from '../types';
+import { moderationApi, feedbackApi } from '../api/client';
+import type { ModerationRecord, ModerationDetail } from '../types';
 import { useToast } from '../App';
+import { useAuth } from '../context/AuthContext';
 
 function PlatformBadge({ platform, sourceUrl }: { platform?: string | null; sourceUrl?: string | null }) {
   const p = (platform || 'manual').toLowerCase();
@@ -50,52 +50,11 @@ function PlatformBadge({ platform, sourceUrl }: { platform?: string | null; sour
   );
 }
 
-const TEST_PRESETS = [
-  {
-    label: "Telugu Insult",
-    lang: "telugu",
-    text: "నువ్వు చాలా పనికిరాని వెధవవి",
-    type: "harmful"
-  },
-  {
-    label: "Hindi Hostile",
-    lang: "hindi",
-    text: "तू बहुत ही घटिया और बदतमीज इंसान है",
-    type: "harmful"
-  },
-  {
-    label: "Hinglish Toxic",
-    lang: "hinglish",
-    text: "ye bilkul bekaar aur wahiyat aadmi hai",
-    type: "harmful"
-  },
-  {
-    label: "Kannada Offensive",
-    lang: "kannada",
-    text: "ನೀನು ತುಂಬಾ ಕೆಟ್ಟವನು ಮತ್ತು ಅಸಹ್ಯ",
-    type: "harmful"
-  },
-  {
-    label: "English Civil",
-    lang: "english",
-    text: "I respectfully disagree with your conclusion, here are the empirical reasons why.",
-    type: "civil"
-  },
-  {
-    label: "English Harassment",
-    lang: "english",
-    text: "You are completely useless and pathetic, stop posting here.",
-    type: "harmful"
-  }
-];
-
 export default function ModerationCenter() {
-  // Live Analysis State
-  const [commentInput, setCommentInput] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState('');
-  const [analyzing, setAnalyzing] = useState(false);
-  const [latestAnalysis, setLatestAnalysis] = useState<AnalyzeResponse | null>(null);
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState<string | null>(null);
+  const { user } = useAuth();
+  const userKey = user?.id || 'guest';
+  const storageKeySourceSessions = `cybertech_moderation_source_sessions_${userKey}`;
+  const storageKeyActiveSession = `cybertech_moderation_active_session_${userKey}`;
 
   // Records Table State
   const [records, setRecords] = useState<ModerationRecord[]>([]);
@@ -110,6 +69,46 @@ export default function ModerationCenter() {
   const [severityFilter, setSeverityFilter] = useState('');
   const [languageFilter, setLanguageFilter] = useState('');
   const [platformFilter, setPlatformFilter] = useState('');
+
+  // Source-Specific Session History State
+  const [sourceSessions, setSourceSessions] = useState<Record<string, Array<{ id: string; name: string; created_at: string }>>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKeySourceSessions);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [activeSessionBySource, setActiveSessionBySource] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKeyActiveSession);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const handleNewSession = (sourceKey: string) => {
+    const sKey = sourceKey || 'all';
+    const now = new Date();
+    const count = (sourceSessions[sKey]?.length || 0) + 1;
+    const sessName = `Session #${count} (${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+    const newId = `sess_${Date.now()}`;
+    const updated = {
+      ...sourceSessions,
+      [sKey]: [{ id: newId, name: sessName, created_at: now.toISOString() }, ...(sourceSessions[sKey] || [])]
+    };
+    setSourceSessions(updated);
+    setActiveSessionBySource(prev => ({ ...prev, [sKey]: newId }));
+    try {
+      localStorage.setItem(storageKeySourceSessions, JSON.stringify(updated));
+      localStorage.setItem(storageKeyActiveSession, JSON.stringify({ ...activeSessionBySource, [sKey]: newId }));
+    } catch {}
+    setPage(1);
+    fetchRecords();
+    addToast(`Created new session "${sessName}". Prior moderation records remain preserved.`, 'info');
+  };
 
   // Selected record for details/drawer
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -150,54 +149,6 @@ export default function ModerationCenter() {
   useEffect(() => {
     fetchRecords();
   }, [page, statusFilter, severityFilter, languageFilter, platformFilter]);
-
-  const handleAnalyze = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!commentInput.trim()) {
-      addToast('Please enter text to analyze', 'warning');
-      return;
-    }
-    setAnalyzing(true);
-    setFeedbackSubmitted(null);
-    try {
-      const resp = await analyzeApi.analyze({
-        text: commentInput.trim(),
-        language_hint: selectedLanguage || undefined,
-      });
-      setLatestAnalysis(resp.data);
-      addToast(`Analysis complete: ${resp.data.decision.replace(/_/g, ' ')}`, 'success');
-      // Automatically refresh moderation records so the new comment appears in the queue
-      await fetchRecords();
-    } catch (err: any) {
-      addToast(err.message || 'Analysis failed', 'error');
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const handleInlineFeedback = async (
-    type: 'correct' | 'false_positive' | 'false_negative' | 'ambiguous'
-  ) => {
-    if (!latestAnalysis) return;
-    try {
-      await feedbackApi.submit({
-        record_id: latestAnalysis.id,
-        is_confirmed: type === 'correct',
-        is_false_positive: type === 'false_positive',
-        is_false_negative: type === 'false_negative',
-        is_ambiguous: type === 'ambiguous',
-        predicted_severity: latestAnalysis.severity,
-        corrected_severity: type === 'false_positive' ? 'low' : (type === 'false_negative' ? 'high' : latestAnalysis.severity),
-        explanation: `In-line analysis feedback: ${type}`,
-        language: latestAnalysis.detected_language,
-        model_version: latestAnalysis.model_version,
-      });
-      setFeedbackSubmitted(type);
-      addToast(`Feedback (${type.replace(/_/g, ' ')}) recorded successfully.`, 'success');
-    } catch (err: any) {
-      addToast(err.message || 'Failed to submit feedback', 'error');
-    }
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -304,7 +255,7 @@ export default function ModerationCenter() {
               <h1 className="text-xl font-bold text-[#20212B] tracking-tight">Moderator Command Center</h1>
             </div>
             <p className="text-xs text-[#858795] mt-0.5">
-              Analyze individual multilingual comments with calibrated local models, submit active feedback, and audit flagged queue items.
+              Review flagged multilingual queue items, investigate full context, perform human ground-truth verifications, and audit moderation history.
             </p>
           </div>
         </div>
@@ -328,256 +279,104 @@ export default function ModerationCenter() {
         </div>
       </div>
 
-      {/* ═════════════════════════════════════════════════════════════════════════
-          TOP SECTION: INTERACTIVE COMMENT ANALYSIS WORKSPACE
-          ═════════════════════════════════════════════════════════════════════════ */}
-      <div className="bg-white p-6 space-y-5 rounded-2xl border border-[#E9EAF1] shadow-xs">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7]">
-              <Sparkles className="w-4 h-4 text-[#6C5CE7]" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-[#20212B] tracking-wide">
-                Interactive Comment Analysis Workspace
-              </h2>
-            </div>
+      {/* ── Source Navigation Tabs & History Sessions ── */}
+      <div className="bg-white rounded-2xl border border-[#E9EAF1] p-4 shadow-xs space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#E9EAF1]">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[
+              { key: '', label: 'All Sources', icon: Layers },
+              { key: 'youtube', label: 'YouTube Comments', icon: Youtube },
+              { key: 'instagram', label: 'Instagram Comments', icon: Instagram },
+              { key: 'manual', label: 'Direct Text / Manual', icon: FileText },
+              { key: 'csv_upload', label: 'CSV File Imports', icon: FileSpreadsheet },
+            ].map(tab => {
+              const Icon = tab.icon;
+              const isActive = platformFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setPlatformFilter(tab.key);
+                    setPage(1);
+                  }}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    isActive
+                      ? 'bg-[#EEEAFE] text-[#6C5CE7] border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#F8F9FE] text-[#858795] border-[#E9EAF1] hover:text-[#20212B]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-[#858795] font-medium">Routing Script:</span>
-            <select
-              value={selectedLanguage}
-              onChange={e => setSelectedLanguage(e.target.value)}
-              className="px-2.5 py-1 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] focus:outline-none focus:border-[#6C5CE7] cursor-pointer"
-            >
-              <option value="">Auto-Detect Language</option>
-              <option value="english">English (word+char v2)</option>
-              <option value="telugu">Telugu (generalization v3)</option>
-              <option value="hindi">Hindi (hostility v1)</option>
-              <option value="hinglish">Hinglish (contextual v2)</option>
-              <option value="kannada">Kannada (word+char v2)</option>
-            </select>
-          </div>
+          {/* New Audit Session Action */}
+          <button
+            type="button"
+            onClick={() => handleNewSession(platformFilter || 'all')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/20 transition-all cursor-pointer"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            <span>New Audit Session</span>
+          </button>
         </div>
 
-        {/* 1-Click Quick Preset Chips */}
-        <div className="flex items-center gap-2 flex-wrap text-xs">
-          <span className="text-[#858795] text-[11px] font-medium mr-1">Quick Presets:</span>
-          {TEST_PRESETS.map((p, idx) => (
+        {/* Sessions Filter Bar */}
+        <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#858795] flex items-center gap-1">
+              <Clock className="w-3 h-3 text-[#6C5CE7]" />
+              <span>Audit Sessions:</span>
+            </span>
+
             <button
-              key={idx}
               type="button"
               onClick={() => {
-                setCommentInput(p.text);
-                setSelectedLanguage(p.lang);
+                setActiveSessionBySource(prev => ({ ...prev, [platformFilter || 'all']: 'all' }));
+                fetchRecords();
               }}
-              className="px-2.5 py-1 rounded-lg bg-[#F8F9FE] hover:bg-[#EEEAFE]/40 border border-[#E9EAF1] hover:border-[#6C5CE7] text-[11px] text-[#20212B] transition-all flex items-center gap-1.5"
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition-colors ${
+                (activeSessionBySource[platformFilter || 'all'] || 'all') === 'all'
+                  ? 'bg-[#6C5CE7] text-white border-[#6C5CE7]'
+                  : 'bg-[#F8F9FE] text-[#858795] border-[#E9EAF1] hover:text-[#20212B]'
+              }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${p.type === 'harmful' ? 'bg-[#FF7675]' : 'bg-[#00B894]'}`} />
-              <span>{p.label}</span>
+              All Records ({total})
             </button>
-          ))}
+
+            {(sourceSessions[platformFilter || 'all'] || []).map(sess => {
+              const isActive = activeSessionBySource[platformFilter || 'all'] === sess.id;
+              return (
+                <button
+                  key={sess.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveSessionBySource(prev => ({ ...prev, [platformFilter || 'all']: sess.id }));
+                    fetchRecords();
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition-colors ${
+                    isActive
+                      ? 'bg-[#6C5CE7] text-white border-[#6C5CE7]'
+                      : 'bg-[#F8F9FE] text-[#858795] border-[#E9EAF1] hover:text-[#20212B]'
+                  }`}
+                >
+                  {sess.name}
+                </button>
+              );
+            })}
+          </div>
+
+          <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-semibold">
+            &check; Preserved in DB &amp; Storage
+          </span>
         </div>
-
-        {/* Input Form */}
-        <form onSubmit={handleAnalyze} className="space-y-3">
-          <div className="relative">
-            <textarea
-              value={commentInput}
-              onChange={e => setCommentInput(e.target.value)}
-              rows={3}
-              placeholder="Type or paste a comment in Telugu, Hindi, Hinglish, Kannada, or English..."
-              className="w-full px-4 py-3 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-sm text-[#20212B] placeholder-[#858795] focus:outline-none focus:bg-white focus:border-[#6C5CE7] transition-colors"
-            />
-            <div className="absolute bottom-3 right-3 flex items-center gap-3">
-              <span className="text-[10px] text-[#858795] font-mono">
-                {commentInput.length} chars
-              </span>
-              {commentInput && (
-                <button
-                  type="button"
-                  onClick={() => setCommentInput('')}
-                  className="text-xs text-[#858795] hover:text-[#20212B]"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={analyzing || !commentInput.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all disabled:opacity-50"
-            >
-              {analyzing ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Evaluating Multilingual Pipeline...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Analyze Comment</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-
-        {/* Live Analysis Result Panel */}
-        {latestAnalysis && (
-          <div className="p-5 rounded-2xl bg-[#F8F9FE] border border-[#DDD6FE] space-y-4 page-enter shadow-xs">
-            <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#E9EAF1]">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#6C5CE7]" />
-                <span className="text-xs font-bold text-[#20212B]">Live Prediction Output</span>
-                <span className="text-[10px] text-[#858795] font-mono">
-                  (Record: {latestAnalysis.id ? latestAnalysis.id.slice(0, 8) : 'temp'})
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 text-[11px] font-mono">
-                <span className="text-[#858795]">Latency:</span>
-                <span className="text-[#6C5CE7] font-semibold">{latestAnalysis.processing_time_ms ? `${latestAnalysis.processing_time_ms.toFixed(1)} ms` : '< 3 ms'}</span>
-                <span className="text-[#858795]">•</span>
-                <span className="text-[#6C5CE7] font-semibold">{latestAnalysis.model_name}</span>
-              </div>
-            </div>
-
-            {/* Verdict Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className={`p-3.5 rounded-xl border ${
-                latestAnalysis.decision === 'flag_for_review' ? 'bg-rose-50 border-rose-200 text-rose-700' :
-                latestAnalysis.decision === 'human_review' ? 'bg-amber-50 border-amber-200 text-amber-700' :
-                'bg-emerald-50 border-emerald-200 text-emerald-700'
-              }`}>
-                <div className="text-[11px] opacity-80 font-medium">Model Decision</div>
-                <div className="text-base font-black capitalize mt-1">
-                  {latestAnalysis.decision.replace(/_/g, ' ')}
-                </div>
-                <div className="text-[10px] opacity-80 mt-0.5">
-                  Action: {latestAnalysis.recommended_action}
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white border border-[#E9EAF1] shadow-xs">
-                <div className="text-[11px] text-[#858795]">Toxicity Assessment</div>
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-lg font-black text-[#20212B] tabular-nums">
-                    {latestAnalysis.toxicity_prediction ? `${(latestAnalysis.toxicity_prediction.toxicity_score * 100).toFixed(1)}%` : 'N/A'}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                    latestAnalysis.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                    latestAnalysis.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                    'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}>
-                    {latestAnalysis.severity} Harm
-                  </span>
-                </div>
-                <div className="w-full h-1.5 bg-[#F0F1F5] rounded-full overflow-hidden mt-2">
-                  <div
-                    className={`h-full ${
-                      (latestAnalysis.toxicity_prediction?.toxicity_score || 0) > 0.5 ? 'bg-[#FF7675]' : 'bg-[#00B894]'
-                    }`}
-                    style={{ width: `${Math.min(100, (latestAnalysis.toxicity_prediction?.toxicity_score || 0) * 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white border border-[#E9EAF1] shadow-xs">
-                <div className="text-[11px] text-[#858795]">Linguistic Route</div>
-                <div className="text-base font-black text-[#6C5CE7] capitalize mt-1">
-                  {latestAnalysis.detected_language}
-                </div>
-                <div className="text-[10px] text-[#858795] mt-0.5">
-                  Route Status: {latestAnalysis.language_route?.status?.replace(/_/g, ' ') || 'validated'}
-                </div>
-              </div>
-            </div>
-
-            {/* Severity Evidence */}
-            {latestAnalysis.severity_reason && (
-              <div className="p-3 rounded-xl bg-white border border-[#E9EAF1] text-xs text-[#20212B]">
-                <span className="text-[#858795] font-semibold mr-1.5">Reasoning:</span>
-                {latestAnalysis.severity_reason}
-              </div>
-            )}
-
-            {/* In-Line Human-in-the-Loop Feedback Controls */}
-            <div className="pt-2 flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2 text-xs text-[#858795]">
-                <span className="font-medium">Submit Human Verification:</span>
-                {feedbackSubmitted && (
-                  <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    Verified as {feedbackSubmitted.replace(/_/g, ' ')}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleInlineFeedback('correct')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                    feedbackSubmitted === 'correct'
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
-                  }`}
-                >
-                  <ThumbsUp className="w-3 h-3" />
-                  <span>Confirm Correct</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleInlineFeedback('false_positive')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                    feedbackSubmitted === 'false_positive'
-                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                      : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200'
-                  }`}
-                >
-                  <ThumbsDown className="w-3 h-3" />
-                  <span>False Positive</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleInlineFeedback('false_negative')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                    feedbackSubmitted === 'false_negative'
-                      ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                      : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
-                  }`}
-                >
-                  <AlertTriangle className="w-3 h-3" />
-                  <span>False Negative</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleInlineFeedback('ambiguous')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                    feedbackSubmitted === 'ambiguous'
-                      ? 'bg-[#6C5CE7] text-white border-[#6C5CE7] shadow-xs'
-                      : 'bg-[#EEEAFE] hover:bg-purple-100 text-[#6C5CE7] border-[#DDD6FE]'
-                  }`}
-                >
-                  <HelpCircle className="w-3 h-3" />
-                  <span>Mark Ambiguous</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ═════════════════════════════════════════════════════════════════════════
-          BOTTOM SECTION: MODERATION QUEUE & FILTER CONTROLS
+          MODERATION QUEUE & AUDIT TRAIL TABLE
           ═════════════════════════════════════════════════════════════════════════ */}
       <div className="space-y-4">
         {/* Filter and Search Bar */}

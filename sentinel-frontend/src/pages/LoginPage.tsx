@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Shield, Lock, Mail, User as UserIcon, Terminal, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Shield, Lock, Mail, User as UserIcon, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleLoginButton } from '../components/GoogleLoginButton';
 
@@ -34,36 +34,6 @@ export default function LoginPage() {
     }
   };
 
-  const DEMO_ACCOUNTS = [
-    { label: 'Faculty Evaluator', role: 'Evaluator', email: 'evaluator@cybertech.ai', pass: 'DemoPassword2026!' },
-    { label: 'Lead Admin', role: 'Admin', email: 'admin@cybertech.ai', pass: 'CyberTech2026!' },
-    { label: 'Safety Moderator', role: 'Moderator', email: 'moderator@cybertech.ai', pass: 'Moderator2026!' },
-  ];
-
-  const fillCredentials = (acc: typeof DEMO_ACCOUNTS[0]) => {
-    setMode('login');
-    setEmail(acc.email);
-    setPassword(acc.pass);
-    setError(null);
-  };
-
-  const handleQuickDemo = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      try {
-        await login({ email: 'evaluator@cybertech.ai', password: 'DemoPassword2026!' });
-      } catch {
-        await login({ email: 'admin@cybertech.ai', password: 'CyberTech2026!' });
-      }
-      navigate('/', { replace: true });
-    } catch (err: any) {
-      setError(err.message || 'Demo authentication failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#F5F6FA] flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -90,8 +60,16 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="bg-white rounded-2xl border border-[#E9EAF1] p-7 shadow-xs space-y-5">
-          {/* Google Sign-In Button */}
-          <div>
+          {/* Google Sign-In Section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#20212B]">
+                Secure Google Authentication
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                OAuth 2.0 Verified
+              </span>
+            </div>
             <GoogleLoginButton
               buttonText={mode === 'login' ? 'Continue with Google' : 'Sign up with Google'}
               onSuccess={() => navigate('/', { replace: true })}
@@ -105,31 +83,6 @@ export default function LoginPage() {
             <span className="bg-white px-3 text-[11px] font-semibold text-[#858795] uppercase tracking-wider relative">
               Or continue with email
             </span>
-          </div>
-
-          {/* Quick-Fill Demo Chips */}
-          <div className="bg-[#F8F9FE] p-3 rounded-xl border border-[#E9EAF1] space-y-1.5">
-            <div className="text-[11px] font-semibold text-[#858795] flex items-center justify-between">
-              <span>Pre-Configured Accounts:</span>
-              <span className="text-[10px] text-[#6C5CE7]">Click to auto-fill</span>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  onClick={() => fillCredentials(acc)}
-                  className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer text-center truncate ${
-                    email === acc.email
-                      ? 'bg-[#6C5CE7] text-white border-[#6C5CE7] shadow-xs'
-                      : 'bg-white text-[#20212B] border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:bg-[#F3F4FD]'
-                  }`}
-                  title={`${acc.label} (${acc.email})`}
-                >
-                  {acc.role}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Error Alert */}
@@ -197,19 +150,6 @@ export default function LoginPage() {
               {loading ? 'Authenticating...' : mode === 'login' ? 'Sign In' : 'Create Account'}
             </button>
           </form>
-
-          {/* Quick Demo Access */}
-          <div className="pt-3 border-t border-[#E9EAF1]">
-            <button
-              type="button"
-              onClick={handleQuickDemo}
-              disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] hover:bg-[#E3DCFE] text-[#6C5CE7] text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Terminal className="w-3.5 h-3.5 text-[#6C5CE7]" />
-              <span>One-Click Faculty / Evaluator Demo Sign In</span>
-            </button>
-          </div>
 
           {/* Mode Switcher */}
           <div className="text-center text-xs text-[#858795]">

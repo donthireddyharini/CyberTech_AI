@@ -5,6 +5,8 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.feedback import AuditEvent
+from app.api.v1.auth import get_current_user_optional
+from app.models.user import User
 
 router = APIRouter()
 
@@ -15,9 +17,15 @@ async def list_audit_events(
     page_size: int = Query(20, ge=1, le=100),
     event_type: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """List all audit events."""
+    """List audit events with account isolation."""
     query = select(AuditEvent)
+    if current_user:
+        if current_user.role != "admin":
+            query = query.where(AuditEvent.actor_id == current_user.id)
+    else:
+        query = query.where(AuditEvent.actor_id.is_(None))
     if event_type:
         query = query.where(AuditEvent.event_type == event_type)
 

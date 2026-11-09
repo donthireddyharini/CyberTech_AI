@@ -9,6 +9,7 @@ Covers:
   - Route protection
 """
 import pytest
+import uuid
 from unittest.mock import patch, MagicMock
 from httpx import AsyncClient, ASGITransport
 
@@ -73,8 +74,9 @@ async def test_google_auth_invalid_issuer():
 
 @pytest.mark.asyncio
 async def test_google_auth_success_new_user():
-    test_sub = "google-sub-9876543210"
-    test_email = "new_moderator_google@cybertech.ai"
+    uid = uuid.uuid4().hex[:8]
+    test_sub = f"google-sub-{uid}"
+    test_email = f"new_moderator_{uid}@cybertech.ai"
     test_name = "Dr. Rajesh Kumar"
     mock_id_info = {
         "iss": "accounts.google.com",
@@ -105,8 +107,9 @@ async def test_google_auth_success_new_user():
 
 @pytest.mark.asyncio
 async def test_google_auth_existing_user_linking():
-    test_email = "linking_user@cybertech.ai"
-    test_sub = "google-sub-linked-112233"
+    uid = uuid.uuid4().hex[:8]
+    test_email = f"linking_user_{uid}@cybertech.ai"
+    test_sub = f"google-sub-linked-{uid}"
 
     # 1. Register with email & password first
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:

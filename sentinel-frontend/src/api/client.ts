@@ -7,7 +7,8 @@ import type {
   EvaluationRun, Dataset, DatasetValidation, FeedbackRecord,
   ErrorAnalysis, RecentActivity, User, AuthResponse,
   RegisterRequest, LoginRequest, UpdateProfileRequest,
-  SocialConnectorStatus, SocialSyncLog, SocialStats, SocialIngestionResult
+  SocialConnectorStatus, SocialSyncLog, SocialStats, SocialIngestionResult,
+  SourceReportResponse
 } from '../types';
 
 const api = axios.create({
@@ -47,6 +48,7 @@ export const authApi = {
   login: (data: LoginRequest) => api.post<AuthResponse>('/auth/login', data),
   googleLogin: (credential: string) => api.post<AuthResponse>('/auth/google', { credential }),
   googleDemoLogin: () => api.post<AuthResponse>('/auth/google/demo'),
+  getOAuthConfig: () => api.get<{ google_enabled: boolean; client_id_configured: boolean; client_id: string | null }>('/auth/oauth-config'),
   me: () => api.get<User>('/auth/me'),
   updateProfile: (data: UpdateProfileRequest) => api.put<User>('/auth/profile', data),
   logout: () => api.post<{ message: string }>('/auth/logout'),
@@ -186,14 +188,54 @@ export const monitoringApi = {
       processing_time_ms: number;
     }>;
   }>('/monitor/batch-analyze', data),
-  uploadCsv: (file: File, deduplicate = true, platform_name = 'CSV Import', language_hint?: string) => {
+  uploadCsv: (
+    file: File,
+    deduplicate = true,
+    platform_name = 'CSV Import',
+    language_hint?: string,
+    comment_column?: string,
+    async_job = true
+  ) => {
     const form = new FormData();
     form.append('file', file);
     form.append('deduplicate', String(deduplicate));
     form.append('platform_name', platform_name);
     if (language_hint) form.append('language_hint', language_hint);
+    if (comment_column) form.append('comment_column', comment_column);
+    form.append('async_job', String(async_job));
     return api.post('/monitor/upload-csv', form);
   },
+  previewCsv: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<{
+      filename: string;
+      total_estimated_rows: number;
+      delimiter: string;
+      columns: string[];
+      detected_column: string | null;
+      preview_rows: Array<Record<string, string>>;
+    }>('/monitor/preview-csv', form);
+  },
+  csvStatus: (jobId: string) =>
+    api.get<{
+      job_id: string;
+      status: 'processing' | 'completed' | 'failed';
+      filename: string;
+      total_records: number;
+      processed_count: number;
+      duplicate_count: number;
+      failed_count: number;
+      flagged_count: number;
+      approved_count: number;
+      severity_breakdown: Record<string, number>;
+      language_breakdown: Record<string, number>;
+      progress_percent: number;
+      processing_time_ms: number;
+      items: Array<any>;
+      error_message?: string | null;
+      completed_at?: number | null;
+    }>(`/monitor/csv-status/${jobId}`),
   exportUrl: (format: 'csv' | 'jsonl' = 'csv') => `/api/monitor/export-reviewed-feedback?format=${format}`,
 };
 
@@ -202,6 +244,29 @@ export const evaluationApi = {
   list: () => api.get<EvaluationRun[]>('/evaluations'),
   get: (id: string) => api.get<EvaluationRun>(`/evaluations/${id}`),
   run: () => api.post('/evaluations/run'),
+  sourceReport: (source: string, timeframe?: string, startDate?: string, endDate?: string) =>
+    api.get<SourceReportResponse>('/evaluations/report/source', {
+      params: { source, timeframe, start_date: startDate, end_date: endDate }
+    }),
+  exportSourceReportUrl: (source: string, format = 'csv') =>
+    `/api/evaluations/report/source/export?source=${encodeURIComponent(source)}&format=${encodeURIComponent(format)}`,
+  downloadSourceReport: async (source: string, format = 'csv') => {
+    const response = await api.get('/evaluations/report/source/export', {
+      params: { source, format },
+      responseType: 'blob',
+    });
+    const mime = format === 'json' ? 'application/json' : 'text/csv';
+    const ext = format === 'json' ? 'json' : 'csv';
+    const blob = new Blob([response.data], { type: mime });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `CyberTech_AI_${source}_Report_${new Date().toISOString().slice(0, 10)}.${ext}`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
   downloadPdf: async () => {
     const response = await api.get('/evaluations/report/pdf', {
       responseType: 'blob',

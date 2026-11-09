@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import {
   MessageSquare, Flag, Clock, AlertTriangle,
@@ -6,7 +7,8 @@ import {
   Play, Globe, Calendar, Layers, ShieldCheck, Sparkles,
   ArrowRight, ShieldAlert, Check, X, FileText, Send,
   Youtube, Instagram, Key, ExternalLink, Share2, Sliders, Settings,
-  RotateCcw
+  RotateCcw,
+  RotateCw
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
@@ -128,7 +130,7 @@ function CustomDonutTooltip({ active, payload, total }: any) {
     const formattedName = rawName.replace(/_/g, ' ');
 
     return (
-      <div className="z-50 px-3.5 py-2.5 rounded-xl bg-white border border-[#E9EAF1] shadow-xl pointer-events-none min-w-[150px] animate-in fade-in duration-150 text-[#20212B]">
+      <div className="z-50 px-3.5 py-2.5 rounded-xl bg-white/95 backdrop-blur-md border border-[#E9EAF1] shadow-[0_8px_20px_rgba(32,33,43,0.06)] pointer-events-none min-w-[150px] animate-in fade-in duration-150 text-[#20212B]">
         <div className="flex items-center gap-2 mb-1.5">
           <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: fill }} />
           <span className="text-xs font-bold text-[#20212B] capitalize tracking-wide truncate">{formattedName}</span>
@@ -196,10 +198,11 @@ function renderActiveShape(props: any) {
         cx={cx}
         cy={cy}
         innerRadius={innerRadius - 2}
-        outerRadius={outerRadius + 4}
+        outerRadius={outerRadius + 3}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
+        cornerRadius={3}
       />
     </g>
   );
@@ -232,18 +235,18 @@ function DonutPanel({
   const activeItem = activeIndex !== null && data[activeIndex] ? data[activeIndex] : null;
 
   return (
-    <div className="bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white border border-[#E9EAF1] rounded-2xl p-5 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex flex-col justify-between self-start h-full">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B] flex items-center gap-2">
           <Icon className="w-4 h-4 text-[#6C5CE7]" />
           <span>{title}</span>
         </h3>
-        <span className="text-[11px] text-[#858795] font-semibold tabular-nums">
+        <span className="text-[11px] text-[#858795] font-semibold tabular-nums px-2.5 py-0.5 rounded-full bg-[#F5F6FA] border border-[#E9EAF1]">
           {total === 1 ? '1 total' : `${total.toLocaleString()} total`}
         </span>
       </div>
 
-      <div className="h-56 relative flex items-center justify-center">
+      <div className="h-48 relative flex items-center justify-center overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-full text-xs text-[#858795]">
             <RefreshCw className="w-5 h-5 animate-spin text-[#6C5CE7]" />
@@ -255,42 +258,54 @@ function DonutPanel({
           </div>
         ) : (
           <>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={62}
-                  outerRadius={88}
-                  paddingAngle={3}
-                  dataKey="value"
-                  isAnimationActive={true}
-                  animationDuration={600}
-                  onMouseEnter={(_, index) => setActiveIndex(index)}
-                  onMouseLeave={() => setActiveIndex(null)}
-                  activeShape={renderActiveShape}
-                >
-                  {data.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={getColor(entry.name, index)}
-                      stroke="#FFFFFF"
-                      strokeWidth={2}
-                      className="transition-all duration-200 cursor-pointer"
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomDonutTooltip total={total} />} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div
+              key={total > 0 ? `donut-${title}-${total}` : 'donut-empty'}
+              className="w-full h-full flex items-center justify-center donut-circle-container"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    startAngle={90}
+                    endAngle={-270}
+                    innerRadius={50}
+                    outerRadius={72}
+                    paddingAngle={2.5}
+                    cornerRadius={3}
+                    dataKey="value"
+                    isAnimationActive={true}
+                    animationDuration={1100}
+                    animationEasing="ease-out"
+                    animationBegin={0}
+                    onMouseEnter={(_, index) => setActiveIndex(index)}
+                    onMouseLeave={() => setActiveIndex(null)}
+                    activeShape={renderActiveShape}
+                  >
+                    {data.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={getColor(entry.name, index)}
+                        stroke="#FFFFFF"
+                        strokeWidth={2}
+                        opacity={activeIndex === null || activeIndex === index ? 1 : 0.45}
+                        style={{ transition: 'opacity 0.22s ease-out' }}
+                        className="cursor-pointer"
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomDonutTooltip total={total} />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
             {/* Center Callout */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black text-[#20212B] tracking-tight tabular-nums">
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
+              <span className="text-xl font-black text-[#20212B] tracking-tight tabular-nums transition-transform duration-150">
                 {activeItem ? activeItem.value.toLocaleString() : total.toLocaleString()}
               </span>
-              <span className="text-[10px] text-[#858795] font-bold uppercase tracking-wider truncate max-w-[100px] text-center">
+              <span className="text-[9px] text-[#858795] font-bold uppercase tracking-wider truncate max-w-[85px] text-center mt-0.5">
                 {activeItem ? activeItem.name.replace(/_/g, ' ') : 'Total'}
               </span>
             </div>
@@ -298,32 +313,42 @@ function DonutPanel({
         )}
       </div>
 
-      {/* Legend Grid */}
+      {/* Legend List (Clean Full-Width Rows — No Truncation) */}
       {data.length > 0 && total > 0 && (
-        <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-[#E9EAF1]">
-          {data.slice(0, 6).map((item, idx) => {
+        <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-[#E9EAF1]">
+          {data.slice(0, 5).map((item, idx) => {
             const color = getColor(item.name, idx);
             const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : '0';
             const isHovered = activeIndex === idx;
+
+            const formatLabel = (raw: string) => {
+              const cleaned = raw.replace(/_/g, ' ').trim();
+              if (cleaned.toLowerCase() === 'code mixed') return 'Hinglish';
+              if (cleaned.toLowerCase() === 'csv import') return 'CSV Import';
+              return cleaned.replace(/\b\w/g, (c: string) => c.toUpperCase());
+            };
+
+            const displayName = formatLabel(item.name);
 
             return (
               <div
                 key={item.name}
                 onMouseEnter={() => setActiveIndex(idx)}
                 onMouseLeave={() => setActiveIndex(null)}
-                className={`flex items-center justify-between text-xs p-1.5 rounded-lg transition-colors cursor-pointer ${
+                title={`${displayName}: ${item.value.toLocaleString()} (${pct}%)`}
+                className={`flex items-center justify-between text-xs px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
                   isHovered ? 'bg-[#F8F9FE]' : 'hover:bg-[#F8F9FE]'
                 }`}
               >
-                <div className="flex items-center gap-1.5 truncate">
+                <div className="flex items-center gap-2 min-w-0 pr-2">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                  <span className="text-[#20212B] capitalize truncate text-[11px] font-medium">
-                    {item.name.replace(/_/g, ' ')}
+                  <span className="text-[#20212B] text-xs font-medium whitespace-nowrap overflow-visible">
+                    {displayName}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 tabular-nums text-[11px]">
+                <div className="flex items-center gap-1.5 tabular-nums text-xs shrink-0 ml-auto">
                   <span className="font-bold text-[#20212B]">{item.value.toLocaleString()}</span>
-                  <span className="text-[10px] text-[#858795]">({pct}%)</span>
+                  <span className="text-[11px] text-[#858795]">({pct}%)</span>
                 </div>
               </div>
             );
@@ -558,208 +583,7 @@ export default function Dashboard() {
     fetchMonitorStatus();
   }, []);
 
-  // ─── Real-Time Comment Ingestion Handlers ───────────────────────────────────
-  const handleBatchIngest = async () => {
-    if (ingestMode === 'text') {
-      const lines = batchText.split('\n').map(l => l.trim()).filter(Boolean);
-      if (lines.length === 0) {
-        addToast('Please enter or select at least one comment to analyze.', 'error');
-        return;
-      }
-      setIsIngesting(true);
-      try {
-        const resp = await monitoringApi.batchAnalyze({
-          comments: lines,
-          deduplicate,
-          platform_source: 'Manual Live Batch',
-        });
-        setBatchResult(resp.data);
-        setSessionBatchCount(prev => prev + 1);
-        setSessionCommentsProcessed(prev => prev + resp.data.processed_count);
-
-        if (resp.data.items && resp.data.items.length > 0) {
-          const formattedNewRecords: RecentActivity[] = resp.data.items.map((it: any) => ({
-            id: it.id,
-            text_preview: it.text.slice(0, 120),
-            severity: it.severity,
-            decision: it.decision,
-            status: 'pending',
-            detected_language: it.detected_language,
-            hate_speech_score: typeof it.hate_speech_score === 'number' ? it.hate_speech_score : 0,
-            harassment_score: typeof it.harassment_score === 'number' ? it.harassment_score : 0,
-            cyberbullying_score: typeof it.cyberbullying_score === 'number' ? it.cyberbullying_score : 0,
-            platform: 'manual',
-            is_demo: false,
-            created_at: new Date().toISOString()
-          }));
-
-          setRecent(prev => [...formattedNewRecords, ...prev].slice(0, 15));
-          const newFlagged = formattedNewRecords.filter(r => r.decision === 'flag_for_review');
-          if (newFlagged.length > 0) {
-            setQueue(prev => [...newFlagged, ...prev].slice(0, 10));
-          }
-        }
-
-        await fetchData(timeframe, false, undefined, undefined, selectedPlatform);
-        await fetchMonitorStatus();
-
-        addToast(
-          `Successfully processed ${resp.data.processed_count} comments (${resp.data.flagged_count} violations detected). Dashboard updated.`,
-          'success'
-        );
-        setBatchText('');
-      } catch (err: any) {
-        addToast(err.message || 'Failed to analyze batch comments.', 'error');
-      } finally {
-        setIsIngesting(false);
-      }
-    } else if (ingestMode === 'csv') {
-      if (!csvFile) {
-        addToast('Please select a CSV or text dataset file.', 'error');
-        return;
-      }
-      setIsIngesting(true);
-      try {
-        const resp = await monitoringApi.uploadCsv(csvFile, deduplicate, 'CSV Import');
-        setBatchResult(resp.data);
-        setSessionBatchCount(prev => prev + 1);
-        setSessionCommentsProcessed(prev => prev + resp.data.processed_count);
-
-        if (resp.data.items && resp.data.items.length > 0) {
-          const formattedNewRecords: RecentActivity[] = resp.data.items.map((it: any) => ({
-            id: it.id,
-            text_preview: it.text.slice(0, 120),
-            severity: it.severity,
-            decision: it.decision,
-            status: 'pending',
-            detected_language: it.detected_language,
-            hate_speech_score: typeof it.hate_speech_score === 'number' ? it.hate_speech_score : 0,
-            harassment_score: typeof it.harassment_score === 'number' ? it.harassment_score : 0,
-            cyberbullying_score: typeof it.cyberbullying_score === 'number' ? it.cyberbullying_score : 0,
-            platform: 'csv_upload',
-            is_demo: false,
-            created_at: new Date().toISOString()
-          }));
-
-          setRecent(prev => [...formattedNewRecords, ...prev].slice(0, 15));
-          const newFlagged = formattedNewRecords.filter(r => r.decision === 'flag_for_review');
-          if (newFlagged.length > 0) {
-            setQueue(prev => [...newFlagged, ...prev].slice(0, 10));
-          }
-        }
-
-        await fetchData(timeframe, false, undefined, undefined, selectedPlatform);
-        await fetchMonitorStatus();
-
-        addToast(
-          `Successfully imported and analyzed ${resp.data.processed_count} comments from '${csvFile.name}'.`,
-          'success'
-        );
-        setCsvFile(null);
-      } catch (err: any) {
-        addToast(err.message || 'Failed to upload and analyze dataset.', 'error');
-      } finally {
-        setIsIngesting(false);
-      }
-    }
-  };
-
-  const handleSocialFetch = async (targetPlatform: 'youtube' | 'instagram') => {
-    setIsIngesting(true);
-    try {
-      let resp: any;
-      if (targetPlatform === 'youtube') {
-        if (!ytVideoInput.trim()) {
-          addToast('Please enter a YouTube video URL or 11-char Video ID.', 'error');
-          setIsIngesting(false);
-          return;
-        }
-        resp = await socialApi.fetchYouTube({
-          video_input: ytVideoInput.trim(),
-          max_comments: ytMaxComments,
-          include_replies: ytIncludeReplies,
-          order: ytOrder,
-        });
-      } else if (targetPlatform === 'instagram') {
-        if (!igMediaInput.trim()) {
-          addToast('Please enter an Instagram post/reel URL or Media ID.', 'error');
-          setIsIngesting(false);
-          return;
-        }
-        resp = await socialApi.fetchInstagram({
-          media_input: igMediaInput.trim(),
-          max_comments: igMaxComments,
-          include_replies: igIncludeReplies,
-        });
-      }
-
-      const data: SocialIngestionResult = resp.data;
-      setBatchResult({
-        total_received: data.total_fetched,
-        processed_count: data.newly_ingested,
-        duplicate_count: data.duplicate_count,
-        flagged_count: data.flagged_count,
-        approved_count: data.approved_count,
-        processing_time_ms: data.processing_time_ms,
-        platform: data.platform,
-        items: data.records.map((r: any) => ({
-          id: r.id,
-          text: r.text,
-          detected_language: r.detected_language,
-          severity: r.severity,
-          decision: r.decision,
-          toxicity_score: r.toxicity_score,
-          processing_time_ms: data.processing_time_ms / (data.records.length || 1),
-          source_url: r.source_url,
-          author_name: r.author_name,
-        })),
-      });
-
-      setSessionBatchCount(prev => prev + 1);
-      setSessionCommentsProcessed(prev => prev + data.newly_ingested);
-
-      if (data.records && data.records.length > 0) {
-        const formattedNewRecords: RecentActivity[] = data.records.map((r: any) => ({
-          id: r.id,
-          text_preview: r.text.slice(0, 120),
-          severity: r.severity,
-          decision: r.decision,
-          status: 'pending',
-          detected_language: r.detected_language,
-          hate_speech_score: typeof r.hate_speech_score === 'number' ? r.hate_speech_score : 0,
-          harassment_score: typeof r.harassment_score === 'number' ? r.harassment_score : 0,
-          cyberbullying_score: typeof r.cyberbullying_score === 'number' ? r.cyberbullying_score : 0,
-          platform: targetPlatform,
-          source_url: r.source_url,
-          author_name: r.author_name,
-          source_id: r.comment_id,
-          is_demo: false,
-          created_at: r.published_at || new Date().toISOString()
-        }));
-
-        setRecent(prev => [...formattedNewRecords, ...prev].slice(0, 15));
-        const newFlagged = formattedNewRecords.filter(r => r.decision !== 'no_action');
-        if (newFlagged.length > 0) {
-          setQueue(prev => [...newFlagged, ...prev].slice(0, 10));
-        }
-      }
-
-      await fetchData(timeframe, false, undefined, undefined, selectedPlatform);
-      await fetchMonitorStatus();
-
-      addToast(
-        `Successfully ingested ${data.newly_ingested} real comments from ${targetPlatform.toUpperCase()} (${data.flagged_count} flagged, ${data.duplicate_count} duplicates skipped).`,
-        'success'
-      );
-    } catch (err: any) {
-      const msg = err.message || `Failed to fetch from ${targetPlatform}`;
-      addToast(msg, 'error');
-    } finally {
-      setIsIngesting(false);
-    }
-  };
-
-  const toChartData = (obj?: Record<string, number> | null) => {
+    const toChartData = (obj?: Record<string, number> | null) => {
     if (!obj) return [];
     const entries = Object.entries(obj).filter(([_, value]) => value > 0);
     return entries.map(([name, value]) => ({ name, value }));
@@ -999,659 +823,138 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Main Two-Column Layout (Courseu 2+1 Layout) ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        
-        {/* ── Left 2 Columns: Ingestion Console + Trend Chart + Telemetry ── */}
-        <div className="xl:col-span-2 space-y-6">
-          
-          {/* 1. Real-Time Comment Ingestion & Social Media Feeds Console */}
-          <div className="bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] space-y-5 relative overflow-hidden card-interactive">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#EEEAFE] flex items-center justify-center text-[#6C5CE7] shadow-xs">
-                  <Activity className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-[#20212B] tracking-wide">
-                      Real-Time Comment Ingestion &amp; Social Feeds
-                    </h2>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2.5 flex-wrap">
-                {/* Mode Switcher */}
-                <div className="flex items-center gap-1 bg-[#F5F6FA] p-1 rounded-xl border border-[#E9EAF1] flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => setIngestMode('text')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      ingestMode === 'text' ? 'bg-white text-[#6C5CE7] shadow-xs' : 'text-[#858795] hover:text-[#20212B]'
-                    }`}
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    <span>Direct Text</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIngestMode('csv')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      ingestMode === 'csv' ? 'bg-white text-[#6C5CE7] shadow-xs' : 'text-[#858795] hover:text-[#20212B]'
-                    }`}
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>CSV File</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIngestMode('youtube')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      ingestMode === 'youtube' ? 'bg-white text-rose-600 shadow-xs' : 'text-[#858795] hover:text-[#20212B]'
-                    }`}
-                  >
-                    <Youtube className="w-3.5 h-3.5 text-rose-600" />
-                    <span>YouTube</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIngestMode('instagram')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      ingestMode === 'instagram' ? 'bg-white text-pink-600 shadow-xs' : 'text-[#858795] hover:text-[#20212B]'
-                    }`}
-                  >
-                    <Instagram className="w-3.5 h-3.5 text-pink-600" />
-                    <span>Instagram</span>
-                  </button>
-                </div>
-
-                {/* Visible Clear Button for Workspace Form */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    clearWorkspace();
-                    addToast('Ingestion workspace cleared.', 'info');
-                  }}
-                  title="Clear inputs and batch results without deleting persisted database records"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E9EAF1] bg-[#F8F9FE] hover:bg-[#F0F1F5] text-[#858795] hover:text-[#20212B] text-xs font-semibold transition-all shadow-xs"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Clear</span>
-                </button>
-              </div>
-            </div>
-
-            {/* TAB 1: DIRECT TEXT */}
-            {ingestMode === 'text' && (
-              <div className="space-y-4">
-                {/* Quick Presets for 1-Click Testing */}
-                <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
-                  <span className="text-[#858795] text-[11px] font-semibold mr-1 flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-[#6C5CE7]" />
-                    <span>Click to test instantly:</span>
-                  </span>
-                  {INGESTION_PRESETS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setBatchText(preset.text)}
-                      className="px-2.5 py-1 rounded-lg bg-[#F5F6FA] hover:bg-[#EEEAFE] border border-[#E9EAF1] hover:border-[#6C5CE7]/30 text-[11px] text-[#20212B] transition-all flex items-center gap-1.5 shadow-xs"
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        preset.type === 'harmful' ? 'bg-[#FF7675]' : preset.type === 'civil' ? 'bg-[#00B894]' : 'bg-[#6C5CE7]'
-                      }`} />
-                      <span>{preset.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="relative">
-                  <textarea
-                    value={batchText}
-                    onChange={(e) => setBatchText(e.target.value)}
-                    placeholder="Paste or type comments to analyze (one per line)...&#10;Example:&#10;నువ్వు చాలా పనికిరాని వెధవవి&#10;ye bilkul bekaar aur wahiyat aadmi hai&#10;तू बहुत ही घटिया और बदतमीज इंसान है&#10;I really appreciate the constructive insights!"
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] placeholder-[#858795] focus:outline-none focus:bg-white focus:border-[#6C5CE7] focus:ring-2 focus:ring-[#EEEAFE] leading-relaxed transition-all"
-                  />
-                  {batchText && (
-                    <button
-                      type="button"
-                      onClick={() => setBatchText('')}
-                      className="absolute bottom-3 right-3 text-[11px] text-[#858795] hover:text-[#20212B]"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between flex-wrap gap-4 pt-1">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleBatchIngest}
-                      disabled={isIngesting || !batchText.trim()}
-                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4BC4] text-white text-xs font-semibold shadow-sm shadow-[#6C5CE7]/20 transition-all disabled:opacity-50"
-                    >
-                      {isIngesting ? (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          <span>Processing Through Local Engine...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3.5 h-3.5 fill-current" />
-                          <span>Analyze Comments Locally</span>
-                        </>
-                      )}
-                    </button>
-
-                    <label className="flex items-center gap-2 text-xs text-[#20212B] cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={deduplicate}
-                        onChange={(e) => setDeduplicate(e.target.checked)}
-                        className="rounded border-[#E9EAF1] text-[#6C5CE7] focus:ring-0"
-                      />
-                      <span>Deduplicate in batch</span>
-                    </label>
-                  </div>
-
-
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: CSV / FILE UPLOAD */}
-            {ingestMode === 'csv' && (
-              <div className="space-y-4">
-                <div className="p-8 rounded-2xl border-2 border-dashed border-[#E9EAF1] bg-[#FBFBFE] flex flex-col items-center justify-center text-center hover:border-[#6C5CE7]/50 hover:bg-[#F5F6FA] transition-colors">
-                  <Upload className="w-10 h-10 text-[#6C5CE7] mb-2 opacity-80" />
-                  <input
-                    type="file"
-                    accept=".csv,.tsv,.txt"
-                    onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-                    className="text-xs text-[#858795] file:mr-3 file:py-1.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#6C5CE7] file:text-white hover:file:bg-[#5B4BC4] cursor-pointer"
-                  />
-                  <p className="text-[11px] text-[#858795] mt-2">
-                    Auto-detects columns: <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-[#E9EAF1]">comment</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-[#E9EAF1]">text</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-[#E9EAF1]">content</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-[#E9EAF1]">body</code>.
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between flex-wrap gap-4 pt-1">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleBatchIngest}
-                      disabled={isIngesting || !csvFile}
-                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4BC4] text-white text-xs font-semibold shadow-sm shadow-[#6C5CE7]/20 transition-all disabled:opacity-50"
-                    >
-                      {isIngesting ? (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          <span>Processing Dataset...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3.5 h-3.5 fill-current" />
-                          <span>Analyze Dataset File</span>
-                        </>
-                      )}
-                    </button>
-
-                    <label className="flex items-center gap-2 text-xs text-[#20212B] cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={deduplicate}
-                        onChange={(e) => setDeduplicate(e.target.checked)}
-                        className="rounded border-[#E9EAF1] text-[#6C5CE7] focus:ring-0"
-                      />
-                      <span>Deduplicate in file</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: YOUTUBE INGESTION */}
-            {ingestMode === 'youtube' && (
-              <div className="space-y-4">
-
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-[#20212B] uppercase tracking-wide">
-                      YouTube Video URL or Video ID
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ"
-                      value={ytVideoInput}
-                      onChange={(e) => setYtVideoInput(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] placeholder-[#858795] focus:outline-none focus:bg-white focus:border-rose-500 font-mono"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-[#20212B] uppercase tracking-wide">
-                      Fetch Limit
-                    </label>
-                    <select
-                      value={ytMaxComments}
-                      onChange={(e) => setYtMaxComments(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] focus:outline-none focus:bg-white focus:border-rose-500 cursor-pointer"
-                    >
-                      <option value={20}>20 comments</option>
-                      <option value={50}>50 comments (Recommended)</option>
-                      <option value={100}>100 comments</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between flex-wrap gap-4 pt-1">
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => handleSocialFetch('youtube')}
-                      disabled={isIngesting || !ytVideoInput.trim()}
-                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
-                    >
-                      {isIngesting ? (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          <span>Fetching &amp; Ingesting YouTube Comments...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3.5 h-3.5 fill-current" />
-                          <span>Fetch &amp; Moderate YouTube Comments</span>
-                        </>
-                      )}
-                    </button>
-
-                    <label className="flex items-center gap-2 text-xs text-[#20212B] cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={ytIncludeReplies}
-                        onChange={(e) => setYtIncludeReplies(e.target.checked)}
-                        className="rounded border-[#E9EAF1] text-rose-600 focus:ring-0"
-                      />
-                      <span>Include nested comment replies</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 4: INSTAGRAM INGESTION */}
-            {ingestMode === 'instagram' && (
-              <div className="space-y-4">
-                <div className="p-3 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white text-xs flex items-center gap-2 shadow-xs">
-                  <Instagram className="w-4 h-4 text-white shrink-0" />
-                  <span>Fetch and moderate comments from Instagram posts, reels, or media IDs via official Instagram Graph API.</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-[#20212B] uppercase tracking-wide">
-                      Instagram Post / Reel URL or Media ID
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. https://www.instagram.com/p/C1xYz... or https://www.instagram.com/reel/C1xYz... or 17989355321012345"
-                      value={igMediaInput}
-                      onChange={(e) => setIgMediaInput(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] placeholder-[#858795] focus:outline-none focus:bg-white focus:border-pink-500"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-[#20212B] uppercase tracking-wide">
-                      Max Comments
-                    </label>
-                    <select
-                      value={igMaxComments}
-                      onChange={(e) => setIgMaxComments(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs text-[#20212B] focus:outline-none focus:bg-white focus:border-pink-500 cursor-pointer"
-                    >
-                      <option value={10}>10 comments</option>
-                      <option value={25}>25 comments (Recommended)</option>
-                      <option value={50}>50 comments</option>
-                      <option value={100}>100 comments</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between flex-wrap gap-4 pt-1">
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => handleSocialFetch('instagram')}
-                      disabled={isIngesting || !igMediaInput.trim()}
-                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
-                    >
-                      {isIngesting ? (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          <span>Fetching Instagram Comments...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3.5 h-3.5 fill-current" />
-                          <span>Fetch &amp; Moderate Instagram Comments</span>
-                        </>
-                      )}
-                    </button>
-
-                    <label className="flex items-center gap-2 text-xs text-[#20212B] cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={igIncludeReplies}
-                        onChange={(e) => setIgIncludeReplies(e.target.checked)}
-                        className="rounded border-[#E9EAF1] text-pink-600 focus:ring-0"
-                      />
-                      <span>Include nested comment replies</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
-
-
-            {/* Batch Result Impact Banner */}
-            {batchResult && (
-              <div className="p-4 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] space-y-3 page-enter">
-                <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-[#E9EAF1]">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#20212B]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>
-                      Batch Ingestion Completed in {batchResult.processing_time_ms ? `${batchResult.processing_time_ms.toFixed(1)} ms` : '0 ms'}
-                    </span>
-                    <span className="text-[10px] text-[#6C5CE7] bg-[#EEEAFE] border border-[#6C5CE7]/20 px-2 py-0.5 rounded-full font-semibold">
-                      Telemetry &amp; Charts Synchronized
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] tabular-nums">
-                    <span className="px-2 py-0.5 rounded bg-white text-[#20212B] border border-[#E9EAF1]">
-                      Total: {batchResult.total_received ?? batchResult.total_fetched}
-                    </span>
-                    {batchResult.duplicate_count > 0 && (
-                      <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                        Duplicates: {batchResult.duplicate_count}
-                      </span>
-                    )}
-                    <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                      Flagged Harmful: {batchResult.flagged_count}
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Approved Safe: {batchResult.approved_count}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto max-h-52 overflow-y-auto rounded-lg border border-[#E9EAF1] divide-y divide-[#E9EAF1] bg-white">
-                  {(batchResult.items || batchResult.records || []).map((it: any) => (
-                    <div key={it.id} className="p-2.5 text-xs flex items-center justify-between gap-3 hover:bg-[#F8F9FE]">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[#20212B] font-medium truncate">{it.text}</p>
-                        <div className="flex items-center gap-2 text-[10px] text-[#858795] mt-0.5">
-                          {it.author_name && (
-                            <span className="font-semibold text-[#20212B]">@{it.author_name}</span>
-                          )}
-                          <span className="text-[#6C5CE7] capitalize font-semibold">{it.detected_language}</span>
-                          <span>•</span>
-                          <span className="tabular-nums">{it.processing_time_ms ? `${it.processing_time_ms.toFixed(1)}ms` : '< 3ms'}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {it.toxicity_score !== null && (
-                          <span className={`text-[11px] font-bold tabular-nums ${
-                            it.toxicity_score >= 0.4 ? 'text-rose-600' : 'text-emerald-600'
-                          }`}>
-                            {(it.toxicity_score * 100).toFixed(0)}%
-                          </span>
-                        )}
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                          it.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                          it.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                          'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        }`}>
-                          {it.severity}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                          it.decision === 'no_action'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : 'bg-rose-50 text-rose-700 border-rose-200'
-                        }`}>
-                          {it.decision.replace(/_/g, ' ')}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+      {/* Quick Access to Dedicated Social Media Ingestion */}
+      <div className="bg-gradient-to-r from-[#F8F9FE] via-[#EEEAFE]/50 to-white border border-[#E9EAF1] rounded-2xl p-5 shadow-xs flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-[#6C5CE7] text-white flex items-center justify-center shadow-md shadow-[#6C5CE7]/20">
+            <Activity className="w-5 h-5" />
           </div>
-
-          {/* 2. Detection Volume & Incident Trends Area Chart */}
-          <div className="bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B] flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-[#6C5CE7]" />
-                  <span>Detection Volume &amp; Incident Trends</span>
-                </h3>
-                <p className="text-[11px] text-[#858795] mt-0.5">
-                  Continuous timeline monitoring of total vs. flagged violations across all feeds.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#6C5CE7]" />
-                  <span className="text-[#858795] text-[11px]">Total Monitored</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF7675]" />
-                  <span className="text-[#858795] text-[11px]">Flagged Violations</span>
-                </div>
-              </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[#20212B]">Real-Time Comment Ingestion &amp; Social Feeds</h3>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                Separate Hub Available
+              </span>
             </div>
-
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="totalGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6C5CE7" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#6C5CE7" stopOpacity={0.0} />
-                    </linearGradient>
-                    <linearGradient id="flaggedGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FF7675" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#FF7675" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F0F1F5" vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    stroke="#858795"
-                    fontSize={10}
-                    tickLine={false}
-                    axisLine={{ stroke: '#E9EAF1' }}
-                    tickFormatter={(val) => {
-                      try {
-                        const d = new Date(val);
-                        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                      } catch {
-                        return val;
-                      }
-                    }}
-                  />
-                  <YAxis
-                    stroke="#858795"
-                    fontSize={10}
-                    tickLine={false}
-                    axisLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<CustomTimelineTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#6C5CE7"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#totalGrad)"
-                    name="Total Monitored"
-                    isAnimationActive={true}
-                    animationDuration={500}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="flagged"
-                    stroke="#FF7675"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#flaggedGrad)"
-                    name="Flagged Violations"
-                    isAnimationActive={true}
-                    animationDuration={500}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* 3. Live Comment Telemetry Stream */}
-          <div className="bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B] flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-[#6C5CE7]" />
-                  <span>Live Comment Telemetry Stream</span>
-                </h3>
-                <p className="text-[11px] text-[#858795] mt-0.5">
-                  Streaming model decisions for recently ingested comments and social monitoring feeds.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#6C5CE7] bg-[#EEEAFE] border border-[#6C5CE7]/20 px-2.5 py-1 rounded-full font-semibold">
-                  {recent.length} Active Records
-                </span>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto rounded-xl border border-[#E9EAF1]">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-[#F8F9FE] text-[#858795] border-b border-[#E9EAF1] uppercase font-semibold text-[10px]">
-                  <tr>
-                    <th className="py-2.5 px-3">Comment Text</th>
-                    <th className="py-2.5 px-3">Platform</th>
-                    <th className="py-2.5 px-3">Language</th>
-                    <th className="py-2.5 px-3">Severity</th>
-                    <th className="py-2.5 px-3">Decision</th>
-                    <th className="py-2.5 px-3">Status</th>
-                    <th className="py-2.5 px-3 text-right">Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E9EAF1]">
-                  {recent.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-[#858795]">
-                        No comments recorded yet. Use the Real-Time Ingestion Console above to analyze comments!
-                      </td>
-                    </tr>
-                  ) : (
-                    recent.map((rec) => (
-                      <tr key={rec.id} className="hover:bg-[#F8F9FE] transition-colors">
-                        <td className="py-2.5 px-3 max-w-xs truncate font-medium text-[#20212B]">
-                          {rec.text_preview}
-                          {rec.author_name && (
-                            <span className="block text-[10px] text-[#858795] font-normal">by @{rec.author_name}</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap">
-                          <PlatformBadge platform={rec.platform} sourceUrl={rec.source_url} />
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <span className="capitalize px-2 py-0.5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] border border-[#6C5CE7]/20 text-[10px] font-semibold">
-                            {rec.detected_language}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                            rec.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                            rec.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                            rec.severity === 'low' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                            'bg-slate-100 text-slate-700 border-slate-200'
-                          }`}>
-                            {rec.severity}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 font-semibold capitalize text-[#20212B]">
-                          {rec.decision.replace(/_/g, ' ')}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                            rec.status === 'reviewed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                            rec.status === 'escalated' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                            'bg-amber-50 text-amber-700 border-amber-200'
-                          }`}>
-                            {rec.status}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 text-right text-[#858795] tabular-nums text-[10px]">
-                          {new Date(rec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <p className="text-xs text-[#858795] mt-0.5">
+              Custom YouTube &amp; Instagram comment entry, batch CSV dataset ingestion, and live URL pipelines moved to dedicated tab.
+            </p>
           </div>
         </div>
 
-        {/* ── Right 1 Column: Statistical Breakdowns & Review Queue (Courseu Right Rail) ── */}
-        <div className="space-y-6">
-          
-          {/* Language Distribution Donut */}
-          <DonutPanel
-            title={t('dashboard.dist.language', 'Language Distribution')}
-            icon={Globe}
-            data={toChartData(distributions?.language_distribution)}
-            colors={LANG_COLORS}
-            loading={loading}
-          />
+        <Link
+          to="/social-ingestion"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all cursor-pointer"
+        >
+          <span>Open Social Media Ingestion</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
 
-          {/* Platform Distribution Donut */}
-          <DonutPanel
-            title="Platform Distribution"
-            icon={Share2}
-            data={toChartData(distributions?.platform_distribution)}
-            colors={PLATFORM_COLORS}
-            loading={loading}
-          />
+      {/* ── Row 1: Operational Monitoring (Trends Area Chart 2 cols + Pending Review Queue 1 col) ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        
+        {/* Detection Volume & Incident Trends Area Chart */}
+        <div className="xl:col-span-2 bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex flex-col justify-between self-start">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B] flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-[#6C5CE7]" />
+                <span>Detection Volume &amp; Incident Trends</span>
+              </h3>
+              <p className="text-[11px] text-[#858795] mt-0.5">
+                Continuous timeline monitoring of total vs. flagged violations across all feeds.
+              </p>
+            </div>
 
-          {/* Severity Distribution Donut */}
-          <DonutPanel
-            title={t('dashboard.dist.severity', 'Severity Distribution')}
-            icon={AlertTriangle}
-            data={toChartData(distributions?.severity_distribution)}
-            colors={SEVERITY_COLORS}
-            loading={loading}
-          />
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#6C5CE7]" />
+                <span className="text-[#858795] text-[11px]">Total Monitored</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#FF7675]" />
+                <span className="text-[#858795] text-[11px]">Flagged Violations</span>
+              </div>
+            </div>
+          </div>
 
-          {/* Violation Categories Donut */}
-          <DonutPanel
-            title={t('dashboard.dist.category', 'Violation Categories')}
-            icon={Layers}
-            data={toChartData(distributions?.category_distribution)}
-            colors={CATEGORY_COLORS}
-            loading={loading}
-          />
+          <div className="h-64 sm:h-72 w-full min-h-0 line-chart-animated">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                key={timelineData.length > 0 ? `timeline-${timelineData.length}-${timelineData[timelineData.length - 1]?.date || ''}` : 'timeline-empty'}
+                data={timelineData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="totalGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6C5CE7" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#6C5CE7" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="flaggedGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FF7675" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#FF7675" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F0F1F5" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  stroke="#858795"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={{ stroke: '#E9EAF1' }}
+                  tickFormatter={(val) => {
+                    try {
+                      const d = new Date(val);
+                      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                    } catch {
+                      return val;
+                    }
+                  }}
+                />
+                <YAxis
+                  stroke="#858795"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip content={<CustomTimelineTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#6C5CE7"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#totalGrad)"
+                  name="Total Monitored"
+                  isAnimationActive={true}
+                  animationDuration={1150}
+                  animationEasing="ease-out"
+                  animationBegin={100}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="flagged"
+                  stroke="#FF7675"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#flaggedGrad)"
+                  name="Flagged Violations"
+                  isAnimationActive={true}
+                  animationDuration={1150}
+                  animationEasing="ease-out"
+                  animationBegin={220}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-          {/* Pending Review Action Queue */}
-          <div className="bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive">
+        {/* Pending Review Action Queue */}
+        <div className="xl:col-span-1 bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex flex-col justify-between self-start">
+          <div>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B] flex items-center gap-2">
@@ -1678,10 +981,10 @@ export default function Dashboard() {
                   No pending items in queue. All clear!
                 </div>
               ) : (
-                queue.slice(0, 5).map((item) => (
+                queue.slice(0, 4).map((item) => (
                   <div
                     key={item.id}
-                    className="p-3 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] hover:border-[#6C5CE7]/40 transition-colors text-xs space-y-1.5"
+                    className="p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] hover:border-[#6C5CE7]/40 transition-colors text-xs space-y-1"
                   >
                     <p className="text-[#20212B] font-medium line-clamp-1">{item.text_preview}</p>
                     <div className="flex items-center justify-between text-[10px]">
@@ -1698,10 +1001,143 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+
+          <div className="pt-3 border-t border-[#E9EAF1] mt-3 flex items-center justify-between text-[11px] text-[#858795]">
+            <span>{queue.length} pending moderation tasks</span>
+            <Link to="/moderation" className="text-[#6C5CE7] font-semibold hover:underline">
+              Open Command Center &rarr;
+            </Link>
+          </div>
         </div>
       </div>
 
+      {/* ── Row 2: Categorical Distributions Grid (All 4 Donut Panels Balanced Side-by-Side!) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 items-start">
+        {/* 1. Language Distribution */}
+        <DonutPanel
+          title={t('dashboard.dist.language', 'Language Distribution')}
+          icon={Globe}
+          data={toChartData(distributions?.language_distribution)}
+          colors={LANG_COLORS}
+          loading={loading}
+        />
 
+        {/* 2. Platform Distribution */}
+        <DonutPanel
+          title="Platform Distribution"
+          icon={Share2}
+          data={toChartData(distributions?.platform_distribution)}
+          colors={PLATFORM_COLORS}
+          loading={loading}
+        />
+
+        {/* 3. Severity Distribution */}
+        <DonutPanel
+          title={t('dashboard.dist.severity', 'Severity Distribution')}
+          icon={AlertTriangle}
+          data={toChartData(distributions?.severity_distribution)}
+          colors={SEVERITY_COLORS}
+          loading={loading}
+        />
+
+        {/* 4. Violation Categories */}
+        <DonutPanel
+          title={t('dashboard.dist.category', 'Violation Categories')}
+          icon={Layers}
+          data={toChartData(distributions?.category_distribution)}
+          colors={CATEGORY_COLORS}
+          loading={loading}
+        />
+      </div>
+
+      {/* ── Row 3: Live Comment Telemetry Stream (Full Width!) ── */}
+      <div className="bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B] flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[#6C5CE7]" />
+              <span>Live Comment Telemetry Stream</span>
+            </h3>
+            <p className="text-[11px] text-[#858795] mt-0.5">
+              Streaming model decisions for recently ingested comments and social monitoring feeds.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-[#6C5CE7] bg-[#EEEAFE] border border-[#6C5CE7]/20 px-2.5 py-1 rounded-full font-semibold">
+              {recent.length} Active Records
+            </span>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto rounded-xl border border-[#E9EAF1]">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-[#F8F9FE] text-[#858795] border-b border-[#E9EAF1] uppercase font-semibold text-[10px]">
+              <tr>
+                <th className="py-2.5 px-3">Comment Text</th>
+                <th className="py-2.5 px-3">Platform</th>
+                <th className="py-2.5 px-3">Language</th>
+                <th className="py-2.5 px-3">Severity</th>
+                <th className="py-2.5 px-3">Decision</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3 text-right">Time</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E9EAF1]">
+              {recent.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-[#858795]">
+                    No comments recorded yet. Use the Real-Time Ingestion Console above to analyze comments!
+                  </td>
+                </tr>
+              ) : (
+                recent.map((rec) => (
+                  <tr key={rec.id} className="hover:bg-[#F8F9FE] transition-colors">
+                    <td className="py-2.5 px-3 max-w-xs truncate font-medium text-[#20212B]">
+                      {rec.text_preview}
+                      {rec.author_name && (
+                        <span className="block text-[10px] text-[#858795] font-normal">by @{rec.author_name}</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <PlatformBadge platform={rec.platform} sourceUrl={rec.source_url} />
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className="capitalize px-2 py-0.5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] border border-[#6C5CE7]/20 text-[10px] font-semibold">
+                        {rec.detected_language}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                        rec.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        rec.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        rec.severity === 'low' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}>
+                        {rec.severity}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 font-semibold capitalize text-[#20212B]">
+                      {rec.decision.replace(/_/g, ' ')}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                        rec.status === 'reviewed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        rec.status === 'escalated' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {rec.status}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right text-[#858795] tabular-nums text-[10px]">
+                      {new Date(rec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

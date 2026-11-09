@@ -2,31 +2,31 @@
   "language": "Hindi",
   "dataset": "necrosyth/hindi-social-media-hostility-detection",
   "split": "held_out_test",
-  "total_test_samples": 860,
-  "positive_samples": 402,
-  "negative_samples": 458,
-  "optimal_threshold": 0.54,
+  "total_test_samples": 887,
+  "positive_samples": 413,
+  "negative_samples": 474,
+  "optimal_threshold": 0.43,
   "metrics": {
-    "accuracy": 0.9674,
-    "precision": 0.9539,
-    "recall": 0.9776,
-    "f1_score": 0.9656,
-    "roc_auc": 0.99,
-    "pr_auc": 0.9857
+    "accuracy": 0.9481,
+    "precision": 0.9199,
+    "recall": 0.9734,
+    "f1_score": 0.9459,
+    "roc_auc": 0.9893,
+    "pr_auc": 0.9875
   },
   "confusion_matrix": {
     "true_negatives": 439,
-    "false_positives": 19,
-    "false_negatives": 9,
-    "true_positives": 393,
+    "false_positives": 35,
+    "false_negatives": 11,
+    "true_positives": 402,
     "raw_matrix": [
       [
         439,
-        19
+        35
       ],
       [
-        9,
-        393
+        11,
+        402
       ]
     ]
   }

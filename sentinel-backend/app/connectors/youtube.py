@@ -160,7 +160,12 @@ class YouTubeConnector(BaseSocialConnector):
                 f"Invalid YouTube URL or Video ID: '{raw_target}'. Expected format: https://youtube.com/watch?v=VIDEO_ID, https://youtu.be/VIDEO_ID, or 11-char ID."
             )
 
-        max_to_fetch = max(1, min(max_comments, 200))
+        if max_comments < 1:
+            raise ValueError("Requested comment count must be at least 1.")
+        if max_comments > 500:
+            raise ValueError(f"Requested count ({max_comments}) exceeds maximum allowed limit of 500 comments per request to protect API quota.")
+
+        max_to_fetch = max_comments
         comments: List[NormalizedSocialComment] = []
         page_token: Optional[str] = None
         pages_retrieved = 0
@@ -220,6 +225,9 @@ class YouTubeConnector(BaseSocialConnector):
                     break
 
                 for item in items:
+                    if len(comments) >= max_to_fetch:
+                        break
+
                     snippet = item.get("snippet", {})
                     top_comment = snippet.get("topLevelComment", {}).get("snippet", {})
                     cid = item.get("id") or top_comment.get("id")
@@ -252,6 +260,9 @@ class YouTubeConnector(BaseSocialConnector):
                                 "video_id": video_id
                             }
                         ))
+
+                    if len(comments) >= max_to_fetch:
+                        break
 
                     # Process replies if requested and present
                     if include_replies:
@@ -290,6 +301,8 @@ class YouTubeConnector(BaseSocialConnector):
                                         "is_reply": True
                                     }
                                 ))
+                            if len(comments) >= max_to_fetch:
+                                break
 
                 pages_retrieved += 1
                 page_token = data.get("nextPageToken")
@@ -300,10 +313,12 @@ class YouTubeConnector(BaseSocialConnector):
         stats = {
             "platform": "youtube",
             "video_id": video_id,
+            "requested_count": max_comments,
             "total_fetched": len(comments),
             "pages_retrieved": pages_retrieved,
             "quota_units_used": quota_used,
+            "failed_count": 0,
             "timestamp": self.last_sync_timestamp
         }
-        logger.info(f"[youtube] Successfully fetched {len(comments)} comments from video {video_id}.")
+        logger.info(f"[youtube] Successfully fetched {len(comments)} comments (requested: {max_comments}) from video {video_id}.")
         return comments, stats

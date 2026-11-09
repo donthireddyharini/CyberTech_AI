@@ -122,10 +122,42 @@ class MultilingualPredictor:
         }
     }
 
+    CATEGORY_CONFIGS = {
+        "english": "english_categories.joblib",
+        "hindi": "hindi_categories.joblib",
+        "kannada": "kannada_categories.joblib",
+        "telugu": "telugu_categories.joblib",
+        "hinglish": "hinglish_categories.joblib",
+        "code_mixed": "hinglish_categories.joblib",
+    }
+
     def __init__(self, models_dir: str = MODELS_DIR):
         self.models_dir = models_dir
         self._loaded_models: Dict[str, Any] = {}
+        self._loaded_cat_models: Dict[str, Any] = {}
         self._configs: Dict[str, Dict[str, Any]] = {}
+
+    def warmup(self):
+        """Pre-load and initialize all supported primary and category models into memory."""
+        logger.info("Pre-warming all multilingual toxicity and category models...")
+        for lang_key in ["english", "hindi", "telugu", "kannada", "hinglish"]:
+            try:
+                self._get_model(lang_key)
+            except Exception as e:
+                logger.warning(f"Could not warm up model for '{lang_key}': {e}")
+            try:
+                self._get_category_model(lang_key)
+            except Exception as e:
+                logger.warning(f"Could not warm up category model for '{lang_key}': {e}")
+
+        # Warm up internal BLAS / scikit-learn pipeline caches with 1 fast dummy inference
+        for lang_key in ["english", "hindi", "telugu", "kannada", "hinglish"]:
+            try:
+                self.predict("warmup", language=lang_key)
+                self.predict_categories("warmup", language=lang_key)
+            except Exception:
+                pass
+        logger.info("Multilingual models pre-warmed successfully.")
 
     def is_language_supported(self, language: str) -> bool:
         lang_key = language.lower().strip()
@@ -210,6 +242,196 @@ class MultilingualPredictor:
             "language": lang_key,
             "scope_notice": f"Local calibrated model for {task_info}."
         }
+
+    def predict_batch(self, texts: List[str], language: str = "english") -> List[Dict[str, Any]]:
+        """
+        Fast vectorized batch inference for toxicity classification.
+        Processes batches up to thousands of items in seconds via underlying BLAS.
+        """
+        lang_key = language.lower().strip()
+        if lang_key in ("code_mixed", "code-mixed"):
+            lang_key = "hinglish"
+        if lang_key not in self.LANGUAGE_CONFIGS:
+            lang_key = "english"
+
+        spec = self.LANGUAGE_CONFIGS[lang_key]
+        threshold = spec["default_threshold"]
+        version = spec["default_version"]
+        task_info = spec["task"]
+        model = self._get_model(lang_key)
+
+        clean_texts = [t.strip() if t and t.strip() else "" for t in texts]
+        non_empty_indices = [i for i, t in enumerate(clean_texts) if t]
+        
+        results = [
+            {
+                "text": t,
+                "is_toxic": False,
+                "toxicity_score": 0.0,
+                "confidence": 1.0,
+                "threshold": threshold,
+                "model_version": version,
+                "language": lang_key,
+                "scope_notice": f"Local calibrated model for {task_info}."
+            }
+            for t in clean_texts
+        ]
+
+        if non_empty_indices:
+            sub_texts = [clean_texts[i] for i in non_empty_indices]
+            probs = model.predict_proba(sub_texts)[:, 1]
+            for idx, p in zip(non_empty_indices, probs):
+                is_toxic = bool(p >= threshold)
+                confidence = abs(p - threshold) / max(threshold, 1.0 - threshold)
+                results[idx]["is_toxic"] = is_toxic
+                results[idx]["toxicity_score"] = round(float(p), 4)
+                results[idx]["confidence"] = round(float(min(confidence, 1.0)), 4)
+
+        return results
+
+    def _get_category_model(self, lang_key: str):
+        canonical = lang_key.lower().strip()
+        if canonical in ("code_mixed", "code-mixed"):
+            canonical = "hinglish"
+        if canonical in self._loaded_cat_models:
+            return self._loaded_cat_models[canonical]
+        if canonical not in self.CATEGORY_CONFIGS:
+            return None
+        fname = self.CATEGORY_CONFIGS[canonical]
+        path = os.path.join(self.models_dir, fname)
+        if not os.path.exists(path):
+            return None
+        try:
+            m = joblib.load(path)
+            self._loaded_cat_models[canonical] = m
+            return m
+        except Exception as e:
+            logger.warning(f"Could not load category artifact for '{canonical}': {e}")
+            return None
+
+    def predict_categories(self, text: str, language: str = "english") -> Dict[str, Dict[str, Any]]:
+        """
+        Runs genuine category scoring across hate_speech, harassment, cyberbullying, legitimate.
+        Returns dict of {category: {'score': float, 'supported': bool, 'note': Optional[str]}}.
+        """
+        lang_key = language.lower().strip()
+        if lang_key in ("code_mixed", "code-mixed"):
+            lang_key = "hinglish"
+
+        all_categories = ["hate_speech", "harassment", "cyberbullying", "legitimate"]
+        cat_model = self._get_category_model(lang_key)
+
+        if not text or not text.strip():
+            return {
+                cat: {
+                    "score": 1.0 if cat == "legitimate" else 0.0,
+                    "supported": True if (cat_model and cat in cat_model.get("classifiers", {})) else (cat in ["hate_speech", "harassment", "legitimate"]),
+                    "note": None if (cat_model and cat in cat_model.get("classifiers", {})) else ("Not available in this model" if cat == "cyberbullying" and lang_key in ("telugu", "hinglish") else None)
+                }
+                for cat in all_categories
+            }
+
+        cleaned = text.strip()
+        if not cat_model:
+            return {
+                cat: {"score": 0.0, "supported": False, "note": "Category model not loaded"}
+                for cat in all_categories
+            }
+
+        features = cat_model["features"]
+        clfs = cat_model.get("classifiers", {})
+
+        try:
+            vec = features.transform([cleaned])
+            res = {}
+            for cat in all_categories:
+                if cat in clfs:
+                    proba = float(clfs[cat].predict_proba(vec)[0, 1])
+                    res[cat] = {
+                        "score": round(proba, 4),
+                        "supported": True,
+                        "note": None
+                    }
+                else:
+                    res[cat] = {
+                        "score": 0.0,
+                        "supported": False,
+                        "note": f"Category not annotated/supported for {lang_key}"
+                    }
+            return res
+        except Exception as e:
+            logger.warning(f"Category prediction error for '{lang_key}': {e}")
+            return {
+                cat: {"score": 0.0, "supported": False, "note": str(e)}
+                for cat in all_categories
+            }
+
+    def predict_categories_batch(self, texts: List[str], language: str = "english") -> List[Dict[str, Dict[str, Any]]]:
+        """
+        Fast vectorized batch category prediction.
+        Transforms all texts once and evaluates all category heads at matrix speed.
+        """
+        lang_key = language.lower().strip()
+        if lang_key in ("code_mixed", "code-mixed"):
+            lang_key = "hinglish"
+
+        all_categories = ["hate_speech", "harassment", "cyberbullying", "legitimate"]
+        cat_model = self._get_category_model(lang_key)
+
+        clean_texts = [t.strip() if t and t.strip() else "" for t in texts]
+        default_empty = {
+            cat: {
+                "score": 1.0 if cat == "legitimate" else 0.0,
+                "supported": True if (cat_model and cat in cat_model.get("classifiers", {})) else (cat in ["hate_speech", "harassment", "legitimate"]),
+                "note": None if (cat_model and cat in cat_model.get("classifiers", {})) else ("Not available in this model" if cat == "cyberbullying" and lang_key in ("telugu", "hinglish") else None)
+            }
+            for cat in all_categories
+        }
+
+        if not cat_model:
+            return [
+                {cat: {"score": 0.0, "supported": False, "note": "Category model not loaded"} for cat in all_categories}
+                for _ in texts
+            ]
+
+        features = cat_model["features"]
+        clfs = cat_model.get("classifiers", {})
+
+        # Batch transform all texts
+        try:
+            vec_all = features.transform(clean_texts)
+            # Evaluate all classifiers on the full matrix
+            cat_probs = {}
+            for cat in all_categories:
+                if cat in clfs:
+                    cat_probs[cat] = clfs[cat].predict_proba(vec_all)[:, 1]
+                else:
+                    cat_probs[cat] = None
+
+            results = []
+            for i, text in enumerate(clean_texts):
+                if not text:
+                    results.append(default_empty.copy())
+                    continue
+                item_res = {}
+                for cat in all_categories:
+                    if cat_probs[cat] is not None:
+                        item_res[cat] = {
+                            "score": round(float(cat_probs[cat][i]), 4),
+                            "supported": True,
+                            "note": None
+                        }
+                    else:
+                        item_res[cat] = {
+                            "score": 0.0,
+                            "supported": False,
+                            "note": f"Category not annotated/supported for {lang_key}"
+                        }
+                results.append(item_res)
+            return results
+        except Exception as e:
+            logger.warning(f"Batch category prediction error for '{lang_key}': {e}")
+            return [self.predict_categories(t, language=lang_key) for t in texts]
 
 
 # Singleton helpers

@@ -119,9 +119,13 @@ export function ContextLabProvider({ children }: { children: React.ReactNode }) 
     return [];
   }, [storageKeySessions]);
 
-  // Initial mount: load cached session or fetch from server
+  // Initial mount: load cached session or fetch from server for authenticated user
   useEffect(() => {
     let mounted = true;
+    setActiveSessionId(null);
+    setCurrentSession(null);
+    setSessions([]);
+
     const init = async () => {
       // Restore local snapshot first to prevent any visual flicker on tab navigation
       try {

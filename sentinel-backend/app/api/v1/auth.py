@@ -284,6 +284,19 @@ async def login(request: UserLoginRequest, db: AsyncSession = Depends(get_db)):
     )
 
 
+@router.get("/oauth-config")
+async def get_oauth_config():
+    """Returns public OAuth status and Google configuration metadata."""
+    client_id = settings.clean_google_client_id
+    return {
+        "google_enabled": True,
+        "client_id_configured": bool(client_id),
+        "client_id": client_id if client_id else None,
+        "auth_provider": "google",
+        "demo_fallback_available": True,
+    }
+
+
 @router.get("/me", response_model=UserProfileResponse)
 async def get_my_profile(current_user: User = Depends(get_current_user)):
     """Retrieve current authenticated user profile."""
@@ -291,6 +304,7 @@ async def get_my_profile(current_user: User = Depends(get_current_user)):
 
 
 @router.patch("/profile", response_model=UserProfileResponse)
+@router.put("/profile", response_model=UserProfileResponse)
 async def update_profile(
     request: UpdateProfileRequest,
     current_user: User = Depends(get_current_user),

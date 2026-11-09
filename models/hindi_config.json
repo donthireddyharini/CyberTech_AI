@@ -4,17 +4,17 @@
   "model_type": "scikit_learn_tfidf_logreg",
   "architecture": "FeatureUnion(Word (1,2) + Char_wb (2,4)) -> LogisticRegression(balanced)",
   "dataset_source": "necrosyth/hindi-social-media-hostility-detection",
-  "train_samples": 4009,
-  "val_samples": 859,
-  "test_samples": 860,
-  "optimal_threshold": 0.54,
+  "train_samples": 4135,
+  "val_samples": 886,
+  "test_samples": 887,
+  "optimal_threshold": 0.43,
   "metrics": {
-    "accuracy": 0.9674,
-    "precision": 0.9539,
-    "recall": 0.9776,
-    "f1_score": 0.9656,
-    "roc_auc": 0.99,
-    "pr_auc": 0.9857
+    "accuracy": 0.9481,
+    "precision": 0.9199,
+    "recall": 0.9734,
+    "f1_score": 0.9459,
+    "roc_auc": 0.9893,
+    "pr_auc": 0.9875
   },
   "checkpoint_path": "models\\hindi_model.joblib"
 }

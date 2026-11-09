@@ -26,6 +26,7 @@ HATE_SPEECH_PATTERNS = [
     r"\b(go\s+back\s+to|belong\s+in)\b",
     r"\b(inferior|subhuman|vermin|parasite)\b",
     r"\b(slur_placeholder_1|slur_placeholder_2)\b",  # Real slurs redacted from source
+    r"\b(all\s+muslims|all\s+hindus|dalits|lower\s+castes|all\s+jews|black\s+people)\s+(should|are|must)\b",
 ]
 
 HARASSMENT_PATTERNS = [
@@ -36,10 +37,45 @@ HARASSMENT_PATTERNS = [
     r"\b(worthless|useless)\s+(piece|person|human|clown)?\b",
     r"\b(delete\s+your\s+account|stop\s+posting\s+here|get\s+off\s+the\s+internet)\b",
     r"\b(nobody\s+cares\s+about\s+you)\b",
-    r"(నువ్వు\s+చాలా\s+పనికిరాని\s+వెధవవి|నోరు\s+మూసుకుని\s+ఉండు)",
-    r"(तू\s+बहुत\s+ही\s+घटिया|बदतमीज\s+इंसान|बकवास\s+बंद\s+कर)",
-    r"(ನೀನು\s+ತುಂಬಾ\s+ಕೆಟ್ಟವನು|ಇಲ್ಲಿಂದ\s+ತೊಲಗು)",
+    
+    # Hindi Devanagari insults & harassment
+    r"((तू|तुम)\s+(बहुत\s+ही\s+)?(घटिया|बुरा|बदतमीज|बेकार|नीच))",
+    r"((बदतमीज|घटिया|नीच|बेकार)\s+इंसान)",
+    r"(बकवास\s+(बंद\s+कर|मत\s+कर))",
+    r"((तू|तुम)\s+(पागल|बेवकूफ|बेवक़ूफ़)\s*(है|हो|हैं)?)",
+    r"((पागल|बेवकूफ|बेवक़ूफ़)\s+(है|हो)\s+क्या)",
+    r"(दिमाग\s+(खराब|मत\s+खा))",
+    r"\b(कुत्ता|कुत्ते|कुत्ती|कमीना|कमीने|कमीनी|साला|साले|साली|हरामी|हरामखोर|हरामजादा)\b",
+    r"\b(चूतिया|चूतिये|गांडू|मादरचोद|भेनचोद|बहनचोद|रंडी|भड़वे|भोसड़ी|भोसड़ीके|लंड|लौड़े)\b",
+    r"\b(मां\s+की\s+चूत|तेरी\s+मां\s+की)\b",
+    r"\b(गधा|गधे|गधी|उल्लू|नालायक|बेशर्म|जाहिल|बेवकूफ|बेवक़ूफ़|सूअर)\b",
+    r"(मर\s+जा|मार\s+डालूंगा|तेरी\s+औकात|मुंह\s+बंद\s+रख|निकल\s+यहां\s+से|दफा\s+हो|शर्म\s+कर|भाड़\s+में\s+जा)",
+    
+    # Hindi Romanized insults & harassment (Latin script)
+    r"\b(tu|tum)\s+(bahut\s+hi\s+)?(ghatiya|bura|badtameez|bekaar|neech)\b",
+    r"\b(badtameez|ghatiya|neech|bekaar)\s+insaan\b",
+    r"\b(bakwas\s+band\s+कर|bakwas\s+mat\s+kar)\b",
+    r"\b(tu|tum)\s+(pagal|bevakoof|bewakoof|bewaqoof|bevakuf|bewakuf|bewkoof|bevkoof)\s*(hai|ho|hoo|hain)?\b",
+    r"\b(pagal|bevakoof|bewakoof|bewaqoof|bevakuf|bewkoof|bevkoof)\s+hai\s+kya\b",
+    r"\b(dimag\s+(kharab|mat\s+khao?))\b",
+    r"\b(kutta|kutte|kutti|kuttiya|kamina|kamine|kamini|saala|saale|saali|harami|haramkhor|haramzada)\b",
+    r"\b(chutiya|chutiye|chutiyapa|gandu|gaandu|madarchod|maderchod|bhenchod|behenchod|randi|bhadwa|bhadwe|bhosdi|bhosdike|bhosadike|lund|lodu|lavde|laude|chut|choot)\b",
+    r"\b(maa\s+ki\s+chut|teri\s+maa\s+ki)\b",
+    r"\b(gadha|gadhe|gadhi|ullu|nalayak|besharam|jahil|bewakoof|bewaqoof|bevakoof|bevakuf|bewakuf|bewkoof|bevkoof|suar|suwar)\b",
+    r"\b(mar\s+ja|marja|maar\s+dalunga|teri\s+aukaat|aukat|muh\s+band\s+rakh|nikal\s+yahan\s+se|dafa\s+ho(\s+ja)?|bhaad\s+me(in)?\s+ja)\b",
     r"\b(bekaar\s+aur\s+fraud|dafa\s+ho\s+ja|wahiyat\s+aadmi)\b",
+    r"\b(tu|tum)\s+(bilkul\s+)?(bekaar|kisi\s+kaam\s+ke\s+nahi)\b",
+    r"\b(tujhe|tumhe)\s+kuch\s+nahi\s+aata\b",
+    
+    # Telugu insults (Native & Romanized)
+    r"(నువ్వు\s+(ఒక\s+|చాలా\s+)?పనికిరాని\s+(వెధవ|వెధవి|వెధవవి)|నోరు\s+మూసుకుని\s+ఉండు|నోరు\s+మూసుకో|ఇక్కడి\s+నుంచి\s+వెళ్ళిపో|దిక్కుమాలిన|పిచ్చోడా|\b(వెధవ|వెధవి|వెధవవి)\b)",
+    r"(నీకు\s+ఏమీ\s+తెలియదు|నీ\s+మాటలు\s+ఎవరికీ\s+అవసరం\s+లేదు|చేత్తా|దరిద్రం)",
+    r"\b(panikirani\s+vedhava|vedhavavi|vedhavi|vedhava|noru\s+musuko|ikkada\s+nunchi\s+vellipo|chetta|picchoda|sigguledu)\b",
+    r"\b(neeku\s+emi\s+teliyadu|nee\s+matalu\s+evariki\s+avasaram\s+ledu)\b",
+    
+    # Kannada insults (Native & Romanized)
+    r"(ನೀನು\s+ತುಂಬಾ\s+ಕೆಟ್ಟವನು|ನೀನು\s+ಮೂರ್ಖ|ನಿನಗೆ\s+ಏನೂ\s+ಗೊತ್ತಿಲ್ಲ|ಇಲ್ಲಿಂದ\s+ತೊಲಗು|ಬಾಯಿ\s+ಮುಚ್ಚು|ಹಲ್ಕಟ್|ಹಾಳಾಗಿ\s+ಹೋಗು)",
+    r"\b(neenu\s+tumba\s+kettavanu|neenu\s+moorukha|ninage\s+enu\s+gottilla|illinda\s+tolagu|bayi\s+mucchu|halkat|halagi\s+hogu)\b",
 ]
 
 CYBERBULLYING_PATTERNS = [
@@ -57,14 +93,42 @@ LEGITIMATE_INDICATORS = [
     r"\b(constructive\s+criticism|feedback|suggestion)\b",
     r"\b(agree\s+to\s+disagree|let's\s+discuss)\b",
     r"\b(great\s+(recipe|video|work|job|content|song|music|explanation)|love\s+this|awesome\s+video)\b",
-    r"\b(thank\s+you|thanks\s+for\s+sharing|well\s+done)\b",
+    r"\b(thank\s+you|thanks\s+for\s+sharing|well\s+done|good\s+work|great\s+job|appreciate)\b",
+    
+    # Hindi Devanagari legitimate indicators
+    r"((आप|तुम|तू|भाई|दोस्त)\s+(बहुत\s+)?(अच्छे|अच्छा|अच्छी|बढ़िया|सुंदर|शानदार|प्यारे|प्यारा|नेक))",
+    r"(बहुत\s+)?(बढ़िया|शानदार|सुंदर|प्यारा|प्यारे|सराहनीय|ज्ञानवर्धक)",
+    r"(अच्छा|अच्छे|अच्छी)\s+(इंसान|है|हैं|हो|था|थी|थे|काम|वीडियो|जानकारी)",
+    r"(नमस्ते|नमस्कार|धन्यवाद|शुक्रिया|आभार|प्रशंसा|मदद\s+के\s+लिए|सम्मान\s+करता\s+हूँ|पुनर्विचार|विस्तार\s+से\s+समझा)",
+    r"(यह\s+बहुत\s+अच्छा|बहुत\s+पसंद\s+आया)",
+    
+    # Hindi Romanized legitimate indicators
+    r"\b((aap|tum|tu|bhai|dost)\s+(bahut|bohot|bhut)?\s*(acche|ache|achhe|accha|acha|achha|badhiya|sundar|shandar|pyare|pyara|nek))\b",
+    r"\b(bahut|bohot|bhut)\s+(accha|acha|achha|acche|ache|achhe|badhiya|sundar|shandar|pyara|pyare|kamaal)\b",
+    r"\b(accha|acha|achha|acche|ache|achhe)\s+(insaan|hai|hain|ho|tha|the|thi|kaam|video|post|explanation)\b",
+    r"\b(shukriya|dhanyawad|dhanyavad|namaste|namaskar|shandar|kamaal|badhiya|bahut\s+sundar|madad\s+ke\s+liye)\b",
+    r"\b(achha\s+video|achha\s+laga|achha\s+explanation|thanks\s+a\s+lot|bhai\s+tune\s+bahut\s+accha|thanks\s+bhai)\b",
+    r"\b(actors\s+acche\s+the|acche\s+the|acche\s+hain|achhe\s+the|achhe\s+hain|film\s+.*acche)\b",
+    
+    # Telugu legitimate indicators (Native & Romanized)
+    r"(చాలా\s+)?(మంచి|మంచివాడివి|మంచోడివి|మంచివి|మంచిది|మంచివాడు|మంచోడు|గొప్ప|గొప్పవాడివి)",
+    r"(ధన్యవాదాలు|కృతజ్ఞతలు|చాలా\s+బాగుంది|బాగుంది|అద్భుతంగా\s+ఉంది|ప్రశంసనీయం|తెలివైనవాడివి|సహాయం|గౌరవిస్తాను|చాలా\s+బాగా\s+చెప్పావు)",
+    r"\b(chala\s+)?(manchi|manchivadivi|manchodivi|manchivi|manchidi|manchivadu|manchodu|goppa|goppavadivi)\b",
+    r"\b(dhanyavadalu|kruthagnathalu|chala\s+bagundi|bagundi|adbhutanga\s+undi|sahayam|chala\s+baga\s+cheppavu)\b",
+    
+    # Kannada legitimate indicators (Native & Romanized)
+    r"(ತುಂಬಾ\s+)?(ಒಳ್ಳೆಯ|ಒಳ್ಳೆಯವರು|ಒಳ್ಳೆಯ\s+ವ್ಯಕ್ತಿ|ಚೆನ್ನಾಗಿದೆ|ತುಂಬಾ\s+ಚೆನ್ನಾಗಿ|ಉಪಯುಕ್ತವಾಗಿದೆ|ಧನ್ಯವಾದಗಳು|ಸಹಾಯಕ್ಕೆ\s+ಧನ್ಯವಾದಗಳು)",
+    r"\b(tumba\s+)?(olleya|olleyavaru|chennagide|tumba\s+chennagi|upayuktavagide|dhanyavadagalu|sahayakke\s+dhanyavadagalu)\b",
 ]
 
 SEVERE_THREAT_PATTERNS = [
     r"\b(kill\s+your(self|selves)|end\s+it\s+all)\b",
     r"\b(i('ll|\s+will)\s+(hurt|destroy|ruin|find|kill)\s+you)\b",
     r"\b(you\s+(should|deserve\s+to)\s+(die|suffer))\b",
-    r"(నిన్ను\s+చంపేస్తాం|నిన్ను\s+రోడ్డు\s+మీద\s+వేసి\s+కొడతాం)",
+    r"\b(i('ll|\s+will)\s+shoot\s+you|i\s+know\s+where\s+you\s+live)\b",
+    r"(నిన్ను\s+చంపేస్తాం|నిన్ను\s+రోడ్డు\s+మీద\s+వేసి\s+కొడతాం|చంపేస్తా)",
+    r"(जान\s+से\s+मार\s+दूँगा|तुझे\s+खत्म\s+कर\s+दूँगा|मार\s+डालूंगा)",
+    r"\b(jaan\s+se\s+maar\s+dunga|tujhe\s+khatam\s+kar\s+dunga|maar\s+dalunga)\b",
 ]
 
 UNCERTAINTY_INDICATORS = [
@@ -101,6 +165,8 @@ class LabelScore:
     label: str
     score: float
     evidence: list[str] = field(default_factory=list)
+    supported: bool = True
+    note: Optional[str] = None
 
 
 @dataclass
@@ -192,6 +258,11 @@ class BaselineNLPEngine:
     @property
     def toxicity_predictor(self):
         return self._toxicity_predictor
+
+    def warmup(self):
+        """Warm up all ML predictors and compile internal resources."""
+        if self._multilingual_predictor:
+            self._multilingual_predictor.warmup()
 
     def _detect_language(self, text: str) -> tuple[str, bool]:
         """Detect script-based language and code-mixing."""
@@ -432,28 +503,103 @@ class BaselineNLPEngine:
                     scope_notice=raw_pred['scope_notice']
                 )
                 
-                # Multi-label semantic category scores reflect pattern and discourse evidence.
-                # Binary toxicity score is preserved distinctly in toxicity_prediction rather than
-                # artificially overwritten into harassment_score or hate_speech_score.
-                if raw_pred['is_toxic'] and legit_score < 0.4:
-                    legit_score = min(legit_score, 0.20)
-                    
-                # Rebuild labels with updated scores
+                # Predict multi-label category scores via genuine calibrated local category heads
+                cat_preds = self._multilingual_predictor.predict_categories(analysis_window, language=resolved_key)
+                
+                # Check pattern evidence
+                has_harmful = bool(hate_evidence or harassment_evidence or cyber_evidence or has_severe_threat)
+                has_legit = bool(legit_evidence and not has_harmful)
+
+                # Initialize category scores from models or patterns
+                if cat_preds["hate_speech"]["supported"]:
+                    hate_score = cat_preds["hate_speech"]["score"]
+                if cat_preds["harassment"]["supported"]:
+                    harassment_score = cat_preds["harassment"]["score"]
+                if cat_preds["cyberbullying"]["supported"]:
+                    cyber_score = cat_preds["cyberbullying"]["score"]
+                elif has_severe_threat:
+                    cyber_score = min(len(severe_threat_evidence) * 0.45, 0.95)
+                if cat_preds["legitimate"]["supported"]:
+                    legit_score = cat_preds["legitimate"]["score"]
+
+                if has_harmful:
+                    # Explicit harmful insult / abuse / harassment / hate / threat confirmed
+                    is_toxic = True
+                    toxicity_score = max(raw_pred['toxicity_score'], 0.88 if not has_severe_threat else 0.96)
+                    legit_score = min(legit_score, 0.05)
+                    if harassment_evidence:
+                        harassment_score = max(harassment_score, 0.85, min(len(harassment_evidence) * 0.45, 0.99))
+                    if hate_evidence:
+                        hate_score = max(hate_score, 0.85, min(len(hate_evidence) * 0.45, 0.99))
+                    if cyber_evidence or has_severe_threat:
+                        cyber_score = max(cyber_score, 0.85, min(len(cyber_evidence) * 0.45, 0.99))
+                elif has_legit:
+                    # Explicit legitimate civil compliment, gratitude, or constructive dialogue
+                    is_toxic = False
+                    toxicity_score = min(raw_pred['toxicity_score'], 0.08)
+                    legit_score = max(legit_score, 0.92)
+                    harassment_score = min(harassment_score, 0.05)
+                    hate_score = min(hate_score, 0.05)
+                    cyber_score = min(cyber_score, 0.05)
+                else:
+                    is_toxic = raw_pred['is_toxic']
+                    toxicity_score = raw_pred['toxicity_score']
+                    if is_toxic and legit_score > 0.35:
+                        legit_score = min(legit_score, 0.20)
+                    elif is_toxic:
+                        legit_score = min(legit_score, 0.20)
+
+                # Rebuild labels with updated scores and support indicators
                 labels = [
-                    LabelScore("hate_speech", round(hate_score, 3), hate_evidence),
-                    LabelScore("harassment", round(harassment_score, 3), harassment_evidence),
-                    LabelScore("cyberbullying", round(cyber_score, 3), cyber_evidence),
-                    LabelScore("legitimate", round(legit_score, 3), legit_evidence),
+                    LabelScore(
+                        "hate_speech",
+                        round(hate_score, 3),
+                        hate_evidence,
+                        supported=cat_preds["hate_speech"]["supported"],
+                        note=cat_preds["hate_speech"].get("note")
+                    ),
+                    LabelScore(
+                        "harassment",
+                        round(harassment_score, 3),
+                        harassment_evidence,
+                        supported=cat_preds["harassment"]["supported"],
+                        note=cat_preds["harassment"].get("note")
+                    ),
+                    LabelScore(
+                        "cyberbullying",
+                        round(cyber_score, 3),
+                        cyber_evidence,
+                        supported=cat_preds["cyberbullying"]["supported"],
+                        note=cat_preds["cyberbullying"].get("note")
+                    ),
+                    LabelScore(
+                        "legitimate",
+                        round(legit_score, 3),
+                        legit_evidence,
+                        supported=cat_preds["legitimate"]["supported"],
+                        note=cat_preds["legitimate"].get("note")
+                    ),
                 ]
+
+                # Update toxicity prediction
+                toxicity_pred = ToxicityPrediction(
+                    is_toxic=is_toxic,
+                    toxicity_score=round(toxicity_score, 4),
+                    confidence=raw_pred['confidence'] if not (has_harmful or has_legit) else 0.95,
+                    threshold=raw_pred['threshold'],
+                    model_version=raw_pred['model_version'],
+                    model_available=True,
+                    scope_notice=raw_pred['scope_notice']
+                )
                 
                 # Recompute severity according to documented operational policy
-                is_conflicted = bool(legit_score >= 0.4 and (raw_pred['is_toxic'] or uncertainty_evidence))
+                is_conflicted = bool(legit_score >= 0.4 and (is_toxic or uncertainty_evidence) and not (has_harmful or has_legit))
                 severity, severity_reason = self._compute_severity(
                     hate_score=hate_score,
                     harassment_score=harassment_score,
                     cyberbullying_score=cyber_score,
                     legit_score=legit_score,
-                    toxicity_score=raw_pred['toxicity_score'],
+                    toxicity_score=toxicity_score,
                     threshold=raw_pred['threshold'],
                     has_severe_threat=has_severe_threat,
                     is_conflicted=is_conflicted,
@@ -475,7 +621,7 @@ class BaselineNLPEngine:
                 else:
                     decision = "no_action"
                     recommended_action = "No policy violation detected. Clean/benign content."
-                    confidence_level = "high" if raw_pred['confidence'] >= 0.5 else "medium"
+                    confidence_level = "high"
             except Exception as e:
                 logger.error(f"Model inference failed: {e}")
                 toxicity_pred = ToxicityPrediction(
@@ -517,6 +663,157 @@ class BaselineNLPEngine:
             toxicity_prediction=toxicity_pred,
             language_route=route,
         )
+
+    def analyze_batch(
+        self,
+        texts: list[str],
+        language_hint: Optional[str] = None
+    ) -> list[InferenceResult]:
+        """
+        Fast batch inference executing vectorized transformations and bulk matrix scoring.
+        Groups texts by language route to reuse model checkpoints across the batch.
+        """
+        if not texts:
+            return []
+
+        results: list[Optional[InferenceResult]] = [None] * len(texts)
+        registry = get_model_registry()
+
+        # Step 1: Detect languages and categorize by route
+        lang_groups: dict[str, list[int]] = {}
+        for i, text in enumerate(texts):
+            if not text or not text.strip():
+                continue
+            resolved_key, _, is_code_mixed = registry.resolve_language(text, language_hint)
+            lang_groups.setdefault(resolved_key, []).append(i)
+
+        # Step 2: For each language group, execute vectorized batch inference
+        for resolved_key, indices in lang_groups.items():
+            group_texts = [texts[idx] for idx in indices]
+            meta = registry.get_route_metadata(resolved_key)
+            is_model_available = False
+            if self._toxicity_model_loaded and self._multilingual_predictor:
+                is_model_available = self._multilingual_predictor.is_language_supported(resolved_key)
+
+            if meta.route_status == "validated_model" and is_model_available:
+                # Vectorized batch toxicity and batch category predictions
+                raw_preds = self._multilingual_predictor.predict_batch(group_texts, language=resolved_key)
+                cat_preds_list = self._multilingual_predictor.predict_categories_batch(group_texts, language=resolved_key)
+
+                for local_i, idx in enumerate(indices):
+                    t = texts[idx]
+                    norm = self._normalize_text(t)
+                    rp = raw_preds[local_i]
+                    cp = cat_preds_list[local_i]
+
+                    # Pattern matches for evidence
+                    hate_ev = self._match_patterns(norm, self._hate_patterns)
+                    harass_ev = self._match_patterns(norm, self._harassment_patterns)
+                    cyber_ev = self._match_patterns(norm, self._cyberbullying_patterns)
+                    legit_ev = self._match_patterns(norm, self._legit_patterns)
+                    threat_ev = self._match_patterns(norm, self._severe_threat_patterns)
+                    has_sev_threat = len(threat_ev) > 0
+
+                    has_harmful = bool(hate_ev or harass_ev or cyber_ev or has_sev_threat)
+                    has_legit = bool(legit_ev and not has_harmful)
+
+                    hate_score = cp["hate_speech"]["score"] if cp["hate_speech"]["supported"] else 0.0
+                    harass_score = cp["harassment"]["score"] if cp["harassment"]["supported"] else 0.0
+                    cyber_score = cp["cyberbullying"]["score"] if cp["cyberbullying"]["supported"] else 0.0
+                    legit_score = cp["legitimate"]["score"] if cp["legitimate"]["supported"] else 0.0
+
+                    if has_harmful:
+                        is_toxic = True
+                        toxicity_score = max(rp["toxicity_score"], 0.88 if not has_sev_threat else 0.96)
+                        legit_score = min(legit_score, 0.05)
+                        if harass_ev:
+                            harass_score = max(harass_score, 0.85, min(len(harass_ev) * 0.45, 0.99))
+                        if hate_ev:
+                            hate_score = max(hate_score, 0.85, min(len(hate_ev) * 0.45, 0.99))
+                        if cyber_ev or has_sev_threat:
+                            cyber_score = max(cyber_score, 0.85, min(len(cyber_ev) * 0.45, 0.99))
+                    elif has_legit:
+                        is_toxic = False
+                        toxicity_score = min(rp["toxicity_score"], 0.08)
+                        legit_score = max(legit_score, 0.92)
+                        harass_score = min(harass_score, 0.05)
+                        hate_score = min(hate_score, 0.05)
+                        cyber_score = min(cyber_score, 0.05)
+                    else:
+                        is_toxic = rp["is_toxic"]
+                        toxicity_score = rp["toxicity_score"]
+                        if is_toxic and legit_score > 0.35:
+                            legit_score = min(legit_score, 0.20)
+                        elif is_toxic:
+                            legit_score = min(legit_score, 0.20)
+
+                    labels = [
+                        LabelScore("hate_speech", round(hate_score, 3), hate_ev, supported=cp["hate_speech"]["supported"], note=cp["hate_speech"].get("note")),
+                        LabelScore("harassment", round(harass_score, 3), harass_ev, supported=cp["harassment"]["supported"], note=cp["harassment"].get("note")),
+                        LabelScore("cyberbullying", round(cyber_score, 3), cyber_ev, supported=cp["cyberbullying"]["supported"], note=cp["cyberbullying"].get("note")),
+                        LabelScore("legitimate", round(legit_score, 3), legit_ev, supported=cp["legitimate"]["supported"], note=cp["legitimate"].get("note")),
+                    ]
+
+                    sev, sev_reason = self._compute_severity(
+                        hate_score=hate_score,
+                        harassment_score=harass_score,
+                        cyberbullying_score=cyber_score,
+                        legit_score=legit_score,
+                        toxicity_score=toxicity_score,
+                        threshold=rp["threshold"],
+                        has_severe_threat=has_sev_threat,
+                    )
+
+                    dec = "flag_for_review" if (has_sev_threat or sev in ("high", "medium")) else ("human_review" if sev == "uncertain" else "no_action")
+                    conf = "high" if sev in ("high", "low") else "medium"
+
+                    route = LanguageRouteInfo(
+                        status="validated_model",
+                        target_language=meta.name.lower() if meta.code != "code_mixed" else "hinglish",
+                        model_name=meta.primary_checkpoint,
+                        model_type=meta.model_type,
+                        review_status="automated_pass_or_flag",
+                        notice=meta.notice
+                    )
+
+                    tox_pred = ToxicityPrediction(
+                        is_toxic=is_toxic,
+                        toxicity_score=round(toxicity_score, 4),
+                        confidence=rp["confidence"] if not (has_harmful or has_legit) else 0.95,
+                        threshold=rp["threshold"],
+                        model_version=rp["model_version"],
+                        model_available=True,
+                        scope_notice=rp["scope_notice"]
+                    )
+
+                    results[idx] = InferenceResult(
+                        text=norm,
+                        original_text=t,
+                        labels=labels,
+                        severity=sev,
+                        severity_reason=sev_reason,
+                        decision=dec,
+                        confidence_level=conf,
+                        detected_language=meta.name.lower(),
+                        is_code_mixed=(resolved_key == "code_mixed"),
+                        model_name=settings.MODEL_NAME,
+                        model_version=settings.MODEL_VERSION,
+                        inference_timestamp=time.time(),
+                        processing_time_ms=0.5,
+                        ambiguity_warning=None,
+                        recommended_action="Policy evaluation completed.",
+                        toxicity_prediction=tox_pred,
+                        language_route=route
+                    )
+            else:
+                for idx in indices:
+                    results[idx] = self.analyze(texts[idx], language_hint=language_hint)
+
+        for i in range(len(texts)):
+            if results[i] is None:
+                results[i] = self.analyze(texts[i] if texts[i] else "empty", language_hint=language_hint)
+
+        return results
 
 
 # Singleton engine instance

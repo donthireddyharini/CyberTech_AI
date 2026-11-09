@@ -100,3 +100,51 @@ text,language,category,is_code_mixed,source_dataset,split,hate_speech,harassment
 కష్టపడి పనిచేస్తే విజయం తప్పక వస్తుంది.,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
 ఈ పరిశోధన ఫలితాలు ఆసక్తికరంగా ఉన్నాయి.,telugu,neutral_criticism,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
 మీ అభిప్రాయాన్ని వ్యక్తపరిచినందుకు ధన్యవాదాలు.,telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చాలా మంచివాడివి, నీ సహాయం చాలా బాగుంది.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చాలా బాగా చెప్పావు, నీ వివరణ అద్భుతంగా ఉంది.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు నా మంచి స్నేహితుడివి, నీకు నా ధన్యవాదాలు.",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నీ సహాయానికి చాలా కృతజ్ఞతలు, నువ్వు చాలా గొప్ప వ్యక్తివి.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చేసిన పని చాలా బాగుంది, నీ ప్రయత్నం ప్రశంసనీయం.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చాలా తెలివైనవాడివి, నీ ఆలోచన బాగుంది.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు ఎప్పుడూ ఇతరులకు సహాయం చేస్తావు, నీ మంచి మనసుకు ధన్యవాదాలు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చెప్పిన విషయం నిజంగా చాలా ఉపయోగకరంగా ఉంది, నీకు ధన్యవాదాలు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చాలా శ్రద్ధగా నేర్చుకుంటున్నావు, నీ భవిష్యత్తు బాగుంటుంది.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు అందించిన సమాచారం చాలా విలువైనది, నీకు కృతజ్ఞతలు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు ఎల్లప్పుడూ మమ్మల్ని ప్రోత్సహిస్తావు, నీ సహకారానికి ధన్యవాదాలు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నీ ప్రతిభ అద్భుతం, నువ్వు తప్పకుండా విజయం సాధిస్తావు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు మాట్లాడిన తీరు అందరినీ ఆకట్టుకుంది, నీకు అభినందనలు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నీతో మాట్లాడటం చాలా సంతోషాన్ని ఇచ్చింది, నువ్వు చాలా స్నేహపూర్వకంగా ఉన్నావు.",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు ఒక మంచి మార్గదర్శకుడివి, నీ సూచనలు మాకు సహాయపడ్డాయి.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చాలా కష్టపడి పనిచేస్తున్నావు, నీ శ్రమ ఫలిస్తుంది.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నీ నవ్వు చాలా అందంగా ఉంటుంది, నువ్వు ఎప్పుడూ నవ్వుతూ ఉండాలి.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు ఇచ్చిన సలహా నాకు చాలా ఉపయోగపడింది, నీకు కృతజ్ఞతలు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు సమయానికి వచ్చి సహాయం చేశావు, నీ సహకారం మరచిపోలేము.",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చూపించిన దయ చాలా గొప్పది, నీకు మా హృదయపూర్వక ధన్యవాదాలు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నువ్వు ఎక్కడున్నావు? నేను నీకోసం చూస్తున్నాను.,telugu,civil_conversational,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నువ్వు ఈరోజు ఏం చేస్తున్నావు? నీ పనులు పూర్తయ్యాయా?,telugu,civil_conversational,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చెప్పింది విన్నాను, నేను ఆలోచిస్తాను.",telugu,civil_conversational,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నీకు ఏ పుస్తకాలు చదవడం ఇష్టం?,telugu,civil_conversational,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నువ్వు నాతో వస్తావా? మనం కలిసి వెళ్దాం.,telugu,civil_conversational,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నీ అభిప్రాయం చెప్పినందుకు ధన్యవాదాలు, నేను అంగీకరిస్తున్నాను.",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నువ్వు ఎప్పుడు వస్తావు? నీ కోసం వేచి చూస్తున్నాం.,telugu,civil_conversational,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు చాలా శ్రద్ధగా రాశావు, నీ రాత బాగుంది.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నువ్వు ఎప్పుడైనా ఈ ప్రదేశానికి వెళ్ళావా? నీ అనుభవం చెప్పు.,telugu,civil_conversational,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+నీ ఫోన్ నంబర్ ఇవ్వగలవా? నువ్వు ఫ్రీగా ఉన్నప్పుడు మాట్లాడుకుందాం.,telugu,civil_conversational,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్ చాలా మంచి పని చేశావు రా, అభినందనలు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్ చెప్పిన సలహా చాలా బాగుంది, ధన్యవాదాలు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నీ కృషి చాలా గొప్పది, నువ్వు సాధించగలవు.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నువ్వు నా బెస్ట్ ఫ్రెండ్ వి, నీకు ఎల్లప్పుడూ తోడుంటాను.",telugu,civil_greeting,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"నీ ప్రతిభను చూసి గర్విస్తున్నాను, నువ్వు నిజంగా గొప్పవాడివి.",telugu,civil_compliment,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"nuvvu chala manchivadivi, nee sahayam chala bagundi",telugu,romanized_civil,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"nuvvu chala baga cheppavu, nee explanation chala bavundi",telugu,romanized_civil,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"nee sahayaniki chala dhanyavadalu, nuvvu chala great",telugu,romanized_civil,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"nuvvu chesina pani chala bagundi, keep it up",telugu,romanized_civil,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"nuvvu na manchi friend vi, thanks ra",telugu,romanized_civil,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"nuvvu chala telivainavadivi, good job",telugu,romanized_civil,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+nuvvu ela unnavu? nee work ela nadusthundi?,telugu,romanized_civil,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+"nee time ichinanduku chala thanks, all the best",telugu,romanized_civil,False,sentinel_telugu_generalization_v2,train,0.0,0.0,0.0,1.0
+nuvvu oka panikirani vedhava,telugu,romanized_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+nuvvu chala panikirani chetta vedhavavi,telugu,romanized_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+"neeku emi theliyadhu, moosukoni kurcho",telugu,romanized_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+nuvvu chethakani vedhavavi ra,telugu,romanized_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0
+"nee bathuku oka daridram, nashanam aipothavu",telugu,romanized_insult,False,sentinel_telugu_generalization_v2,train,1.0,1.0,0.0,0.0

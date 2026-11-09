@@ -1,0 +1,93 @@
+text,hate_speech,harassment,cyberbullying,legitimate
+"Great recipe, absolutely loved the detailed steps!",0,0,0,1
+Thank you for sharing this informative video.,0,0,0,1
+"Awesome work, really enjoyed watching this tutorial!",0,0,0,1
+Clear explanation and very well structured presentation.,0,0,0,1
+I really appreciate you taking the time to explain this in detail.,0,0,0,1
+"Wonderful content as always, looking forward to the next part.",0,0,0,1
+"Excellent breakdown of the topic, helped me understand a lot.",0,0,0,1
+Love the positive energy in your videos!,0,0,0,1
+I strongly disagree with your political opinion here.,0,0,0,1
+This policy is completely wrong and your economic reasoning makes no sense.,0,0,0,1
+"I didn't like this movie, the plot was boring and the pacing was terrible.",0,0,0,1
+The code in this repository has serious architectural flaws and memory leaks.,0,0,0,1
+This is bad financial advice and people should be very careful.,0,0,0,1
+Your argument is factually incorrect according to the latest research paper.,0,0,0,1
+I think this product is overpriced for the features it offers.,0,0,0,1
+"I have to disagree, the previous version of the software was much more intuitive.",0,0,0,1
+Your methodology has significant sample bias that undermines your conclusion.,0,0,0,1
+I don't think this strategy will work in real production environments.,0,0,0,1
+Nice troll,0,0,0,1
+Haha you are such a nerd,0,0,0,1
+Bro thought he cooked with this one 💀,0,0,0,1
+Look at this boomer trying to understand modern memes 😂,0,0,0,1
+"Nice try grandpa, maybe next time!",0,0,0,1
+"Haha typical developer excuses, it works on my machine right?",0,0,0,1
+"You are crazy man, who even does that! 😂",0,0,0,1
+Shut up you idiot,0,1,0,0
+You are completely useless and pathetic person,0,1,0,0
+Go away loser nobody cares about you,0,1,0,0
+"You are a fraud, a thief, and a habitual liar",0,1,0,0
+You are disgusting and should disappear forever,0,1,0,0
+You are an ugly clown with zero talent,0,1,0,0
+"Nobody likes you, you are absolute garbage",0,1,0,0
+"Stop embarrassing yourself, you stupid moron",0,1,0,0
+You are the dumbest person on this entire platform,0,1,0,0
+What a pathetic excuse for a human being,0,1,0,0
+You are an obnoxious piece of trash,0,1,0,0
+"Get lost you incompetent fool, you ruin everything you touch",0,1,0,0
+You are completely delusional and brainless,0,1,0,0
+I will make sure your career is destroyed,0,1,1,0
+Everyone in this forum is going to report and ruin you,0,1,1,0
+We will keep messaging you everywhere until you delete your account,0,1,1,0
+You won't be able to show your face anywhere after this,0,1,1,0
+I'm going to expose all your private information and humiliate you,0,1,1,0
+All Muslims should be deported from our country,1,0,0,0
+Dalits and lower castes are dirty and don't belong in polite society,1,0,0,0
+Women are inferior and should not be allowed to work or vote,1,0,0,0
+"Filthy immigrants are ruining our nation, kick them all out",1,0,0,0
+All Jews are parasites and control everything behind the scenes,1,0,0,0
+Black people are criminals and should all be locked up,1,0,0,0
+You deserve to die and I will ruin you.,0,1,1,0
+I will find you and make your life hell,0,1,1,0
+"Go kill yourself, nobody in this world will ever miss you",0,1,1,0
+I know where you live and I'm coming to hurt you,0,1,1,0
+I will shoot you if you ever show up here again,0,1,1,0
+आपने बहुत अच्छी जानकारी साझा की है। धन्यवाद।,0,0,0,1
+"बहुत ही सुंदर और ज्ञानवर्धक वीडियो, बहुत बहुत शुक्रिया।",0,0,0,1
+"मुझे आपका यह तरीका बहुत पसंद आया, शानदार प्रस्तुति।",0,0,0,1
+"बहुत अच्छा काम किया आपने, ऐसे ही आगे बढ़ते रहें।",0,0,0,1
+मैं आपके इस विचार से सहमत नहीं हूँ लेकिन आपकी बात का सम्मान करता हूँ।,0,0,0,1
+यह नीति सही नहीं है और हमें इस पर पुनर्विचार करना चाहिए।,0,0,0,1
+क्या आप इस विषय पर और विस्तार से समझा सकते हैं?,0,0,0,1
+"तू बहुत ही घटिया इंसान है, यहां से निकल जा",0,1,0,0
+"तुम्हें कुछ भी नहीं आता, तुम्हारी बात कोई नहीं सुनना चाहता।",0,1,0,0
+"बेवकूफ और जाहिल इंसान, अपना मुंह बंद रख।",0,1,0,0
+"तेरी कोई औकात नहीं है, चुपचाप बैठ जा।",0,1,0,0
+"शर्म करो कुछ, कितने गिरे हुए इंसान हो तुम।",0,1,0,0
+చాలా మంచి సమాచారం పంచుకున్నారు. ధన్యవాదాలు.,0,0,0,1
+"మీ వివరణ చాలా బాగుంది, ధన్యవాదాలు!",0,0,0,1
+"చాలా స్పష్టంగా అర్థమయ్యేలా చెప్పారు, కృతజ్ఞతలు.",0,0,0,1
+నేను మీ అభిప్రాయంతో విభేదిస్తున్నాను కానీ మీ శ్రమను గౌరవిస్తాను.,0,0,0,1
+"నువ్వు చాలా మంచివాడివి, నీ సహాయం చాలా బాగుంది.",0,0,0,1
+"నువ్వు చాలా బాగా చెప్పావు, నీ వివరణ అద్భుతంగా ఉంది.",0,0,0,1
+"నీ సహాయానికి చాలా కృతజ్ఞతలు, నువ్వు చాలా గొప్ప వ్యక్తివి.",0,0,0,1
+"నువ్వు నా మంచి స్నేహితుడివి, నీకు నా ధన్యవాదాలు.",0,0,0,1
+"నువ్వు చేసిన పని చాలా బాగుంది, నీ ప్రయత్నం ప్రశంసనీయం.",0,0,0,1
+"నువ్వు చాలా తెలివైనవాడివి, నీ ఆలోచన బాగుంది.",0,0,0,1
+"nuvvu chala manchivadivi, nee sahayam chala bagundi",0,0,0,1
+"నీకు ఏమీ తెలియదు, నీ మాటలు ఎవరికీ అవసరం లేదు.",0,1,0,0
+"నువ్వు చాలా పనికిరాని వెధవవి, ఇక్కడి నుంచి వెళ్ళిపో.",0,1,0,0
+నువ్వు ఒక పనికిరాని వెధవ.,0,1,0,0
+nuvvu oka panikirani vedhava,0,1,0,0
+ನೀವು ತುಂಬಾ ಚೆನ್ನಾಗಿ ವಿವರಿಸಿದ್ದೀರಿ. ಧನ್ಯವಾದಗಳು.,0,0,0,1
+"ನಿಮ್ಮ ಮಾಹಿತಿ ತುಂಬಾ ಉಪಯುಕ್ತವಾಗಿದೆ, ಧನ್ಯವಾದಗಳು.",0,0,0,1
+"ನೀನು ತುಂಬಾ ಒಳ್ಳೆಯ ವ್ಯಕ್ತಿ, ನಿನ್ನ ಸಹಾಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು.",0,0,0,1
+"ನಿನಗೆ ಏನೂ ಗೊತ್ತಿಲ್ಲ, ನೀನು ಮೂರ್ಖ.",0,1,0,0
+"Bahut achha explanation diya, thank you!",0,0,0,1
+"Bhai tune bahut accha kaam kiya hai, thanks a lot.",0,0,0,1
+"Tu bilkul bekaar hai, tujhe kuch nahi aata.",0,1,0,0
+Thank you for your help. You explained everything very clearly.,0,0,0,1
+You are a useless idiot. Nobody wants to hear you.,0,1,0,0
+"तुम बहुत अच्छे इंसान हो, तुम्हारी मदद के लिए शुक्रिया।",0,0,0,1
+तुम बिल्कुल बेकार इंसान हो।,0,1,0,0

@@ -17,6 +17,7 @@ import os
 import sys
 import json
 import time
+import re
 import joblib
 import pandas as pd
 import numpy as np
@@ -266,6 +267,14 @@ def train_hindi():
     print("="*60)
     
     raw_df = pd.read_csv("data/processed/indic/hindi_hostility_train.csv")
+    try:
+        diff_df = pd.read_csv("data/processed/difficult_moderation_cases.csv")
+        hi_diff = diff_df[diff_df["text"].apply(lambda t: bool(re.search(r'[\u0900-\u097F]', str(t))))].copy()
+        if len(hi_diff) > 0:
+            hi_diff_reps = pd.concat([hi_diff] * 15, ignore_index=True)
+            raw_df = pd.concat([raw_df, hi_diff_reps], ignore_index=True)
+    except Exception as ex:
+        print(f"Warning loading difficult cases for Hindi: {ex}")
     X = np.array(raw_df["text"].fillna("").tolist(), dtype=object)
     y = np.array((raw_df["legitimate"] == 0.0).astype(int).tolist(), dtype=int)
     

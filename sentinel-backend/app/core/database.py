@@ -23,15 +23,19 @@ class Base(DeclarativeBase):
 
 async def create_tables():
     """Create all database tables and ensure column migrations."""
-    from app.models import moderation, evaluation, feedback, dataset, audit, user, social  # noqa: F401
+    from app.models import moderation, evaluation, feedback, dataset, audit, user, social, chat_session  # noqa: F401
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
         def migrate_sqlite_columns(connection):
-            # Check and add new columns to moderation_records and feedback_records if missing
+            # Check and add new columns for complete account-wise data isolation
             cols_to_add = [
                 ("moderation_records", "user_id VARCHAR(36)"),
                 ("feedback_records", "user_id VARCHAR(36)"),
+                ("dataset_records", "user_id VARCHAR(36)"),
+                ("dataset_runs", "user_id VARCHAR(36)"),
+                ("social_sync_logs", "user_id VARCHAR(36)"),
+                ("chat_sessions", "user_id VARCHAR(36)"),
                 ("moderation_records", "source_url VARCHAR(500)"),
                 ("moderation_records", "author_name VARCHAR(200)"),
                 ("moderation_records", "author_id VARCHAR(200)"),

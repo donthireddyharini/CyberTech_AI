@@ -54,3 +54,6 @@ test_*.db
 
 sentinel.db
 *.db
+
+# Scratch scripts
+scratch/
