@@ -1,62 +1,95 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  MessageSquareWarning, AlertOctagon, CheckCircle2, AlertTriangle,
-  HelpCircle, RefreshCw, Layers, Sparkles, Search, Filter,
-  ArrowRight, Check, X, Copy, ExternalLink, Download, ChevronRight,
-  ShieldAlert, Info, Clock, Globe, UserCheck
+  Sparkles, Search, Filter, Check, X, Copy, Download, ChevronRight,
+  ShieldAlert, Clock, Globe, RefreshCw, CheckCircle2, AlertOctagon,
+  AlertTriangle, HelpCircle, Flame, FileSpreadsheet, Eye
 } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts';
-import { feedbackApi, moderationApi } from '../api/client';
-import type { ErrorAnalysis, FeedbackRecord } from '../types';
+import { feedbackApi, moderationApi, socialApi } from '../api/client';
+import type { FeedbackRecord, SocialSyncLog } from '../types';
 import { useToast } from '../App';
 import { useTranslation } from '../i18n/I18nContext';
 
-const PIE_COLORS = {
-  confirmed: '#00B894',    // Emerald
-  false_positive: '#FDCB6E', // Amber
-  false_negative: '#FF7675', // Rose
-  ambiguous: '#6C5CE7',    // Purple
-};
+const LOCAL_HISTORY_KEY = 'sentinel_social_sync_history_v2';
+const LOCAL_REVIEW_MAP_KEY = 'sentinel_investigation_reviews_v1';
 
-function CustomFeedbackPieTooltip({ active, payload, total }: any) {
-  if (active && payload && payload.length) {
-    const item = payload[0];
-    const fill = item.payload?.color || item.payload?.fill || item.color || '#6C5CE7';
-    const val = Number(item.value) || 0;
-    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
-    const name = String(item.name || '');
+export interface HighRiskInvestigationCase {
+  id: string;
+  record_id: string;
+  comment_text: string;
+  language: string;
+  platform: string;
+  severity: string;
+  decision: string;
+  status: string;
+  hate_speech_score: number;
+  harassment_score: number;
+  cyberbullying_score: number;
+  legitimate_score: number;
+  is_confirmed?: boolean;
+  is_false_positive?: boolean;
+  is_false_negative?: boolean;
+  is_ambiguous?: boolean;
+  explanation?: string;
+  human_review?: string | null;
+  created_at: string;
+  source_title?: string;
+  model_version?: string;
+}
 
-    return (
-      <div className="z-50 px-3.5 py-2.5 rounded-xl bg-white/95 backdrop-blur-md border border-[#E9EAF1] shadow-xl pointer-events-none min-w-[150px] animate-in fade-in duration-150">
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: fill }} />
-          <span className="text-xs font-bold text-[#20212B] capitalize tracking-wide truncate">{name}</span>
-        </div>
-        <div className="flex items-baseline justify-between gap-3 text-[#20212B]">
-          <span className="text-sm font-black text-[#20212B] tabular-nums">{val.toLocaleString()}</span>
-          <span className="text-[11px] text-[#6C5CE7] font-semibold tabular-nums">{pct}%</span>
-        </div>
-        <div className="text-[10px] text-[#858795] font-medium mt-0.5">
-          {val === 1 ? '1 review case' : `${val.toLocaleString()} review cases`} ({pct}% of total)
-        </div>
-      </div>
-    );
+interface UserReviewEntry {
+  decision: 'correct' | 'false_positive' | 'false_negative' | 'ambiguous';
+  explanation: string;
+  updated_at: string;
+}
+
+function loadLocalSyncHistory(): SocialSyncLog[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
-  return null;
+}
+
+function loadLocalReviewMap(): Record<string, UserReviewEntry> {
+  try {
+    const raw = localStorage.getItem(LOCAL_REVIEW_MAP_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'object' && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLocalReviewMap(map: Record<string, UserReviewEntry>) {
+  try {
+    localStorage.setItem(LOCAL_REVIEW_MAP_KEY, JSON.stringify(map));
+  } catch {
+    // ignore
+  }
 }
 
 export default function FeedbackAnalysis() {
-  const [analysis, setAnalysis] = useState<ErrorAnalysis | null>(null);
-  const [feedbackList, setFeedbackList] = useState<FeedbackRecord[]>([]);
+  const [cases, setCases] = useState<HighRiskInvestigationCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState<'all' | 'confirmed' | 'false_positive' | 'false_negative' | 'ambiguous'>('all');
+  const [selectedRiskType, setSelectedRiskType] = useState<'all' | 'high_severity' | 'high_harassment'>('all');
   const [selectedLangFilter, setSelectedLangFilter] = useState<string>('all');
-  const [activePieIndex, setActivePieIndex] = useState<number>(-1);
-  
+  const [selectedPlatformFilter, setSelectedPlatformFilter] = useState<string>('all');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'pending' | 'reviewed'>('all');
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
   // Drawer / Investigation State
-  const [selectedItem, setSelectedItem] = useState<FeedbackRecord | null>(null);
+  const [selectedItem, setSelectedItem] = useState<HighRiskInvestigationCase | null>(null);
   const [drawerDecision, setDrawerDecision] = useState<'correct' | 'false_positive' | 'false_negative' | 'ambiguous' | null>(null);
   const [drawerExplanation, setDrawerExplanation] = useState('');
   const [isUpdatingDecision, setIsUpdatingDecision] = useState(false);
@@ -64,116 +97,266 @@ export default function FeedbackAnalysis() {
   const { addToast } = useToast();
   const { t } = useTranslation();
 
-  const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-    return (
-      <g>
-        <Sector
-          cx={cx}
-          cy={cy}
-          innerRadius={innerRadius - 2}
-          outerRadius={outerRadius + 3}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          fill={fill}
-          cornerRadius={3}
-          style={{
-            filter: `drop-shadow(0px 2px 6px ${fill}55)`,
-            transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-            cursor: 'pointer'
-          }}
-        />
-      </g>
-    );
-  };
-
-  const fetchData = async (isManual = false) => {
+  // Aggregate only detected comments that have High Harassment OR High Severity
+  const fetchAllHighRiskCases = useCallback(async (isManual = false) => {
     if (isManual) setRefreshing(true);
     else setLoading(true);
+
     try {
-      const [errResp, listResp] = await Promise.all([
-        feedbackApi.errorAnalysis(),
-        feedbackApi.list({ page: 1 })
+      // 1. Fetch server sync history, moderation queue, and existing feedback
+      const [syncResp, modResp, fbResp] = await Promise.allSettled([
+        socialApi.getSyncHistory(undefined, 100),
+        moderationApi.list({ page_size: 200 }),
+        feedbackApi.list({ page: 1 }),
       ]);
-      setAnalysis(errResp.data);
-      setFeedbackList(listResp.data.items);
+
+      const localSyncLogs = loadLocalSyncHistory();
+      const serverSyncLogs: SocialSyncLog[] =
+        syncResp.status === 'fulfilled' && Array.isArray(syncResp.value.data)
+          ? syncResp.value.data
+          : [];
+
+      // Combine sync logs (avoid duplicate runs)
+      const syncLogsMap = new Map<string, SocialSyncLog>();
+      for (const log of [...localSyncLogs, ...serverSyncLogs]) {
+        if (!log || !log.id) continue;
+        if (!syncLogsMap.has(log.id) || ((log.records?.length || 0) > (syncLogsMap.get(log.id)?.records?.length || 0))) {
+          syncLogsMap.set(log.id, log);
+        }
+      }
+
+      // Existing feedback map
+      const feedbackItems: FeedbackRecord[] =
+        fbResp.status === 'fulfilled' && Array.isArray(fbResp.value.data?.items)
+          ? fbResp.value.data.items
+          : [];
+
+      const feedbackMap = new Map<string, FeedbackRecord>();
+      for (const fb of feedbackItems) {
+        if (fb.record_id) feedbackMap.set(fb.record_id, fb);
+        feedbackMap.set(fb.id, fb);
+      }
+
+      const userReviewMap = loadLocalReviewMap();
+
+      const candidateMap = new Map<string, HighRiskInvestigationCase>();
+
+      // A. Extract from all Social Sync Ingested Comments (YouTube, Instagram, CSV, Manual)
+      for (const log of syncLogsMap.values()) {
+        if (!log.records || !Array.isArray(log.records)) continue;
+        for (const r of log.records) {
+          const text = (r.text || '').trim();
+          if (!text) continue;
+
+          const sev = (r.severity || 'low').toLowerCase();
+          const harassmentScore = r.harassment_score ?? 0;
+          const isHighSev = sev === 'high' || sev === 'uncertain';
+          const isHighHarassment = harassmentScore >= 0.4 || (r.severity_reason?.toLowerCase().includes('harassment') ?? false);
+
+          // ONLY High Severity OR High Harassment comments belong in this section
+          if (!isHighSev && !isHighHarassment) continue;
+
+          const key = text.toLowerCase();
+          if (!candidateMap.has(key)) {
+            const fbMatch = feedbackMap.get(r.id) || feedbackMap.get(r.comment_id);
+            const userReview = userReviewMap[r.id] || userReviewMap[r.comment_id];
+
+            candidateMap.set(key, {
+              id: r.id || r.comment_id,
+              record_id: r.comment_id || r.id,
+              comment_text: text,
+              language: r.detected_language || 'english',
+              platform: r.platform || log.platform || 'direct',
+              severity: isHighSev ? 'high' : sev,
+              decision: r.decision || 'flag_for_review',
+              status: userReview ? 'reviewed' : (fbMatch?.status || (r.is_flagged ? 'flagged' : 'pending')),
+              hate_speech_score: r.hate_speech_score ?? 0,
+              harassment_score: harassmentScore,
+              cyberbullying_score: r.cyberbullying_score ?? 0,
+              legitimate_score: r.legitimate_score ?? 0,
+              is_confirmed: userReview ? userReview.decision === 'correct' : fbMatch?.is_confirmed,
+              is_false_positive: userReview ? userReview.decision === 'false_positive' : fbMatch?.is_false_positive,
+              is_false_negative: userReview ? userReview.decision === 'false_negative' : fbMatch?.is_false_negative,
+              is_ambiguous: userReview ? userReview.decision === 'ambiguous' : fbMatch?.is_ambiguous,
+              explanation: userReview?.explanation || fbMatch?.explanation || '',
+              human_review: userReview ? userReview.decision.replace(/_/g, ' ') : fbMatch?.human_review,
+              created_at: r.published_at || log.created_at || new Date().toISOString(),
+              source_title: log.media_title || log.channel_name || log.target_input,
+              model_version: 'v2.1',
+            });
+          }
+        }
+      }
+
+      // B. Extract from Moderation Server Queue
+      if (modResp.status === 'fulfilled' && modResp.value.data?.items) {
+        for (const m of modResp.value.data.items) {
+          const text = (m.original_text || '').trim();
+          if (!text) continue;
+
+          const sev = (m.severity || 'low').toLowerCase();
+          const harassmentScore = m.harassment_score ?? 0;
+          const isHighSev = sev === 'high' || sev === 'uncertain';
+          const isHighHarassment = harassmentScore >= 0.4;
+
+          if (!isHighSev && !isHighHarassment) continue;
+
+          const key = text.toLowerCase();
+          if (!candidateMap.has(key)) {
+            const fbMatch = feedbackMap.get(m.id);
+            const userReview = userReviewMap[m.id];
+
+            candidateMap.set(key, {
+              id: m.id,
+              record_id: m.id,
+              comment_text: text,
+              language: m.detected_language || 'english',
+              platform: m.platform || 'direct',
+              severity: isHighSev ? 'high' : sev,
+              decision: m.decision || 'flag_for_review',
+              status: userReview ? 'reviewed' : (m.status || 'pending'),
+              hate_speech_score: m.hate_speech_score ?? 0,
+              harassment_score: harassmentScore,
+              cyberbullying_score: m.cyberbullying_score ?? 0,
+              legitimate_score: m.legitimate_score ?? 0,
+              is_confirmed: userReview ? userReview.decision === 'correct' : fbMatch?.is_confirmed,
+              is_false_positive: userReview ? userReview.decision === 'false_positive' : fbMatch?.is_false_positive,
+              is_false_negative: userReview ? userReview.decision === 'false_negative' : fbMatch?.is_false_negative,
+              is_ambiguous: userReview ? userReview.decision === 'ambiguous' : fbMatch?.is_ambiguous,
+              explanation: userReview?.explanation || fbMatch?.explanation || '',
+              human_review: userReview ? userReview.decision.replace(/_/g, ' ') : fbMatch?.human_review,
+              created_at: m.created_at || new Date().toISOString(),
+              model_version: m.model_version || 'v2.1',
+            });
+          }
+        }
+      }
+
+      // C. Extract from Feedback Items directly if high severity or high harassment
+      for (const fb of feedbackItems) {
+        const text = (fb.comment_text || fb.explanation || '').trim();
+        if (!text) continue;
+        const sev = (fb.severity || 'low').toLowerCase();
+        const harassmentScore = fb.harassment_score ?? 0;
+        const isHighSev = sev === 'high';
+        const isHighHarassment = harassmentScore >= 0.4;
+
+        if (isHighSev || isHighHarassment) {
+          const key = text.toLowerCase();
+          if (!candidateMap.has(key)) {
+            const userReview = userReviewMap[fb.id] || (fb.record_id ? userReviewMap[fb.record_id] : null);
+            candidateMap.set(key, {
+              id: fb.id,
+              record_id: fb.record_id || fb.id,
+              comment_text: text,
+              language: fb.language || 'english',
+              platform: fb.platform || 'direct',
+              severity: isHighSev ? 'high' : sev,
+              decision: fb.decision || 'flag_for_review',
+              status: fb.status || 'reviewed',
+              hate_speech_score: fb.hate_speech_score ?? 0,
+              harassment_score: harassmentScore,
+              cyberbullying_score: fb.cyberbullying_score ?? 0,
+              legitimate_score: fb.legitimate_score ?? 0,
+              is_confirmed: userReview ? userReview.decision === 'correct' : fb.is_confirmed,
+              is_false_positive: userReview ? userReview.decision === 'false_positive' : fb.is_false_positive,
+              is_false_negative: userReview ? userReview.decision === 'false_negative' : fb.is_false_negative,
+              is_ambiguous: userReview ? userReview.decision === 'ambiguous' : fb.is_ambiguous,
+              explanation: userReview?.explanation || fb.explanation || '',
+              human_review: userReview ? userReview.decision.replace(/_/g, ' ') : fb.human_review,
+              created_at: fb.created_at || new Date().toISOString(),
+              model_version: fb.model_version || 'v2.1',
+            });
+          }
+        }
+      }
+
+      // Sort by newest first
+      const allList = Array.from(candidateMap.values()).sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+      setCases(allList);
       if (isManual) {
-        addToast('Feedback & Error metrics refreshed with latest human ground truth.', 'success');
+        addToast(`Refreshed ${allList.length} high-severity and high-harassment cases from all detected channels.`, 'success');
       }
     } catch (err: any) {
-      addToast(err.message || 'Failed to load feedback analysis', 'error');
+      console.error('Failed to load high-risk detection cases:', err);
+      addToast(err.message || 'Failed to load high-risk cases', 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [addToast]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchAllHighRiskCases();
+  }, [fetchAllHighRiskCases]);
 
-  // Filtered feedback list
-  const filteredList = useMemo(() => {
-    return feedbackList.filter(item => {
-      // Type filter
-      if (selectedTypeFilter === 'confirmed' && !item.is_confirmed) return false;
-      if (selectedTypeFilter === 'false_positive' && !item.is_false_positive) return false;
-      if (selectedTypeFilter === 'false_negative' && !item.is_false_negative) return false;
-      if (selectedTypeFilter === 'ambiguous' && !item.is_ambiguous) return false;
+  // Filtered List
+  const filteredCases = useMemo(() => {
+    return cases.filter(item => {
+      // Risk Type Filter
+      if (selectedRiskType === 'high_severity' && item.severity !== 'high') return false;
+      if (selectedRiskType === 'high_harassment' && (item.harassment_score ?? 0) < 0.4) return false;
 
-      // Language filter
+      // Platform Filter
+      if (selectedPlatformFilter !== 'all') {
+        const itemPlat = (item.platform || '').toLowerCase();
+        if (!itemPlat.includes(selectedPlatformFilter.toLowerCase())) return false;
+      }
+
+      // Language Filter
       if (selectedLangFilter !== 'all') {
-        const itemLang = (item.language || 'english').toLowerCase();
+        const itemLang = (item.language || '').toLowerCase();
         if (!itemLang.includes(selectedLangFilter.toLowerCase())) return false;
       }
 
-      // Search query
+      // Review Status Filter
+      if (selectedStatusFilter === 'reviewed') {
+        const isReviewed = item.is_confirmed || item.is_false_positive || item.is_false_negative || item.is_ambiguous || item.status === 'reviewed';
+        if (!isReviewed) return false;
+      } else if (selectedStatusFilter === 'pending') {
+        const isReviewed = item.is_confirmed || item.is_false_positive || item.is_false_negative || item.is_ambiguous || item.status === 'reviewed';
+        if (isReviewed) return false;
+      }
+
+      // Search Query
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
-        const matchesExplanation = item.explanation?.toLowerCase().includes(query);
-        const matchesLang = item.language?.toLowerCase().includes(query);
-        const matchesId = item.id.toLowerCase().includes(query) || (item.record_id && item.record_id.toLowerCase().includes(query));
-        if (!matchesExplanation && !matchesLang && !matchesId) return false;
+        const matchesText = item.comment_text.toLowerCase().includes(query);
+        const matchesId = item.id.toLowerCase().includes(query) || item.record_id.toLowerCase().includes(query);
+        const matchesLang = item.language.toLowerCase().includes(query);
+        const matchesNotes = (item.explanation || '').toLowerCase().includes(query);
+        if (!matchesText && !matchesId && !matchesLang && !matchesNotes) return false;
       }
 
       return true;
     });
-  }, [feedbackList, selectedTypeFilter, selectedLangFilter, searchQuery]);
+  }, [cases, selectedRiskType, selectedPlatformFilter, selectedLangFilter, selectedStatusFilter, searchQuery]);
 
-  // Open Drawer for investigation with reliable comment text & metrics hydration
-  const openInvestigation = async (item: FeedbackRecord) => {
-    let targetItem: FeedbackRecord = { ...item };
-    if ((!targetItem.comment_text || targetItem.comment_text.trim() === '') && targetItem.record_id) {
-      try {
-        const detailResp = await moderationApi.getDetail(targetItem.record_id);
-        if (detailResp.data) {
-          targetItem = {
-            ...targetItem,
-            comment_text: detailResp.data.original_text || detailResp.data.normalized_text || targetItem.comment_text,
-            severity: detailResp.data.severity || targetItem.severity,
-            decision: detailResp.data.decision || targetItem.decision,
-            platform: detailResp.data.platform || targetItem.platform,
-            language: detailResp.data.detected_language || targetItem.language,
-            hate_speech_score: detailResp.data.hate_speech_score ?? targetItem.hate_speech_score,
-            harassment_score: detailResp.data.harassment_score ?? targetItem.harassment_score,
-            cyberbullying_score: detailResp.data.cyberbullying_score ?? targetItem.cyberbullying_score,
-            legitimate_score: detailResp.data.legitimate_score ?? targetItem.legitimate_score,
-          };
-        }
-      } catch (err) {
-        console.warn('Could not fetch moderation detail for record:', targetItem.record_id, err);
-      }
-    }
-    setSelectedItem(targetItem);
-    setDrawerExplanation(targetItem.explanation || '');
-    if (targetItem.is_confirmed) setDrawerDecision('correct');
-    else if (targetItem.is_false_positive) setDrawerDecision('false_positive');
-    else if (targetItem.is_false_negative) setDrawerDecision('false_negative');
-    else if (targetItem.is_ambiguous) setDrawerDecision('ambiguous');
+  // Summary Metrics for the Banner
+  const metrics = useMemo(() => {
+    const total = cases.length;
+    const highSev = cases.filter(c => c.severity === 'high').length;
+    const highHar = cases.filter(c => (c.harassment_score ?? 0) >= 0.4).length;
+    const reviewed = cases.filter(c => c.is_confirmed || c.is_false_positive || c.is_false_negative || c.is_ambiguous || c.status === 'reviewed').length;
+    const pending = total - reviewed;
+    return { total, highSev, highHar, reviewed, pending };
+  }, [cases]);
+
+  // Open Drawer for investigation
+  const openInvestigation = (item: HighRiskInvestigationCase) => {
+    setSelectedItem(item);
+    setDrawerExplanation(item.explanation || '');
+    if (item.is_confirmed) setDrawerDecision('correct');
+    else if (item.is_false_positive) setDrawerDecision('false_positive');
+    else if (item.is_false_negative) setDrawerDecision('false_negative');
+    else if (item.is_ambiguous) setDrawerDecision('ambiguous');
     else setDrawerDecision(null);
   };
 
-  // Submit decision update (upsert)
+  // Submit decision update
   const handleUpdateDecision = async () => {
     if (!selectedItem || !drawerDecision) return;
     setIsUpdatingDecision(true);
@@ -186,11 +369,40 @@ export default function FeedbackAnalysis() {
         is_ambiguous: drawerDecision === 'ambiguous',
         explanation: drawerExplanation || `Updated review decision: ${drawerDecision}`,
         language: selectedItem.language || 'english',
-        model_version: selectedItem.model_version || '1.0.0',
+        model_version: selectedItem.model_version || 'v2.1',
       });
+
+      // Update local storage review map
+      const reviewMap = loadLocalReviewMap();
+      reviewMap[selectedItem.id] = {
+        decision: drawerDecision,
+        explanation: drawerExplanation,
+        updated_at: new Date().toISOString(),
+      };
+      if (selectedItem.record_id) {
+        reviewMap[selectedItem.record_id] = reviewMap[selectedItem.id];
+      }
+      saveLocalReviewMap(reviewMap);
+
+      // Update in-memory state immediately
+      setCases(prev => prev.map(c => {
+        if (c.id === selectedItem.id || c.record_id === selectedItem.record_id) {
+          return {
+            ...c,
+            is_confirmed: drawerDecision === 'correct',
+            is_false_positive: drawerDecision === 'false_positive',
+            is_false_negative: drawerDecision === 'false_negative',
+            is_ambiguous: drawerDecision === 'ambiguous',
+            explanation: drawerExplanation,
+            status: 'reviewed',
+            human_review: drawerDecision.replace(/_/g, ' '),
+          };
+        }
+        return c;
+      }));
+
       addToast(`Updated review decision to ${drawerDecision.replace(/_/g, ' ')} successfully.`, 'success');
       setSelectedItem(null);
-      await fetchData();
     } catch (err: any) {
       addToast(err.message || 'Failed to update review decision', 'error');
     } finally {
@@ -198,498 +410,371 @@ export default function FeedbackAnalysis() {
     }
   };
 
-  // Distribution chart data
-  const pieData = useMemo(() => {
-    if (!analysis) return [];
-    return [
-      { name: 'Confirmed Correct', value: analysis.confirmed || 0, color: PIE_COLORS.confirmed },
-      { name: 'False Positives', value: analysis.false_positives || 0, color: PIE_COLORS.false_positive },
-      { name: 'False Negatives', value: analysis.false_negatives || 0, color: PIE_COLORS.false_negative },
-      { name: 'Ambiguous', value: analysis.ambiguous || 0, color: PIE_COLORS.ambiguous },
-    ].filter(d => d.value > 0);
-  }, [analysis]);
+  // Export filtered high-risk cases to CSV
+  const handleExportCsv = () => {
+    if (filteredCases.length === 0) {
+      addToast('No high-risk records to export', 'info');
+      return;
+    }
+
+    const headers = [
+      'Record ID',
+      'Comment Text',
+      'Platform',
+      'Language',
+      'Severity',
+      'Harassment Score (%)',
+      'Hate Speech Score (%)',
+      'Cyberbullying Score (%)',
+      'Model Decision',
+      'Review Status',
+      'Human Review Verdict',
+      'Reviewer Notes',
+      'Date'
+    ];
+
+    const rows = filteredCases.map(item => [
+      `"${item.id}"`,
+      `"${item.comment_text.replace(/"/g, '""')}"`,
+      `"${item.platform}"`,
+      `"${item.language}"`,
+      `"${item.severity}"`,
+      `${((item.harassment_score || 0) * 100).toFixed(1)}`,
+      `${((item.hate_speech_score || 0) * 100).toFixed(1)}`,
+      `${((item.cyberbullying_score || 0) * 100).toFixed(1)}`,
+      `"${item.decision}"`,
+      `"${item.status}"`,
+      `"${item.is_confirmed ? 'Confirmed Correct' : item.is_false_positive ? 'False Positive' : item.is_false_negative ? 'False Negative' : item.is_ambiguous ? 'Ambiguous' : 'Pending'}"`,
+      `"${(item.explanation || '').replace(/"/g, '""')}"`,
+      `"${new Date(item.created_at).toLocaleString()}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `cybertech_high_risk_cases_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    addToast(`Exported ${filteredCases.length} high-risk cases to CSV.`, 'success');
+  };
+
+  // Paginated records
+  const paginatedCases = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredCases.slice(start, start + pageSize);
+  }, [filteredCases, page, pageSize]);
 
   return (
-    <div className="space-y-8 max-w-screen-2xl page-enter pb-16">
+    <div className="space-y-6 max-w-screen-2xl page-enter pb-16">
       
       {/* ═══════════════════════════════════════════════════════════════════════
-          HEADER: TITLE, MISSION NOTICE & ACTIONS
+          HUMAN REVIEW ANNOTATIONS & CASE INVESTIGATION WORKSPACE
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="bg-white p-4 sm:p-6 relative overflow-hidden rounded-2xl border border-[#E9EAF1] shadow-xs">
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] shadow-xs shrink-0">
-              <MessageSquareWarning className="w-5 h-5 text-[#6C5CE7]" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-bold text-[#20212B] tracking-tight">
-                  {t('feedback.title', 'Feedback & Error Analysis Studio')}
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE] whitespace-nowrap">
-                  Human-in-the-Loop Ground Truth
-                </span>
-              </div>
-              <p className="text-xs text-[#858795] mt-1 max-w-3xl leading-relaxed">
-                Empirically track model false alarms, audit evasive harassment cases, and refine decision thresholds across Telugu, Hindi, Kannada, Hinglish, and English.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:flex items-center gap-2.5 w-full sm:w-auto">
-            <a
-              href={feedbackApi.exportUrl('csv')}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-[#F8F9FE] border border-[#E9EAF1] text-[#20212B] text-xs font-semibold shadow-xs transition-all active:scale-95"
-              title="Download human feedback records as CSV"
-            >
-              <Download className="w-3.5 h-3.5 text-[#6C5CE7] shrink-0" />
-              <span>Export CSV</span>
-            </a>
-
-            <button
-              onClick={() => fetchData(true)}
-              disabled={refreshing || loading}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all active:scale-95 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${refreshing ? 'animate-spin' : ''}`} />
-              <span>{refreshing ? 'Syncing...' : 'Refresh Metrics'}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION A: 5 REVIEW OVERVIEW METRIC TILES
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="bg-white rounded-2xl border border-[#E9EAF1] shadow-xs overflow-hidden">
         
-        {/* 1. Total Reviewed */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-[#E9EAF1] shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between gap-1.5">
-            <span className="text-[10px] sm:text-xs text-[#858795] font-semibold tracking-wide uppercase">
-              Total Reviewed
-            </span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] shrink-0">
-              <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#6C5CE7]" />
-            </div>
-          </div>
-          <div className="text-xl sm:text-3xl font-black text-[#20212B] mt-2 tabular-nums">
-            {analysis?.total_feedback ?? 0}
-          </div>
-          <span className="text-[10px] sm:text-[11px] text-[#6C5CE7] mt-1 block font-medium">
-            Denominator Base
-          </span>
-          <span className="text-[10px] text-[#858795] mt-0.5 block">Total verified judgements</span>
-        </div>
-
-        {/* 2. Confirmed Predictions */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-[#E9EAF1] shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between gap-1.5">
-            <span className="text-[10px] sm:text-xs text-[#858795] font-semibold tracking-wide uppercase">
-              Confirmed Correct
-            </span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
-              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
-            </div>
-          </div>
-          <div className="text-xl sm:text-3xl font-black text-[#20212B] mt-2 tabular-nums">
-            {analysis?.confirmed ?? 0}
-          </div>
-          <span className="text-[10px] sm:text-[11px] text-emerald-600 mt-1 block font-medium tabular-nums">
-            {analysis?.total_feedback ? `${(((analysis.confirmed || 0) / analysis.total_feedback) * 100).toFixed(1)}% concordance` : 'No cases'}
-          </span>
-          <span className="text-[10px] text-[#858795] mt-0.5 block">Verified correct</span>
-        </div>
-
-        {/* 3. False Positives (FP) */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-[#E9EAF1] shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between gap-1.5">
-            <span className="text-[10px] sm:text-xs text-[#858795] font-semibold tracking-wide uppercase">
-              False Positives
-            </span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
-              <AlertOctagon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600" />
-            </div>
-          </div>
-          <div className="text-xl sm:text-3xl font-black text-[#20212B] mt-2 tabular-nums">
-            {analysis?.false_positives ?? 0}
-          </div>
-          <span className="text-[10px] sm:text-[11px] text-amber-600 mt-1 block font-medium tabular-nums">
-            Rate: {((analysis?.fp_rate ?? 0) * 100).toFixed(1)}% of reviewed
-          </span>
-          <span className="text-[10px] text-[#858795] mt-0.5 block">Benign flagged harmful</span>
-        </div>
-
-        {/* 4. False Negatives (FN) */}
-        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-[#E9EAF1] shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between gap-1.5">
-            <span className="text-[10px] sm:text-xs text-[#858795] font-semibold tracking-wide uppercase">
-              False Negatives
-            </span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
-              <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" />
-            </div>
-          </div>
-          <div className="text-xl sm:text-3xl font-black text-[#20212B] mt-2 tabular-nums">
-            {analysis?.false_negatives ?? 0}
-          </div>
-          <span className="text-[10px] sm:text-[11px] text-rose-600 mt-1 block font-medium tabular-nums">
-            Rate: {((analysis?.fn_rate ?? 0) * 100).toFixed(1)}% of reviewed
-          </span>
-          <span className="text-[10px] text-[#858795] mt-0.5 block">Harmful evaded detection</span>
-        </div>
-
-        {/* 5. Ambiguous Cases */}
-        <div className="col-span-2 lg:col-span-1 bg-white p-3.5 sm:p-5 rounded-2xl border border-[#E9EAF1] shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between gap-1.5">
-            <span className="text-[10px] sm:text-xs text-[#858795] font-semibold tracking-wide uppercase">
-              Ambiguous Cases
-            </span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] shrink-0">
-              <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#6C5CE7]" />
-            </div>
-          </div>
-          <div className="text-xl sm:text-3xl font-black text-[#20212B] mt-2 tabular-nums">
-            {analysis?.ambiguous ?? 0}
-          </div>
-          <span className="text-[10px] sm:text-[11px] text-[#6C5CE7] mt-1 block font-medium">
-            Context Lab verification
-          </span>
-          <span className="text-[10px] text-[#858795] mt-0.5 block">Sarcasm, cultural slang, or dialect</span>
-        </div>
-
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION B: DUAL VISUALIZATIONS (DISTRIBUTION & LINGUISTIC PATTERNS)
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left: Decision Breakdown Donut */}
-        <div className="bg-white p-6 rounded-2xl border border-[#E9EAF1] shadow-xs lg:col-span-1 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Layers className="w-4 h-4 text-[#6C5CE7]" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B]">
-                Ground Truth Verdict Breakdown
-              </h3>
-            </div>
-            <p className="text-[11px] text-[#858795]">
-              Proportion of model outputs verified against human ground truth.
-            </p>
-          </div>
-
-          <div className="py-4 flex items-center justify-center">
-            {pieData.length === 0 ? (
-              <div className="h-44 flex flex-col items-center justify-center text-[#858795] text-xs text-center px-4">
-                <HelpCircle className="w-8 h-8 mb-2 opacity-30 text-[#6C5CE7]" />
-                <span>No review decisions logged yet. Submit reviews in the Moderator Command Center to see live error distributions.</span>
+        {/* Section Header */}
+        <div className="p-4 sm:p-6 border-b border-[#E9EAF1] bg-gradient-to-r from-white via-[#FDFDFF] to-[#FAF8FF]">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            
+            <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#6C5CE7] to-[#A29BFE] flex items-center justify-center text-white shadow-md shadow-[#6C5CE7]/20 shrink-0">
+                <ShieldAlert className="w-5 h-5 text-white" />
               </div>
-            ) : (
-              <div className="relative w-full h-44 flex items-center justify-center overflow-hidden">
-                <div key={activePieIndex >= 0 ? undefined : (analysis?.total_feedback || 0)} className="w-full h-full flex items-center justify-center donut-circle-container">
-                  <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      startAngle={90}
-                      endAngle={-270}
-                      innerRadius={48}
-                      outerRadius={68}
-                      paddingAngle={2.5}
-                      cornerRadius={3}
-                      dataKey="value"
-                      activeIndex={activePieIndex}
-                      activeShape={renderActiveShape}
-                      onMouseEnter={(_, index) => setActivePieIndex(index)}
-                      onMouseLeave={() => setActivePieIndex(-1)}
-                      cursor="pointer"
-                      isAnimationActive={true}
-                      animationDuration={850}
-                      animationEasing="ease-out"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.color}
-                          stroke="#FFFFFF"
-                          strokeWidth={2}
-                          opacity={activePieIndex === -1 || activePieIndex === index ? 1 : 0.45}
-                          style={{ transition: 'opacity 0.22s ease-out' }}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      content={<CustomFeedbackPieTooltip total={analysis?.total_feedback || pieData.reduce((a, b) => a + b.value, 0)} />}
-                      wrapperStyle={{ outline: 'none', zIndex: 100 }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                </div>
-
-                {/* Dynamic Center Label */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center px-2">
-                  {activePieIndex >= 0 && pieData[activePieIndex] ? (
-                    <>
-                      <span className="text-sm font-black text-[#20212B] tracking-tight tabular-nums leading-none truncate max-w-[80px]">
-                        {pieData[activePieIndex].value.toLocaleString()}
-                      </span>
-                      <span className="text-[9px] text-[#6C5CE7] font-semibold capitalize tracking-tight truncate max-w-[80px] mt-0.5">
-                        {pieData[activePieIndex].name}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-base font-black text-[#20212B] tracking-tight tabular-nums leading-none">
-                        {(analysis?.total_feedback || pieData.reduce((a, b) => a + b.value, 0)).toLocaleString()}
-                      </span>
-                      <span className="text-[10px] text-[#858795] font-medium mt-0.5">Reviewed</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Interactive Bidirectional Legend */}
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#E9EAF1] text-[11px]">
-            {[
-              { key: 'Confirmed Correct', label: 'Confirmed', count: analysis?.confirmed ?? 0, color: '#00B894', idx: pieData.findIndex(p => p.name === 'Confirmed Correct') },
-              { key: 'False Positives', label: 'False Pos.', count: analysis?.false_positives ?? 0, color: '#FDCB6E', idx: pieData.findIndex(p => p.name === 'False Positives') },
-              { key: 'False Negatives', label: 'False Neg.', count: analysis?.false_negatives ?? 0, color: '#FF7675', idx: pieData.findIndex(p => p.name === 'False Negatives') },
-              { key: 'Ambiguous', label: 'Ambiguous', count: analysis?.ambiguous ?? 0, color: '#6C5CE7', idx: pieData.findIndex(p => p.name === 'Ambiguous') },
-            ].map((leg) => {
-              const isHovered = leg.idx !== -1 && activePieIndex === leg.idx;
-              return (
-                <div
-                  key={leg.key}
-                  onMouseEnter={() => leg.idx !== -1 && setActivePieIndex(leg.idx)}
-                  onMouseLeave={() => setActivePieIndex(-1)}
-                  className={`flex items-center gap-1.5 p-1 rounded-lg cursor-pointer transition-all ${
-                    isHovered ? 'bg-[#F8F9FE] text-[#20212B] shadow-xs' : 'text-[#858795] hover:bg-[#F8F9FE]'
-                  }`}
-                >
-                  <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0 transition-transform"
-                    style={{
-                      backgroundColor: leg.color,
-                      transform: isHovered ? 'scale(1.3)' : 'scale(1)',
-                      boxShadow: isHovered ? `0 0 8px ${leg.color}` : 'none'
-                    }}
-                  />
-                  <span className={isHovered ? 'font-bold text-[#20212B]' : ''}>
-                    {leg.label} ({leg.count})
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-lg sm:text-xl font-bold text-[#20212B] tracking-tight">
+                    Human Review Annotations &amp; Case Investigation
+                  </h1>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1 shrink-0">
+                    <Flame className="w-3 h-3 text-rose-500 shrink-0" />
+                    <span>High Harassment &amp; High Severity Only</span>
                   </span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Right: Linguistic Disparities Table */}
-        <div className="bg-white p-6 rounded-2xl border border-[#E9EAF1] shadow-xs lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Globe className="w-4 h-4 text-[#6C5CE7]" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B]">
-                  Linguistic Domain Error Disparities
-                </h3>
+                <p className="text-xs text-[#858795] mt-1 max-w-3xl leading-relaxed">
+                  Dedicated investigation queue consolidating all detected high-severity violations and high-harassment comments across YouTube, Instagram, CSV file imports, and manual chat.
+                </p>
               </div>
-              <p className="text-[11px] text-[#858795]">
-                Audits regional languages disproportionately impacted by false alarms or undetected harassment.
-              </p>
             </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2.5 self-stretch sm:self-auto justify-end flex-wrap">
+              <button
+                onClick={handleExportCsv}
+                disabled={filteredCases.length === 0}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#F8F9FE] border border-[#E9EAF1] text-[#20212B] text-xs font-semibold shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                title="Export high-risk investigation records as CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-[#6C5CE7] shrink-0" />
+                <span>Export CSV</span>
+              </button>
+
+              <button
+                onClick={() => fetchAllHighRiskCases(true)}
+                disabled={refreshing || loading}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${refreshing ? 'animate-spin' : ''}`} />
+                <span>{refreshing ? 'Syncing...' : 'Refresh Cases'}</span>
+              </button>
+            </div>
+
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-[#E9EAF1]">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-[#F8F9FE] text-[#858795] border-b border-[#E9EAF1] font-semibold uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="py-2.5 px-3.5">Language Domain</th>
-                  <th className="py-2.5 px-3">Total Cases</th>
-                  <th className="py-2.5 px-3 text-amber-600">False Positives</th>
-                  <th className="py-2.5 px-3 text-rose-600">False Negatives</th>
-                  <th className="py-2.5 px-3 text-[#6C5CE7]">Ambiguity Flags</th>
-                  <th className="py-2.5 px-3.5 text-right">Error Rate</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F0F1F5]">
-                {analysis?.by_language && Object.keys(analysis.by_language).length > 0 ? (
-                  Object.entries(analysis.by_language).map(([lang, counts]) => {
-                    const errorCount = (counts.fp || 0) + (counts.fn || 0);
-                    const rate = counts.total > 0 ? ((errorCount / counts.total) * 100).toFixed(1) : '0.0';
-                    return (
-                      <tr key={lang} className="hover:bg-[#F8F9FE] transition-colors">
-                        <td className="py-2.5 px-3.5 capitalize font-bold text-[#20212B] flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#6C5CE7]" />
-                          <span>{lang}</span>
-                        </td>
-                        <td className="py-2.5 px-3 text-[#20212B] tabular-nums">{counts.total}</td>
-                        <td className="py-2.5 px-3 text-amber-600 font-semibold tabular-nums">{counts.fp}</td>
-                        <td className="py-2.5 px-3 text-rose-600 font-semibold tabular-nums">{counts.fn}</td>
-                        <td className="py-2.5 px-3 text-[#6C5CE7] font-semibold tabular-nums">{counts.ambiguous}</td>
-                        <td className="py-2.5 px-3.5 text-right text-[#6C5CE7] font-semibold tabular-nums">{rate}%</td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-[#858795] text-xs">
-                      No linguistic feedback records collected yet. Reviews submitted from the Moderator Command Center will populate here.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          {/* High-Risk Metric Pill Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3 mt-5 pt-4 border-t border-[#E9EAF1]">
+            <div className="p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1]">
+              <span className="text-[10px] uppercase font-bold text-[#858795] block tracking-wider">Total High-Risk Cases</span>
+              <div className="text-lg sm:text-2xl font-black text-[#20212B] mt-1 tabular-nums">{metrics.total}</div>
+            </div>
 
-      </div>
+            <div className="p-3 bg-rose-50/60 rounded-xl border border-rose-200/80">
+              <span className="text-[10px] uppercase font-bold text-rose-700 block tracking-wider">High Severity</span>
+              <div className="text-lg sm:text-2xl font-black text-rose-700 mt-1 tabular-nums">{metrics.highSev}</div>
+            </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION C: INTERACTIVE CASE INVESTIGATION WORKSPACE & TABLE
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-[#E9EAF1] shadow-xs space-y-5">
-        
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h3 className="text-sm font-bold text-[#20212B] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#6C5CE7] shrink-0" />
-              <span>Human Review Annotations &amp; Case Investigation</span>
-            </h3>
-            <p className="text-xs text-[#858795] mt-0.5">
-              Select any review case to investigate the ground-truth evidence, inspect model predictions, or update the recorded verdict.
-            </p>
-          </div>
+            <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/80">
+              <span className="text-[10px] uppercase font-bold text-amber-700 block tracking-wider">High Harassment (≥40%)</span>
+              <div className="text-lg sm:text-2xl font-black text-amber-700 mt-1 tabular-nums">{metrics.highHar}</div>
+            </div>
 
-          <div className="text-xs text-[#858795] bg-[#F8F9FE] px-3 py-1.5 rounded-xl border border-[#E9EAF1]">
-            Showing <strong className="text-[#20212B]">{filteredList.length}</strong> of {feedbackList.length} records
+            <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200/80">
+              <span className="text-[10px] uppercase font-bold text-emerald-700 block tracking-wider">Human Reviewed</span>
+              <div className="text-lg sm:text-2xl font-black text-emerald-700 mt-1 tabular-nums">{metrics.reviewed}</div>
+            </div>
+
+            <div className="col-span-2 sm:col-span-1 p-3 bg-[#EEEAFE]/60 rounded-xl border border-[#DDD6FE]">
+              <span className="text-[10px] uppercase font-bold text-[#6C5CE7] block tracking-wider">Pending Action</span>
+              <div className="text-lg sm:text-2xl font-black text-[#6C5CE7] mt-1 tabular-nums">{metrics.pending}</div>
+            </div>
           </div>
         </div>
 
         {/* Filter Controls Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
-          {/* Search Input */}
-          <div className="sm:col-span-5 relative">
-            <Search className="w-3.5 h-3.5 text-[#858795] absolute left-3 top-3" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by explanation, language, or ID..."
-              className="w-full pl-9 pr-3 py-2 bg-[#FBFBFE] border border-[#E9EAF1] rounded-xl text-xs text-[#20212B] placeholder-[#858795] focus:bg-white focus:outline-none focus:border-[#6C5CE7] transition-colors"
-            />
+        <div className="p-4 sm:p-5 border-b border-[#E9EAF1] bg-[#FDFDFF] space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-3">
+            
+            {/* Search Input */}
+            <div className="sm:col-span-4 relative">
+              <Search className="w-3.5 h-3.5 text-[#858795] absolute left-3 top-3" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search comments, ID, or notes..."
+                className="w-full pl-9 pr-3 py-2 bg-white border border-[#E9EAF1] rounded-xl text-xs text-[#20212B] placeholder-[#858795] focus:bg-white focus:outline-none focus:border-[#6C5CE7] transition-colors shadow-2xs"
+              />
+            </div>
+
+            {/* Risk Criteria Filter */}
+            <div className="sm:col-span-3 flex items-center gap-1.5 bg-white border border-[#E9EAF1] rounded-xl px-2.5 py-1 shadow-2xs">
+              <Filter className="w-3.5 h-3.5 text-[#858795] shrink-0" />
+              <select
+                value={selectedRiskType}
+                onChange={(e) => {
+                  setSelectedRiskType(e.target.value as any);
+                  setPage(1);
+                }}
+                className="w-full bg-transparent text-xs text-[#20212B] focus:outline-none cursor-pointer py-1 font-medium"
+              >
+                <option value="all">All High-Risk Cases</option>
+                <option value="high_severity">High Severity Only</option>
+                <option value="high_harassment">High Harassment (≥40%)</option>
+              </select>
+            </div>
+
+            {/* Platform Filter */}
+            <div className="sm:col-span-2 flex items-center gap-1.5 bg-white border border-[#E9EAF1] rounded-xl px-2.5 py-1 shadow-2xs">
+              <FileSpreadsheet className="w-3.5 h-3.5 text-[#858795] shrink-0" />
+              <select
+                value={selectedPlatformFilter}
+                onChange={(e) => {
+                  setSelectedPlatformFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-transparent text-xs text-[#20212B] focus:outline-none cursor-pointer py-1 font-medium capitalize"
+              >
+                <option value="all">All Sources</option>
+                <option value="youtube">YouTube</option>
+                <option value="instagram">Instagram</option>
+                <option value="csv">CSV Import</option>
+                <option value="manual">Manual Batch</option>
+              </select>
+            </div>
+
+            {/* Language Filter */}
+            <div className="sm:col-span-3 flex items-center gap-1.5 bg-white border border-[#E9EAF1] rounded-xl px-2.5 py-1 shadow-2xs">
+              <Globe className="w-3.5 h-3.5 text-[#858795] shrink-0" />
+              <select
+                value={selectedLangFilter}
+                onChange={(e) => {
+                  setSelectedLangFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-transparent text-xs text-[#20212B] focus:outline-none cursor-pointer py-1 capitalize font-medium"
+              >
+                <option value="all">All Languages</option>
+                <option value="telugu">Telugu</option>
+                <option value="hindi">Hindi</option>
+                <option value="hinglish">Hinglish</option>
+                <option value="kannada">Kannada</option>
+                <option value="english">English</option>
+              </select>
+            </div>
+
           </div>
 
-          {/* Verdict Filter */}
-          <div className="sm:col-span-4 flex items-center gap-1.5 bg-[#FBFBFE] border border-[#E9EAF1] rounded-xl px-2.5 py-1">
-            <Filter className="w-3.5 h-3.5 text-[#858795] shrink-0" />
-            <select
-              value={selectedTypeFilter}
-              onChange={(e) => setSelectedTypeFilter(e.target.value as any)}
-              className="w-full bg-transparent text-xs text-[#20212B] focus:outline-none cursor-pointer py-1"
-            >
-              <option value="all">All Verdicts</option>
-              <option value="confirmed">Confirmed Correct</option>
-              <option value="false_positive">False Positives (FP)</option>
-              <option value="false_negative">False Negatives (FN)</option>
-              <option value="ambiguous">Ambiguous Cases</option>
-            </select>
-          </div>
+          {/* Secondary Filter & Status Strip */}
+          <div className="flex items-center justify-between flex-wrap gap-2 pt-1 text-xs text-[#858795]">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-semibold text-[#20212B]">Status Filter:</span>
+              {[
+                { id: 'all', label: `All (${filteredCases.length})` },
+                { id: 'pending', label: 'Pending Review' },
+                { id: 'reviewed', label: 'Human Reviewed' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setSelectedStatusFilter(tab.id as any);
+                    setPage(1);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    selectedStatusFilter === tab.id
+                      ? 'bg-[#6C5CE7] text-white shadow-xs'
+                      : 'bg-white hover:bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Language Filter */}
-          <div className="sm:col-span-3 flex items-center gap-1.5 bg-[#FBFBFE] border border-[#E9EAF1] rounded-xl px-2.5 py-1">
-            <Globe className="w-3.5 h-3.5 text-[#858795] shrink-0" />
-            <select
-              value={selectedLangFilter}
-              onChange={(e) => setSelectedLangFilter(e.target.value)}
-              className="w-full bg-transparent text-xs text-[#20212B] focus:outline-none cursor-pointer py-1 capitalize"
-            >
-              <option value="all">All Languages</option>
-              <option value="telugu">Telugu</option>
-              <option value="hindi">Hindi</option>
-              <option value="hinglish">Hinglish</option>
-              <option value="kannada">Kannada</option>
-              <option value="english">English</option>
-            </select>
+            <div className="text-[11px] font-semibold text-[#858795] bg-[#F5F6FA] px-2.5 py-1 rounded-lg border border-[#E9EAF1]">
+              Showing <strong className="text-[#20212B]">{filteredCases.length}</strong> matching records
+            </div>
           </div>
         </div>
 
-        {/* Mobile Cards for Human Review Annotations */}
-        <div className="md:hidden space-y-2.5">
+        {/* ── Mobile Card View (md:hidden) ── */}
+        <div className="md:hidden divide-y divide-[#E9EAF1]">
           {loading ? (
-            [0, 1, 2].map(i => (
-              <div key={i} className="h-24 bg-[#F8F9FE] border border-[#E9EAF1] rounded-xl animate-pulse" />
-            ))
-          ) : filteredList.length === 0 ? (
-            <div className="py-10 text-center text-[#858795] text-xs rounded-xl border border-[#E9EAF1] bg-[#F8F9FE]">
-              No human feedback records match the selected filters.
+            <div className="p-6 space-y-3">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="h-28 bg-[#F8F9FE] border border-[#E9EAF1] rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : paginatedCases.length === 0 ? (
+            <div className="py-14 px-4 text-center space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center mx-auto">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <h4 className="text-sm font-bold text-[#20212B]">No High-Risk Detection Records Found</h4>
+              <p className="text-xs text-[#858795] max-w-sm mx-auto">
+                No comments matching high-severity or high-harassment criteria. Run detections in Social Media Ingestion to populate this queue.
+              </p>
             </div>
           ) : (
-            filteredList.map(item => (
+            paginatedCases.map(item => (
               <div
                 key={item.id}
                 onClick={() => openInvestigation(item)}
-                className="p-3.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] space-y-2 cursor-pointer active:scale-[0.99] transition-all"
+                className="p-4 bg-white hover:bg-[#FBFBFE] space-y-2.5 cursor-pointer active:scale-[0.99] transition-all"
               >
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-mono text-[10px] font-bold text-[#6C5CE7]">
                       #{(item.record_id || item.id).slice(0, 8)}
                     </span>
-                    <span className="capitalize text-[10px] px-2 py-0.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] font-semibold text-[#6C5CE7]">
-                      {item.language || 'English'}
+                    <span className="capitalize text-[10px] px-2 py-0.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] font-bold text-[#6C5CE7]">
+                      {item.language}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-white text-[#858795] border border-[#E9EAF1]">
-                      {item.platform || 'direct'}
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
+                      {item.platform}
                     </span>
                   </div>
-                  {item.is_confirmed ? (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Confirmed
-                    </span>
-                  ) : item.is_false_positive ? (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1">
-                      <AlertOctagon className="w-3 h-3" /> False Pos.
-                    </span>
-                  ) : item.is_false_negative ? (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" /> False Neg.
-                    </span>
-                  ) : item.is_ambiguous ? (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE] inline-flex items-center gap-1">
-                      <HelpCircle className="w-3 h-3" /> Ambiguous
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white text-[#858795] border border-[#E9EAF1]">
-                      Pending
-                    </span>
-                  )}
+
+                  <div className="flex items-center gap-1.5">
+                    {item.severity === 'high' && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-50 text-rose-700 border border-rose-200">
+                        High Severity
+                      </span>
+                    )}
+                    {(item.harassment_score ?? 0) >= 0.4 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-50 text-amber-700 border border-amber-200">
+                        Har: {Math.round((item.harassment_score || 0) * 100)}%
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <p className="text-xs font-medium text-[#20212B] break-words line-clamp-2">
-                  {item.comment_text || item.explanation || 'Direct sample'}
+                <p className="text-xs font-semibold text-[#20212B] break-words line-clamp-3 leading-relaxed">
+                  "{item.comment_text}"
                 </p>
 
+                {/* Score indicators */}
+                <div className="flex items-center gap-3 text-[10px] font-mono bg-[#F8F9FE] p-2 rounded-lg border border-[#E9EAF1]">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[#858795]">Harassment:</span>
+                    <span className="font-bold text-amber-600">
+                      {Math.round((item.harassment_score || 0) * 100)}%
+                    </span>
+                  </div>
+                  <span>•</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[#858795]">Hate Speech:</span>
+                    <span className="font-bold text-rose-600">
+                      {Math.round((item.hate_speech_score || 0) * 100)}%
+                    </span>
+                  </div>
+                  <span>•</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[#858795]">Cyberbully:</span>
+                    <span className="font-bold text-purple-600">
+                      {Math.round((item.cyberbullying_score || 0) * 100)}%
+                    </span>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between gap-2 pt-1">
-                  <span className="text-[10px] text-[#858795] tabular-nums">
-                    {new Date(item.created_at).toLocaleDateString()}
-                  </span>
+                  <div>
+                    {item.is_confirmed ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Confirmed
+                      </span>
+                    ) : item.is_false_positive ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1">
+                        <AlertOctagon className="w-3 h-3" /> False Positive
+                      </span>
+                    ) : item.is_false_negative ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> False Negative
+                      </span>
+                    ) : item.is_ambiguous ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE] inline-flex items-center gap-1">
+                        <HelpCircle className="w-3 h-3" /> Ambiguous
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
+                        Pending Review
+                      </span>
+                    )}
+                  </div>
+
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       openInvestigation(item);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-[#EEEAFE] hover:bg-[#DDD6FE] text-[#6C5CE7] border border-[#DDD6FE] text-[11px] font-semibold inline-flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg bg-[#EEEAFE] hover:bg-[#DDD6FE] text-[#6C5CE7] border border-[#DDD6FE] text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <span>Investigate</span>
-                    <ChevronRight className="w-3 h-3" />
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -697,71 +782,114 @@ export default function FeedbackAnalysis() {
           )}
         </div>
 
-        {/* Scannable Desktop Case Table */}
-        <div className="hidden md:block overflow-x-auto rounded-xl border border-[#E9EAF1]">
+        {/* ── Desktop Scannable Table (hidden md:block) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead className="bg-[#F8F9FE] text-[#858795] border-b border-[#E9EAF1] font-semibold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="py-3 px-3.5">Record ID</th>
-                <th className="py-3 px-3">Comment Text</th>
+                <th className="py-3 px-3">High-Risk Comment Text</th>
+                <th className="py-3 px-3">Source</th>
                 <th className="py-3 px-3">Language</th>
-                <th className="py-3 px-3">Platform</th>
                 <th className="py-3 px-3">Severity</th>
-                <th className="py-3 px-3">Reviewer Verdict</th>
-                <th className="py-3 px-3">Human Review</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-4">Explanation / Ground Truth</th>
+                <th className="py-3 px-3">Harassment Level</th>
+                <th className="py-3 px-3">Model Decision</th>
+                <th className="py-3 px-3">Human Review Status</th>
                 <th className="py-3 px-3">Date</th>
-                <th className="py-3 px-3.5 text-right">Action</th>
+                <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#F0F1F5]">
+            <tbody className="divide-y divide-[#F0F1F5] bg-white">
               {loading ? (
                 [0, 1, 2, 3].map(i => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={11} className="py-4 px-4 bg-[#F8F9FE]/40">
+                    <td colSpan={10} className="py-4 px-4 bg-[#F8F9FE]/40">
                       <div className="h-4 bg-[#E9EAF1] rounded w-full" />
                     </td>
                   </tr>
                 ))
-              ) : filteredList.length === 0 ? (
+              ) : paginatedCases.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="py-12 text-center text-[#858795] text-xs">
-                    No human feedback records match the selected filters.
+                  <td colSpan={10} className="py-14 text-center text-[#858795] text-xs space-y-2">
+                    <div className="w-10 h-10 rounded-xl bg-[#EEEAFE] text-[#6C5CE7] flex items-center justify-center mx-auto mb-2">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div className="font-bold text-[#20212B]">No High-Risk Detection Records Found</div>
+                    <p className="max-w-md mx-auto text-[11px] text-[#858795]">
+                      No comments matching high severity or harassment criteria. Analyze videos, posts, or CSVs in Social Media Ingestion to feed this queue.
+                    </p>
                   </td>
                 </tr>
               ) : (
-                filteredList.map(item => (
+                paginatedCases.map(item => (
                   <tr
                     key={item.id}
-                    className="hover:bg-[#F8F9FE] transition-colors group cursor-pointer"
+                    className="hover:bg-[#F8F9FE]/80 transition-colors group cursor-pointer"
                     onClick={() => openInvestigation(item)}
                   >
                     <td className="py-3 px-3.5 font-mono text-[#6C5CE7] font-semibold whitespace-nowrap">
-                      {(item.record_id || item.id).slice(0, 8)}...
+                      #{(item.record_id || item.id).slice(0, 8)}
                     </td>
-                    <td className="py-3 px-3 max-w-[200px] truncate text-[#20212B] font-medium" title={item.comment_text || item.explanation || ''}>
-                      {item.comment_text || item.explanation || <span className="text-[#858795] italic">Direct sample</span>}
+
+                    <td className="py-3 px-3 max-w-[280px] text-[#20212B] font-medium" title={item.comment_text}>
+                      <div className="truncate" title={item.comment_text}>
+                        "{item.comment_text}"
+                      </div>
+                      {item.explanation && (
+                        <div className="text-[10px] text-[#858795] italic truncate mt-0.5">
+                          Notes: {item.explanation}
+                        </div>
+                      )}
                     </td>
+
                     <td className="py-3 px-3 whitespace-nowrap">
-                      <span className="capitalize text-[10px] px-2.5 py-0.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] font-semibold text-[#6C5CE7]">
-                        {item.language || 'English'}
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
+                        {item.platform}
                       </span>
                     </td>
+
                     <td className="py-3 px-3 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
-                        {item.platform || 'direct'}
+                      <span className="capitalize text-[10px] px-2.5 py-0.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] font-bold text-[#6C5CE7]">
+                        {item.language}
                       </span>
                     </td>
+
                     <td className="py-3 px-3 whitespace-nowrap">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                        item.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                        item.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                        'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
+                        item.severity === 'high'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
                       }`}>
-                        {item.severity || 'low'}
+                        {item.severity}
                       </span>
                     </td>
+
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div className="w-14 h-2 bg-[#F0F1F5] rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              (item.harassment_score || 0) >= 0.7
+                                ? 'bg-rose-500'
+                                : (item.harassment_score || 0) >= 0.4
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500'
+                            }`}
+                            style={{ width: `${Math.round((item.harassment_score || 0) * 100)}%` }}
+                          />
+                        </div>
+                        <span className={`font-mono text-[11px] font-bold ${
+                          (item.harassment_score || 0) >= 0.4 ? 'text-amber-700' : 'text-[#20212B]'
+                        }`}>
+                          {Math.round((item.harassment_score || 0) * 100)}%
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className="py-3 px-3 whitespace-nowrap capitalize font-medium text-[#20212B]">
+                      {item.decision.replace(/_/g, ' ')}
+                    </td>
+
                     <td className="py-3 px-3 whitespace-nowrap">
                       {item.is_confirmed ? (
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
@@ -776,43 +904,30 @@ export default function FeedbackAnalysis() {
                           <AlertTriangle className="w-3 h-3" /> False Negative
                         </span>
                       ) : item.is_ambiguous ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE] inline-flex items-center gap-1">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE] inline-flex items-center gap-1">
                           <HelpCircle className="w-3 h-3" /> Ambiguous
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
-                          Pending
+                          Pending Review
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3 whitespace-nowrap capitalize font-medium text-[#20212B]">
-                      {item.human_review ? item.human_review.replace(/_/g, ' ') : (item.is_confirmed ? 'Approved' : 'Audited')}
-                    </td>
-                    <td className="py-3 px-3 whitespace-nowrap">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize border ${
-                        item.status === 'reviewed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        item.status === 'flagged' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                        'bg-[#F5F6FA] text-[#858795] border-[#E9EAF1]'
-                      }`}>
-                        {item.status || 'reviewed'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-[#20212B] max-w-xs truncate" title={item.explanation || ''}>
-                      {item.explanation ? `"${item.explanation}"` : <span className="text-[#858795] italic">No notes provided</span>}
-                    </td>
+
                     <td className="py-3 px-3 text-[#858795] text-[11px] tabular-nums whitespace-nowrap">
                       {new Date(item.created_at).toLocaleDateString()}
                     </td>
-                    <td className="py-3 px-3.5 text-right whitespace-nowrap">
+
+                    <td className="py-3 px-4 text-right whitespace-nowrap">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           openInvestigation(item);
                         }}
-                        className="px-2.5 py-1 rounded-lg bg-[#EEEAFE] hover:bg-[#DDD6FE] text-[#6C5CE7] border border-[#DDD6FE] text-[11px] font-semibold transition-all inline-flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-lg bg-[#EEEAFE] hover:bg-[#DDD6FE] text-[#6C5CE7] border border-[#DDD6FE] text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer"
                       >
+                        <Eye className="w-3.5 h-3.5" />
                         <span>Investigate</span>
-                        <ChevronRight className="w-3 h-3" />
                       </button>
                     </td>
                   </tr>
@@ -822,10 +937,60 @@ export default function FeedbackAnalysis() {
           </table>
         </div>
 
+        {/* Pagination Bar */}
+        {filteredCases.length > 0 && (
+          <div className="p-3.5 sm:p-4 bg-[#F8F9FE] border-t border-[#E9EAF1] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#858795]">
+            <div className="flex items-center justify-between sm:justify-start gap-3">
+              <span>
+                Showing <strong className="text-[#20212B] font-mono">{(page - 1) * pageSize + 1}</strong>–<strong className="text-[#20212B] font-mono">{Math.min(page * pageSize, filteredCases.length)}</strong> of <strong className="text-[#20212B] font-mono">{filteredCases.length}</strong> high-risk cases
+              </span>
+              <span className="text-[#DDD6FE] hidden sm:inline">•</span>
+              <label className="flex items-center gap-1.5 text-[11px]">
+                <span>Per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="px-2 py-0.5 rounded-lg border border-[#E9EAF1] bg-white text-[#20212B] font-semibold text-[11px] cursor-pointer"
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between sm:justify-end gap-1.5">
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 rounded-lg border border-[#E9EAF1] bg-white hover:bg-[#F0F1F5] text-[#20212B] disabled:opacity-40 cursor-pointer text-xs font-semibold shadow-2xs transition-colors"
+              >
+                Previous
+              </button>
+              <span className="px-2 font-mono text-[11px] font-bold text-[#6C5CE7]">
+                Page {page} of {Math.ceil(filteredCases.length / pageSize) || 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.min(Math.ceil(filteredCases.length / pageSize), p + 1))}
+                disabled={page >= Math.ceil(filteredCases.length / pageSize)}
+                className="px-3 py-1.5 rounded-lg border border-[#E9EAF1] bg-white hover:bg-[#F0F1F5] text-[#20212B] disabled:opacity-40 cursor-pointer text-xs font-semibold shadow-2xs transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION D: SLIDE-OVER INVESTIGATION DRAWER
+          SLIDE-OVER CASE INVESTIGATION DRAWER
           ═══════════════════════════════════════════════════════════════════════ */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
@@ -835,59 +1000,60 @@ export default function FeedbackAnalysis() {
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 border-b border-[#E9EAF1]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7]">
-                    <ShieldAlert className="w-4 h-4 text-[#6C5CE7]" />
+                  <div className="w-9 h-9 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7]">
+                    <ShieldAlert className="w-5 h-5 text-[#6C5CE7]" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-[#20212B]">Case Investigation Panel</h3>
                     <p className="text-[11px] text-[#858795] font-mono">
-                      ID: {selectedItem.id}
+                      Record: {selectedItem.record_id || selectedItem.id}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedItem(null)}
-                  className="p-1 rounded-lg text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA] transition-colors"
+                  className="p-1 rounded-lg text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA] transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Original Target Comment Section */}
+              {/* Target High-Risk Comment */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#20212B]">
-                    Original Comment Content
+                    Original High-Risk Comment
                   </span>
                   <div className="flex items-center gap-1.5">
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
-                      {selectedItem.platform || 'Direct'}
+                      {selectedItem.platform}
                     </span>
                     <span className="capitalize text-[10px] px-2 py-0.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] font-bold text-[#6C5CE7]">
-                      {selectedItem.language || 'English'}
+                      {selectedItem.language}
                     </span>
                   </div>
                 </div>
-                <div className="p-3.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] text-xs text-[#20212B] font-medium leading-relaxed max-h-40 overflow-y-auto break-words select-text shadow-inner">
-                  "{selectedItem.comment_text || selectedItem.explanation || 'No comment text recorded'}"
+                <div className="p-4 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] text-xs text-[#20212B] font-medium leading-relaxed max-h-48 overflow-y-auto break-words select-text shadow-inner">
+                  "{selectedItem.comment_text}"
                 </div>
               </div>
 
-              {/* Status & Decision Badges Strip */}
+              {/* Status & Severity Strip */}
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                  selectedItem.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                  selectedItem.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  'bg-emerald-50 text-emerald-700 border-emerald-200'
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border ${
+                  selectedItem.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                 }`}>
-                  Severity: {selectedItem.severity || 'low'}
+                  Severity: {selectedItem.severity}
                 </span>
+
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                  Harassment: {Math.round((selectedItem.harassment_score || 0) * 100)}%
+                </span>
+
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white border border-[#E9EAF1] text-[#858795] capitalize">
-                  Decision: {(selectedItem.decision || selectedItem.status || 'no action').replace(/_/g, ' ')}
+                  Decision: {selectedItem.decision.replace(/_/g, ' ')}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#F5F6FA] text-[#858795] border border-[#E9EAF1]">
-                  Status: {selectedItem.validation_status || selectedItem.status || 'reviewed'}
-                </span>
+
                 {selectedItem.created_at && (
                   <span className="text-[10px] text-[#858795] font-mono flex items-center gap-1">
                     <Clock className="w-3 h-3 text-[#858795]" />
@@ -904,8 +1070,8 @@ export default function FeedbackAnalysis() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
                   {[
-                    { label: 'Hate Speech', score: selectedItem.hate_speech_score ?? 0.0, isHarm: (selectedItem.hate_speech_score ?? 0) >= 0.4 },
                     { label: 'Harassment', score: selectedItem.harassment_score ?? 0.0, isHarm: (selectedItem.harassment_score ?? 0) >= 0.4 },
+                    { label: 'Hate Speech', score: selectedItem.hate_speech_score ?? 0.0, isHarm: (selectedItem.hate_speech_score ?? 0) >= 0.4 },
                     { label: 'Cyberbullying', score: selectedItem.cyberbullying_score ?? 0.0, isHarm: (selectedItem.cyberbullying_score ?? 0) >= 0.4 },
                     { label: 'Legitimate', score: selectedItem.legitimate_score ?? 0.0, isHarm: false },
                   ].map((cat) => {
@@ -930,31 +1096,19 @@ export default function FeedbackAnalysis() {
                 </div>
               </div>
 
-              {/* Reviewer Notes / Historical Ground Truth */}
-              {selectedItem.explanation && (
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#20212B]">
-                    Logged Reviewer Notes &amp; Rationale
-                  </span>
-                  <div className="p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1] text-xs text-[#20212B] leading-relaxed max-h-24 overflow-y-auto">
-                    "{selectedItem.explanation}"
-                  </div>
-                </div>
-              )}
-
               {/* Case Metadata Strip */}
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1]">
                   <span className="text-[10px] uppercase font-semibold text-[#858795] block">Language Domain</span>
-                  <span className="font-bold text-[#20212B] capitalize mt-0.5 block">{selectedItem.language || 'English'}</span>
+                  <span className="font-bold text-[#20212B] capitalize mt-0.5 block">{selectedItem.language}</span>
                 </div>
                 <div className="p-3 bg-[#F8F9FE] rounded-xl border border-[#E9EAF1]">
                   <span className="text-[10px] uppercase font-semibold text-[#858795] block">Model Pipeline</span>
-                  <span className="font-mono text-[#6C5CE7] text-[11px] font-semibold mt-0.5 block">{selectedItem.model_version || 'v1.0.0'}</span>
+                  <span className="font-mono text-[#6C5CE7] text-[11px] font-semibold mt-0.5 block">{selectedItem.model_version || 'v2.1'}</span>
                 </div>
               </div>
 
-              {/* Linked Record Details */}
+              {/* Linked Record Reference */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-[#20212B]">
                   Linked Record Reference
@@ -966,7 +1120,7 @@ export default function FeedbackAnalysis() {
                       navigator.clipboard.writeText(selectedItem.record_id || selectedItem.id);
                       addToast('Copied record reference ID to clipboard', 'info');
                     }}
-                    className="p-1 rounded hover:bg-[#E9EAF1] text-[#858795] hover:text-[#20212B]"
+                    className="p-1 rounded hover:bg-[#E9EAF1] text-[#858795] hover:text-[#20212B] cursor-pointer"
                     title="Copy ID"
                   >
                     <Copy className="w-3.5 h-3.5" />
@@ -978,13 +1132,14 @@ export default function FeedbackAnalysis() {
               <div className="space-y-2.5">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-[#20212B] flex items-center justify-between">
                   <span>Human Ground Truth Decision</span>
-                  <span className="text-[10px] text-[#6C5CE7] normal-case">Select to re-classify</span>
+                  <span className="text-[10px] text-[#6C5CE7] normal-case">Select to record verdict</span>
                 </label>
                 
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <button
+                    type="button"
                     onClick={() => setDrawerDecision('correct')}
-                    className={`p-3 rounded-xl border font-bold flex items-center gap-2 transition-all ${
+                    className={`p-3 rounded-xl border font-bold flex items-center gap-2 transition-all cursor-pointer ${
                       drawerDecision === 'correct'
                         ? 'bg-emerald-50 border-emerald-600 text-emerald-700 shadow-xs'
                         : 'bg-[#F8F9FE] border-[#E9EAF1] text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA]'
@@ -995,8 +1150,9 @@ export default function FeedbackAnalysis() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setDrawerDecision('false_positive')}
-                    className={`p-3 rounded-xl border font-bold flex items-center gap-2 transition-all ${
+                    className={`p-3 rounded-xl border font-bold flex items-center gap-2 transition-all cursor-pointer ${
                       drawerDecision === 'false_positive'
                         ? 'bg-amber-50 border-amber-600 text-amber-700 shadow-xs'
                         : 'bg-[#F8F9FE] border-[#E9EAF1] text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA]'
@@ -1007,8 +1163,9 @@ export default function FeedbackAnalysis() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setDrawerDecision('false_negative')}
-                    className={`p-3 rounded-xl border font-bold flex items-center gap-2 transition-all ${
+                    className={`p-3 rounded-xl border font-bold flex items-center gap-2 transition-all cursor-pointer ${
                       drawerDecision === 'false_negative'
                         ? 'bg-rose-50 border-rose-600 text-rose-700 shadow-xs'
                         : 'bg-[#F8F9FE] border-[#E9EAF1] text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA]'
@@ -1019,8 +1176,9 @@ export default function FeedbackAnalysis() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setDrawerDecision('ambiguous')}
-                    className={`p-3 rounded-xl border font-bold flex items-center gap-2 transition-all ${
+                    className={`p-3 rounded-xl border font-bold flex items-center gap-2 transition-all cursor-pointer ${
                       drawerDecision === 'ambiguous'
                         ? 'bg-[#EEEAFE] border-[#6C5CE7] text-[#6C5CE7] shadow-xs'
                         : 'bg-[#F8F9FE] border-[#E9EAF1] text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA]'
@@ -1051,15 +1209,17 @@ export default function FeedbackAnalysis() {
             {/* Drawer Action Bar */}
             <div className="pt-4 border-t border-[#E9EAF1] flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setSelectedItem(null)}
-                className="flex-1 py-2.5 rounded-xl bg-[#F5F6FA] hover:bg-[#E9EAF1] border border-[#E9EAF1] text-[#20212B] text-xs font-semibold transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-[#F5F6FA] hover:bg-[#E9EAF1] border border-[#E9EAF1] text-[#20212B] text-xs font-semibold transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleUpdateDecision}
                 disabled={isUpdatingDecision || !drawerDecision}
-                className="flex-1 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isUpdatingDecision ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 <span>{isUpdatingDecision ? 'Saving...' : 'Save Decision'}</span>
