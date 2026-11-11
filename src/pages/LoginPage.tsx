@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Shield, Lock, Mail, User as UserIcon, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GoogleLoginButton } from '../components/GoogleLoginButton';
+import { BrandMark } from '../components/BrandLogo';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -40,9 +41,7 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2.5 group mb-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#6C5CE7] flex items-center justify-center text-white shadow-md shadow-[#6C5CE7]/20 group-hover:scale-105 transition-transform">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
+            <BrandMark size={40} />
             <div className="text-left">
               <div className="text-lg font-black text-[#20212B] tracking-tight">CyberTech AI</div>
               <div className="text-[10px] text-[#858795] font-semibold uppercase tracking-wider">

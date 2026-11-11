@@ -2349,6 +2349,13 @@ apiRouter.get('/evaluations/report/source', (req: Request, res: Response) => {
   });
 });
 
+apiRouter.get('/evaluations/report/pdf', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    message: 'Audit report PDF is generated client-side with full detected comments and zero credentials exposed.',
+  });
+});
+
 // 10. Datasets
 apiRouter.get('/datasets', (_req: Request, res: Response) => {
   res.json([

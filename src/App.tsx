@@ -17,6 +17,7 @@ import { DashboardProvider } from './context/DashboardContext';
 import { ContextLabProvider } from './context/ContextLabContext';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import { BrandMark } from './components/BrandLogo';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -137,9 +138,7 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: Sidebar
         {/* Brand Header */}
         <div className="p-4 border-b border-[#E9EAF1] flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-9 h-9 shrink-0 rounded-xl bg-[#6C5CE7] flex items-center justify-center text-white shadow-sm shadow-[#6C5CE7]/20">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
+            <BrandMark size={36} />
             {(!collapsed || mobileOpen) && (
               <div className="truncate">
                 <div className="text-sm font-black text-[#20212B] tracking-tight">

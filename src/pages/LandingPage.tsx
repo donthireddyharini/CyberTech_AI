@@ -8,6 +8,7 @@ import { useTranslation } from '../i18n/I18nContext';
 import { analyzeApi } from '../api/client';
 import { GoogleLoginButton } from '../components/GoogleLoginButton';
 import { ScrollReveal } from '../components/ScrollReveal';
+import { BrandMark } from '../components/BrandLogo';
 import type { AnalyzeResponse } from '../types';
 
 export default function LandingPage() {
@@ -132,9 +133,7 @@ export default function LandingPage() {
       {/* Top Navigation */}
       <header className="relative z-20 border-b border-[#E9EAF1] bg-white/95 backdrop-blur-md sticky top-0 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 shadow-xs">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#6C5CE7] flex items-center justify-center text-white shadow-sm shadow-[#6C5CE7]/25 shrink-0">
-            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-          </div>
+          <BrandMark size={38} />
           <div className="min-w-0">
             <div className="text-sm sm:text-base font-black tracking-tight text-[#20212B] truncate">
               CyberTech AI
@@ -671,7 +670,7 @@ export default function LandingPage() {
 
             {/* Modal Title */}
             <div className="flex items-center gap-2 mb-1.5 pr-7">
-              <Shield className="w-5 h-5 text-[#6C5CE7] shrink-0" />
+              <BrandMark size={24} />
               <h3 className="text-base sm:text-lg font-bold text-[#20212B]">
                 {authMode === 'login' ? 'Sign In to CyberTech AI' : 'Create Account'}
               </h3>
@@ -793,7 +792,7 @@ export default function LandingPage() {
         <ScrollReveal delay={50} duration={500}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 mb-2.5">
             <div className="flex items-center gap-1.5">
-              <Shield className="w-4 h-4 text-[#6C5CE7] shrink-0" />
+              <BrandMark size={20} />
               <span className="font-bold text-[#20212B]">CyberTech AI Intelligence Platform</span>
             </div>
             <span className="hidden sm:inline">•</span>
