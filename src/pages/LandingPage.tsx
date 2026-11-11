@@ -130,16 +130,18 @@ export default function LandingPage() {
       </div>
 
       {/* Top Navigation */}
-      <header className="relative z-20 border-b border-[#E9EAF1] bg-white/90 backdrop-blur-md sticky top-0 px-6 py-4 flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#6C5CE7] flex items-center justify-center text-white shadow-sm shadow-[#6C5CE7]/25">
-            <Shield className="w-5 h-5 text-white" />
+      <header className="relative z-20 border-b border-[#E9EAF1] bg-white/95 backdrop-blur-md sticky top-0 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 shadow-xs">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#6C5CE7] flex items-center justify-center text-white shadow-sm shadow-[#6C5CE7]/25 shrink-0">
+            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <div>
-            <div className="text-base font-black tracking-tight text-[#20212B] flex items-center gap-2">
-              <span>CyberTech AI</span>
+          <div className="min-w-0">
+            <div className="text-sm sm:text-base font-black tracking-tight text-[#20212B] truncate">
+              CyberTech AI
             </div>
-            <div className="text-xs text-[#858795] font-medium">Content Moderation Intelligence</div>
+            <div className="text-[10px] sm:text-xs text-[#858795] font-medium truncate">
+              Content Moderation Intelligence
+            </div>
           </div>
         </div>
 
@@ -194,7 +196,7 @@ export default function LandingPage() {
               setDemoModalOpen(true);
               handleRunDemo();
             }}
-            className="flex items-center gap-1.5 text-[#6C5CE7] hover:text-[#5B4CD9] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7] rounded-lg px-2 py-1"
+            className="flex items-center gap-1.5 text-[#6C5CE7] hover:text-[#5B4CD9] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7] rounded-lg px-2 py-1 cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
             <span>Interactive Demo</span>
@@ -202,13 +204,13 @@ export default function LandingPage() {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <button
             onClick={() => {
               setAuthMode('login');
               setAuthModalOpen(true);
             }}
-            className="px-4 py-1.5 text-xs font-semibold rounded-xl text-[#20212B] hover:text-[#6C5CE7] hover:bg-white transition-all border border-transparent hover:border-[#E9EAF1]"
+            className="px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-xl text-[#20212B] hover:text-[#6C5CE7] bg-[#F8F9FE] sm:bg-transparent hover:bg-white transition-all border border-[#E9EAF1] sm:border-transparent hover:border-[#E9EAF1] cursor-pointer whitespace-nowrap"
           >
             {t('action.signIn', 'Sign In')}
           </button>
@@ -218,7 +220,7 @@ export default function LandingPage() {
               setAuthMode('register');
               setAuthModalOpen(true);
             }}
-            className="px-4 py-1.5 text-xs font-semibold rounded-xl bg-[#6C5CE7] text-white hover:bg-[#5B4CD9] shadow-sm shadow-[#6C5CE7]/25 transition-all"
+            className="hidden sm:inline-flex px-4 py-1.5 text-xs font-semibold rounded-xl bg-[#6C5CE7] text-white hover:bg-[#5B4CD9] shadow-sm shadow-[#6C5CE7]/25 transition-all cursor-pointer whitespace-nowrap"
           >
             {t('action.getStarted', 'Get Started')}
           </button>
@@ -226,105 +228,139 @@ export default function LandingPage() {
           {/* Mobile Hamburger Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl text-[#858795] hover:text-[#20212B] hover:bg-[#F5F6FA] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7]"
+            className="md:hidden p-2 rounded-xl text-[#20212B] bg-[#F8F9FE] border border-[#E9EAF1] hover:bg-[#EEEAFE] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7]"
             aria-label="Toggle mobile menu"
             aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileMenuOpen ? <X className="w-4 h-4 text-[#6C5CE7]" /> : <Menu className="w-4 h-4 text-[#6C5CE7]" />}
           </button>
         </div>
       </header>
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden sticky top-[73px] z-20 border-b border-[#E9EAF1] bg-white/95 backdrop-blur-md px-6 py-4 space-y-3 shadow-md animate-in slide-in-from-top duration-200">
-          <a
-            href="#hero"
-            onClick={(e) => handleNavClick(e, 'hero')}
-            className={`block text-sm py-1.5 transition-colors ${
-              activeSection === 'hero' ? 'text-[#6C5CE7] font-bold' : 'text-[#858795] hover:text-[#20212B]'
-            }`}
-          >
-            Overview
-          </a>
-          <a
-            href="#features"
-            onClick={(e) => handleNavClick(e, 'features')}
-            className={`block text-sm py-1.5 transition-colors ${
-              activeSection === 'features' ? 'text-[#6C5CE7] font-bold' : 'text-[#858795] hover:text-[#20212B]'
-            }`}
-          >
-            Features
-          </a>
-          <a
-            href="#multilingual"
-            onClick={(e) => handleNavClick(e, 'multilingual')}
-            className={`block text-sm py-1.5 transition-colors ${
-              activeSection === 'multilingual' ? 'text-[#6C5CE7] font-bold' : 'text-[#858795] hover:text-[#20212B]'
-            }`}
-          >
-            Languages
-          </a>
-          <a
-            href="#architecture"
-            onClick={(e) => handleNavClick(e, 'architecture')}
-            className={`block text-sm py-1.5 transition-colors ${
-              activeSection === 'architecture' ? 'text-[#6C5CE7] font-bold' : 'text-[#858795] hover:text-[#20212B]'
-            }`}
-          >
-            Architecture
-          </a>
+        <div className="md:hidden sticky top-[61px] z-20 border-b border-[#E9EAF1] bg-white/98 backdrop-blur-md px-4 py-4 space-y-2.5 shadow-lg animate-in slide-in-from-top duration-200">
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              href="#hero"
+              onClick={(e) => handleNavClick(e, 'hero')}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                activeSection === 'hero'
+                  ? 'bg-[#EEEAFE] text-[#6C5CE7] border-[#DDD6FE]'
+                  : 'bg-[#F8F9FE] text-[#20212B] border-[#E9EAF1]'
+              }`}
+            >
+              Overview
+            </a>
+            <a
+              href="#features"
+              onClick={(e) => handleNavClick(e, 'features')}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                activeSection === 'features'
+                  ? 'bg-[#EEEAFE] text-[#6C5CE7] border-[#DDD6FE]'
+                  : 'bg-[#F8F9FE] text-[#20212B] border-[#E9EAF1]'
+              }`}
+            >
+              Features
+            </a>
+            <a
+              href="#multilingual"
+              onClick={(e) => handleNavClick(e, 'multilingual')}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                activeSection === 'multilingual'
+                  ? 'bg-[#EEEAFE] text-[#6C5CE7] border-[#DDD6FE]'
+                  : 'bg-[#F8F9FE] text-[#20212B] border-[#E9EAF1]'
+              }`}
+            >
+              Languages
+            </a>
+            <a
+              href="#architecture"
+              onClick={(e) => handleNavClick(e, 'architecture')}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                activeSection === 'architecture'
+                  ? 'bg-[#EEEAFE] text-[#6C5CE7] border-[#DDD6FE]'
+                  : 'bg-[#F8F9FE] text-[#20212B] border-[#E9EAF1]'
+              }`}
+            >
+              Architecture
+            </a>
+          </div>
+
           <button
             onClick={() => {
               setMobileMenuOpen(false);
               setDemoModalOpen(true);
               handleRunDemo();
             }}
-            className="flex items-center gap-2 text-sm py-1.5 text-[#6C5CE7] font-semibold w-full text-left"
+            className="flex items-center justify-center gap-2 text-xs py-2.5 px-3 rounded-xl bg-[#F8F9FE] border border-[#DDD6FE] text-[#6C5CE7] font-bold w-full"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Interactive Demo</span>
+            <span>Try Interactive Live Demo</span>
           </button>
+
+          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[#E9EAF1]">
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setAuthMode('login');
+                setAuthModalOpen(true);
+              }}
+              className="py-2.5 px-3 rounded-xl border border-[#E9EAF1] bg-white text-[#20212B] text-xs font-bold text-center"
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setAuthMode('register');
+                setAuthModalOpen(true);
+              }}
+              className="py-2.5 px-3 rounded-xl bg-[#6C5CE7] text-white text-xs font-bold text-center shadow-xs"
+            >
+              Get Started Free
+            </button>
+          </div>
         </div>
       )}
 
       {/* Hero Section */}
-      <section id="hero" className="scroll-mt-24 relative z-10 pt-20 pb-20 px-6 max-w-6xl mx-auto text-center">
+      <section id="hero" className="scroll-mt-20 relative z-10 pt-8 sm:pt-16 md:pt-20 pb-10 sm:pb-20 px-4 sm:px-6 max-w-6xl mx-auto text-center">
         {/* Badge */}
         <ScrollReveal delay={0} duration={600}>
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] text-[#6C5CE7] text-xs font-semibold mb-8 shadow-xs hover:border-[#6C5CE7]/50 transition-colors">
-            <Sparkles className="w-3.5 h-3.5 text-[#6C5CE7]" />
-            <span>Strict Offline Machine Learning Architecture • Zero External APIs</span>
+          <div className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-[#EEEAFE] border border-[#DDD6FE] text-[#6C5CE7] text-[11px] sm:text-xs font-semibold mb-5 sm:mb-8 shadow-xs max-w-full">
+            <Sparkles className="w-3.5 h-3.5 text-[#6C5CE7] shrink-0" />
+            <span className="leading-snug">Context-Aware Multilingual ML Architecture • Real-Time Detection</span>
           </div>
         </ScrollReveal>
 
         <ScrollReveal delay={120} duration={650}>
-          <h1 className="text-4xl sm:text-6xl font-black text-[#20212B] tracking-tight leading-tight max-w-4xl mx-auto">
+          <h1 className="text-2xl sm:text-5xl md:text-6xl font-black text-[#20212B] tracking-tight leading-tight max-w-4xl mx-auto break-words">
             Understand Harmful Content.{' '}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#6C5CE7] via-[#5B4CD9] to-[#00CEC9]">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#6C5CE7] via-[#5B4CD9] to-[#00CEC9] block sm:inline mt-1 sm:mt-0">
               Build Safer Digital Spaces.
             </span>
           </h1>
         </ScrollReveal>
 
         <ScrollReveal delay={220} duration={650}>
-          <p className="mt-6 text-base sm:text-lg text-[#858795] max-w-3xl mx-auto leading-relaxed font-normal">
-            High-performance, context-aware content moderation engineered specifically for Indic languages, code-mixed text, and cultural nuance. Built with verified machine learning models and 100% local inference.
+          <p className="mt-4 sm:mt-6 text-xs sm:text-base md:text-lg text-[#858795] max-w-3xl mx-auto leading-relaxed font-normal px-1">
+            High-performance, context-aware content moderation engineered specifically for Indic languages, code-mixed text, and cultural nuance. Built with verified machine learning models and real-time multilingual inference.
           </p>
         </ScrollReveal>
 
         {/* CTA Buttons */}
         <ScrollReveal delay={300} duration={650}>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto">
             <button
               onClick={() => {
                 setAuthMode('login');
                 setAuthModalOpen(true);
               }}
-              className="px-8 py-3.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white font-semibold text-sm shadow-md shadow-[#6C5CE7]/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#6C5CE7]/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>{t('action.getStarted', 'Enter Moderation Dashboard')}</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 shrink-0" />
             </button>
 
             <button
@@ -332,142 +368,146 @@ export default function LandingPage() {
                 setDemoModalOpen(true);
                 handleRunDemo();
               }}
-              className="px-7 py-3.5 rounded-xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 text-[#20212B] font-semibold text-sm shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center gap-2 hover:bg-[#FBFBFE] cursor-pointer"
+              className="w-full sm:w-auto px-6 sm:px-7 py-3 sm:py-3.5 rounded-xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 text-[#20212B] font-semibold text-xs sm:text-sm shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center gap-2 hover:bg-[#FBFBFE] cursor-pointer"
             >
-              <Eye className="w-4 h-4 text-[#6C5CE7]" />
+              <Eye className="w-4 h-4 text-[#6C5CE7] shrink-0" />
               <span>{t('action.tryDemo', 'Try Interactive Live Demo')}</span>
             </button>
           </div>
         </ScrollReveal>
 
         {/* Key Feature Highlights Pill Row with Staggered Scroll Reveal */}
-        <div className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <div className="mt-8 sm:mt-16 grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 max-w-4xl mx-auto">
           <ScrollReveal delay={380} duration={600} className="h-full">
-            <div className="h-full p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
-              <div className="text-2xl font-black text-[#20212B]">5+</div>
-              <div className="text-xs text-[#6C5CE7] font-semibold">Languages Supported</div>
-              <div className="text-[11px] text-[#858795] mt-1">Telugu, Hindi, Kannada, Hinglish, English</div>
+            <div className="h-full p-3.5 sm:p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+              <div className="text-xl sm:text-2xl font-black text-[#20212B]">5+</div>
+              <div className="text-[11px] sm:text-xs text-[#6C5CE7] font-bold mt-0.5">Languages Supported</div>
+              <div className="text-[10px] sm:text-[11px] text-[#858795] mt-1 leading-snug">Telugu, Hindi, Kannada, Hinglish, English</div>
             </div>
           </ScrollReveal>
           <ScrollReveal delay={480} duration={600} className="h-full">
-            <div className="h-full p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
-              <div className="text-2xl font-black text-[#20212B]">&lt; 50ms</div>
-              <div className="text-xs text-[#00B894] font-semibold">Local Inference Latency</div>
-              <div className="text-[11px] text-[#858795] mt-1">Direct memory pipelines with zero network delays</div>
+            <div className="h-full p-3.5 sm:p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+              <div className="text-xl sm:text-2xl font-black text-[#20212B]">&lt; 50ms</div>
+              <div className="text-[11px] sm:text-xs text-[#00B894] font-bold mt-0.5">Real-Time Inference Latency</div>
+              <div className="text-[10px] sm:text-[11px] text-[#858795] mt-1 leading-snug">High-speed classification pipelines for instant moderation</div>
             </div>
           </ScrollReveal>
           <ScrollReveal delay={580} duration={600} className="h-full">
-            <div className="h-full p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
-              <div className="text-2xl font-black text-[#20212B]">100%</div>
-              <div className="text-xs text-[#0984E3] font-semibold">Data Privacy & Sovereignty</div>
-              <div className="text-[11px] text-[#858795] mt-1">Zero cloud APIs, zero leaks, 100% offline</div>
+            <div className="h-full p-3.5 sm:p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+              <div className="text-xl sm:text-2xl font-black text-[#20212B]">100%</div>
+              <div className="text-[11px] sm:text-xs text-[#0984E3] font-bold mt-0.5">Data Privacy &amp; Sovereignty</div>
+              <div className="text-[10px] sm:text-[11px] text-[#858795] mt-1 leading-snug">End-to-end encrypted audit trails &amp; enterprise security</div>
             </div>
           </ScrollReveal>
           <ScrollReveal delay={680} duration={600} className="h-full">
-            <div className="h-full p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
-              <div className="text-2xl font-black text-[#20212B]">Active</div>
-              <div className="text-xs text-[#FDCB6E] font-semibold">Human-in-the-Loop</div>
-              <div className="text-[11px] text-[#858795] mt-1">4-way feedback loop for continuous refinement</div>
+            <div className="h-full p-3.5 sm:p-4 rounded-2xl bg-white border border-[#E9EAF1] shadow-xs text-left hover:-translate-y-1 hover:shadow-md transition-all duration-200">
+              <div className="text-xl sm:text-2xl font-black text-[#20212B]">Active</div>
+              <div className="text-[11px] sm:text-xs text-[#FDCB6E] font-bold mt-0.5">Human-in-the-Loop</div>
+              <div className="text-[10px] sm:text-[11px] text-[#858795] mt-1 leading-snug">4-way feedback loop for continuous refinement</div>
             </div>
           </ScrollReveal>
         </div>
       </section>
 
       {/* Product Preview Card with Scroll Reveal */}
-      <section id="demo-preview" className="scroll-mt-24 relative z-10 px-6 max-w-5xl mx-auto mb-20">
+      <section id="demo-preview" className="scroll-mt-24 relative z-10 px-4 sm:px-6 max-w-5xl mx-auto mb-12 sm:mb-20">
         <ScrollReveal delay={100} duration={700}>
-        <div className="rounded-2xl border border-[#E9EAF1] bg-white p-2 shadow-xl shadow-slate-200/50">
-          <div className="rounded-xl bg-[#FBFBFE] p-6 border border-[#E9EAF1]">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E9EAF1]">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-rose-400" />
-                <div className="w-3 h-3 rounded-full bg-amber-400" />
-                <div className="w-3 h-3 rounded-full bg-emerald-400" />
-                <span className="ml-3 text-xs font-medium text-[#858795]">CyberTech Intelligence Engine • Real-Time Stream</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Engine Active</span>
-              </div>
-            </div>
-
-            {/* Quick Demo Preview inside UI */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-[#20212B]">Live Sample Input</label>
-                <div className="p-4 rounded-xl bg-white border border-[#E9EAF1] shadow-xs text-sm text-[#20212B]">
-                  <p className="font-semibold text-[#6C5CE7]">నువ్వు చాలా పనికిరాని వెధవవి</p>
-                  <div className="mt-2 text-[11px] text-[#858795] flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-md bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE] font-medium">Telugu Script</span>
-                    <span>Direct personal insult & abusive language</span>
-                  </div>
+          <div className="rounded-2xl border border-[#E9EAF1] bg-white p-1.5 sm:p-2 shadow-xl shadow-slate-200/50">
+            <div className="rounded-xl bg-[#FBFBFE] p-4 sm:p-6 border border-[#E9EAF1]">
+              <div className="flex items-center justify-between flex-wrap gap-2 pb-3.5 sm:pb-4 border-b border-[#E9EAF1]">
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-rose-400 shrink-0" />
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-400 shrink-0" />
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="ml-1.5 sm:ml-3 text-[11px] sm:text-xs font-semibold text-[#858795] truncate">
+                    CyberTech Intelligence Engine
+                  </span>
                 </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setDemoText('నువ్వు చాలా పనికిరాని వెధవవి');
-                      setDemoLanguageHint('te');
-                      setDemoModalOpen(true);
-                      handleRunDemo('నువ్వు చాలా పనికిరాని వెధవవి', 'te');
-                    }}
-                    className="flex-1 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-xs font-semibold text-white shadow-sm shadow-[#6C5CE7]/20 transition-all"
-                  >
-                    Run Local Classification
-                  </button>
+                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-emerald-600 font-semibold shrink-0">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Engine Active</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-xs font-bold text-[#20212B]">Classified Telemetry</label>
-                <div className="p-4 rounded-xl bg-white border border-[#E9EAF1] shadow-xs text-xs space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#858795]">Classification</span>
-                    <span className="px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-rose-700 font-bold uppercase text-[11px]">
-                      Toxic / Harassment
-                    </span>
+              {/* Quick Demo Preview inside UI */}
+              <div className="mt-4 sm:mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-[#20212B] block">Live Sample Input</label>
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E9EAF1] shadow-xs text-sm text-[#20212B]">
+                    <p className="font-semibold text-[#6C5CE7] break-words">నువ్వు చాలా పనికిరాని వెధవవి</p>
+                    <div className="mt-2.5 text-[11px] text-[#858795] flex items-center flex-wrap gap-1.5 sm:gap-2">
+                      <span className="px-2 py-0.5 rounded-md bg-[#EEEAFE] text-[#6C5CE7] border border-[#DDD6FE] font-semibold">
+                        Telugu Script
+                      </span>
+                      <span>Direct personal insult &amp; abusive language</span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#858795]">Harm Severity</span>
-                    <span className="text-rose-600 font-bold">High Harm (0.978)</span>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setDemoText('నువ్వు చాలా పనికిరాని వెధవవి');
+                        setDemoLanguageHint('te');
+                        setDemoModalOpen(true);
+                        handleRunDemo('నువ్వు చాలా పనికిరాని వెధవవి', 'te');
+                      }}
+                      className="flex-1 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-xs font-semibold text-white shadow-sm shadow-[#6C5CE7]/20 transition-all cursor-pointer"
+                    >
+                      Run Live Classification
+                    </button>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#858795]">Resolved Language</span>
-                    <span className="text-[#6C5CE7] font-semibold">Telugu (తెలుగు)</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#858795]">Active Pipeline</span>
-                    <span className="font-mono text-[11px] text-[#858795]">telugu_generalization_v3</span>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-[#20212B] block">Classified Telemetry</label>
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E9EAF1] shadow-xs text-xs space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[#858795]">Classification</span>
+                      <span className="px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-rose-700 font-bold uppercase text-[10px] sm:text-[11px]">
+                        Toxic / Harassment
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[#858795]">Harm Severity</span>
+                      <span className="text-rose-600 font-bold">High Harm (0.978)</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[#858795]">Resolved Language</span>
+                      <span className="text-[#6C5CE7] font-semibold">Telugu (తెలుగు)</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[#858795]">Active Pipeline</span>
+                      <span className="font-mono text-[10px] sm:text-[11px] text-[#858795] truncate">telugu_generalization_v3</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
         </ScrollReveal>
       </section>
 
       {/* Core Features Section */}
-      <section id="features" className="scroll-mt-24 relative z-10 py-16 px-6 max-w-6xl mx-auto border-t border-[#E9EAF1]">
+      <section id="features" className="scroll-mt-24 relative z-10 py-10 sm:py-16 px-4 sm:px-6 max-w-6xl mx-auto border-t border-[#E9EAF1]">
         <ScrollReveal delay={0} duration={600}>
-          <div className="text-center mb-14">
-            <h2 className="text-3xl font-black text-[#20212B] tracking-tight">
+          <div className="text-center mb-8 sm:mb-14">
+            <h2 className="text-xl sm:text-3xl font-black text-[#20212B] tracking-tight">
               Engineered for Cultural Nuance and High Precision
             </h2>
-            <p className="mt-3 text-[#858795] text-sm max-w-2xl mx-auto">
+            <p className="mt-2.5 sm:mt-3 text-[#858795] text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
               Standard moderation models fail when faced with regional slang, phonetic typing, and code-mixing. CyberTech AI addresses these real-world challenges.
             </p>
           </div>
         </ScrollReveal>
 
         {/* Grouped Feature Cards with Staggered Scroll Reveal */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
           <ScrollReveal delay={100} duration={650} className="h-full">
-            <div className="h-full p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all duration-300 group shadow-xs">
-              <div className="w-12 h-12 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] mb-5 group-hover:scale-105 transition-transform">
-                <Cpu className="w-6 h-6" />
+            <div className="h-full p-5 sm:p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all duration-300 group shadow-xs">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#EEEAFE] border border-[#DDD6FE] flex items-center justify-center text-[#6C5CE7] mb-4 sm:mb-5 group-hover:scale-105 transition-transform">
+                <Cpu className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="text-base font-bold text-[#20212B] mb-2">Context Intelligence Lab</h3>
+              <h3 className="text-sm sm:text-base font-bold text-[#20212B] mb-1.5 sm:mb-2">Context Intelligence Lab</h3>
               <p className="text-xs text-[#858795] leading-relaxed">
                 Disentangles apparent hostility from colloquial banter. Evaluates preceding and following context to eliminate unwarranted false positives.
               </p>
@@ -475,11 +515,11 @@ export default function LandingPage() {
           </ScrollReveal>
 
           <ScrollReveal delay={250} duration={650} className="h-full">
-            <div id="multilingual" className="h-full scroll-mt-24 p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all duration-300 group shadow-xs">
-              <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-[#6C5CE7] mb-5 group-hover:scale-105 transition-transform">
-                <Globe className="w-6 h-6" />
+            <div id="multilingual" className="h-full scroll-mt-24 p-5 sm:p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all duration-300 group shadow-xs">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-[#6C5CE7] mb-4 sm:mb-5 group-hover:scale-105 transition-transform">
+                <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="text-base font-bold text-[#20212B] mb-2">Multilingual & Code-Mixed</h3>
+              <h3 className="text-sm sm:text-base font-bold text-[#20212B] mb-1.5 sm:mb-2">Multilingual &amp; Code-Mixed</h3>
               <p className="text-xs text-[#858795] leading-relaxed">
                 Custom specialized word and character n-gram pipelines for Telugu, Hindi, Kannada, Hinglish, and English, retaining full Unicode fidelity.
               </p>
@@ -487,13 +527,13 @@ export default function LandingPage() {
           </ScrollReveal>
 
           <ScrollReveal delay={400} duration={650} className="h-full">
-            <div id="architecture" className="h-full scroll-mt-24 p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all duration-300 group shadow-xs">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-5 group-hover:scale-105 transition-transform">
-                <Lock className="w-6 h-6" />
+            <div id="architecture" className="h-full scroll-mt-24 p-5 sm:p-6 rounded-2xl bg-white border border-[#E9EAF1] hover:border-[#6C5CE7]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#6C5CE7]/5 transition-all duration-300 group shadow-xs">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-4 sm:mb-5 group-hover:scale-105 transition-transform">
+                <Lock className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="text-base font-bold text-[#20212B] mb-2">100% Offline & Private</h3>
+              <h3 className="text-sm sm:text-base font-bold text-[#20212B] mb-1.5 sm:mb-2">Enterprise Privacy &amp; Governance</h3>
               <p className="text-xs text-[#858795] leading-relaxed">
-                Zero dependency on third-party cloud LLMs or paid APIs. Complete institutional privacy and compliance with university research standards.
+                Complete auditability, role-based moderation workflows, and institutional compliance with trust and safety research standards.
               </p>
             </div>
           </ScrollReveal>
@@ -502,25 +542,25 @@ export default function LandingPage() {
 
       {/* Live Interactive Demo Modal */}
       {demoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20212B]/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl bg-white border border-[#E9EAF1] rounded-2xl shadow-2xl p-6 relative text-[#20212B]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20212B]/50 backdrop-blur-sm p-3 sm:p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-[#E9EAF1] rounded-2xl shadow-2xl p-4 sm:p-6 relative text-[#20212B]">
             <button
               onClick={() => setDemoModalOpen(false)}
-              className="absolute top-4 right-4 text-[#858795] hover:text-[#20212B] transition-colors"
+              className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-[#858795] hover:text-[#20212B] transition-colors p-1"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-5 h-5 text-[#6C5CE7]" />
-              <h3 className="text-lg font-bold text-[#20212B]">Interactive Live Detection Sandbox</h3>
+            <div className="flex items-center gap-2 mb-1.5 pr-7">
+              <Sparkles className="w-5 h-5 text-[#6C5CE7] shrink-0" />
+              <h3 className="text-base sm:text-lg font-bold text-[#20212B]">Interactive Live Detection Sandbox</h3>
             </div>
-            <p className="text-xs text-[#858795] mb-4">
-              Test genuine local model inference without requiring an account. Select a sample or type your own multilingual comment.
+            <p className="text-xs text-[#858795] mb-3.5">
+              Test genuine multilingual model inference without requiring an account. Select a sample or type your own multilingual comment.
             </p>
 
             {/* Quick Sample Selector */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3.5">
               {sampleComments.map((s, idx) => (
                 <button
                   key={idx}
@@ -543,16 +583,16 @@ export default function LandingPage() {
                 onChange={(e) => setDemoText(e.target.value)}
                 placeholder="Enter text to analyze..."
                 rows={3}
-                className="w-full p-3.5 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-sm text-[#20212B] focus:outline-none focus:border-[#6C5CE7] resize-none"
+                className="w-full p-3 sm:p-3.5 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs sm:text-sm text-[#20212B] focus:outline-none focus:border-[#6C5CE7] resize-none"
               />
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs text-[#858795]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center justify-between sm:justify-start gap-2 text-xs text-[#858795]">
                   <span className="font-medium">Language Hint:</span>
                   <select
                     value={demoLanguageHint}
                     onChange={(e) => setDemoLanguageHint(e.target.value)}
-                    className="bg-white border border-[#E9EAF1] rounded-lg px-2.5 py-1 text-[#20212B] text-xs font-medium focus:outline-none focus:border-[#6C5CE7]"
+                    className="bg-white border border-[#E9EAF1] rounded-lg px-2.5 py-1.5 text-[#20212B] text-xs font-medium focus:outline-none focus:border-[#6C5CE7]"
                   >
                     <option value="te">Telugu (తెలుగు)</option>
                     <option value="hi">Hindi (हिन्दी)</option>
@@ -565,7 +605,7 @@ export default function LandingPage() {
                 <button
                   onClick={() => handleRunDemo()}
                   disabled={demoAnalyzing || !demoText.trim()}
-                  className="px-5 py-2 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] disabled:opacity-50 text-white font-semibold text-xs shadow-sm shadow-[#6C5CE7]/25 transition-all flex items-center gap-2"
+                  className="w-full sm:w-auto justify-center px-5 py-2.5 sm:py-2 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] disabled:opacity-50 text-white font-semibold text-xs shadow-sm shadow-[#6C5CE7]/25 transition-all flex items-center gap-2"
                 >
                   {demoAnalyzing ? 'Analyzing...' : 'Run Analysis'}
                 </button>
@@ -574,11 +614,11 @@ export default function LandingPage() {
 
             {/* Result Area */}
             {demoResult && (
-              <div className="mt-6 p-4 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="mt-4 sm:mt-6 p-3.5 sm:p-4 rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-xs space-y-3">
+                <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-[#20212B]">Analysis Verdict:</span>
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                    className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase ${
                       demoResult.severity === 'high'
                         ? 'bg-rose-50 border border-rose-200 text-rose-700'
                         : demoResult.severity === 'medium'
@@ -590,7 +630,7 @@ export default function LandingPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-[#20212B] pt-2 border-t border-[#E9EAF1]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-[#20212B] pt-2 border-t border-[#E9EAF1]">
                   <div>
                     <span className="text-[#858795]">Toxicity Score:</span>{' '}
                     <span className="font-bold tabular-nums text-[#20212B]">
@@ -601,11 +641,11 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <span className="text-[#858795]">Detected Language:</span>{' '}
-                    <span className="font-semibold text-[#6C5CE7]">{demoResult.detected_language}</span>
+                    <span className="font-semibold text-[#6C5CE7] capitalize">{demoResult.detected_language}</span>
                   </div>
                   <div>
                     <span className="text-[#858795]">Model Pipeline:</span>{' '}
-                    <span className="font-mono text-[11px] text-[#20212B]">{demoResult.model_version}</span>
+                    <span className="font-mono text-[11px] text-[#20212B] break-all">{demoResult.model_version}</span>
                   </div>
                   <div>
                     <span className="text-[#858795]">Latency:</span>{' '}
@@ -620,23 +660,23 @@ export default function LandingPage() {
 
       {/* Auth Modal (Login / Register) */}
       {authModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20212B]/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-white border border-[#E9EAF1] rounded-2xl shadow-2xl p-6 relative text-[#20212B]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20212B]/50 backdrop-blur-sm p-3 sm:p-4">
+          <div className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-white border border-[#E9EAF1] rounded-2xl shadow-2xl p-4 sm:p-6 relative text-[#20212B]">
             <button
               onClick={() => setAuthModalOpen(false)}
-              className="absolute top-4 right-4 text-[#858795] hover:text-[#20212B] transition-colors"
+              className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-[#858795] hover:text-[#20212B] transition-colors p-1"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Modal Title */}
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-5 h-5 text-[#6C5CE7]" />
-              <h3 className="text-lg font-bold text-[#20212B]">
-                {authMode === 'login' ? 'Sign In to CyberTech AI' : 'Create Moderator Account'}
+            <div className="flex items-center gap-2 mb-1.5 pr-7">
+              <Shield className="w-5 h-5 text-[#6C5CE7] shrink-0" />
+              <h3 className="text-base sm:text-lg font-bold text-[#20212B]">
+                {authMode === 'login' ? 'Sign In to CyberTech AI' : 'Create Account'}
               </h3>
             </div>
-            <p className="text-xs text-[#858795] mb-6">
+            <p className="text-xs text-[#858795] mb-5">
               {authMode === 'login'
                 ? 'Access real-time telemetry, moderation queues, and research reports.'
                 : 'Join the moderation research and development platform.'}
@@ -659,14 +699,14 @@ export default function LandingPage() {
             </div>
 
             {/* Divider */}
-            <div className="relative flex items-center justify-center mb-5">
+            <div className="relative flex items-center justify-center mb-4">
               <div className="border-t border-[#E9EAF1] w-full" />
-              <span className="bg-white px-3 text-[10px] font-semibold text-[#858795] uppercase tracking-wider relative">
+              <span className="bg-white px-3 text-[10px] font-semibold text-[#858795] uppercase tracking-wider relative whitespace-nowrap">
                 Or continue with email
               </span>
             </div>
 
-            <form onSubmit={handleAuthSubmit} className="space-y-4">
+            <form onSubmit={handleAuthSubmit} className="space-y-3.5">
               {authMode === 'register' && (
                 <div>
                   <label className="block text-xs font-semibold text-[#20212B] mb-1">Full Name</label>
@@ -675,7 +715,7 @@ export default function LandingPage() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Dr. A. Sharma"
+                    placeholder="e.g. Donthireddy Harini"
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-[#20212B] placeholder-[#858795] focus:outline-none focus:border-[#6C5CE7]"
                   />
                 </div>
@@ -688,7 +728,7 @@ export default function LandingPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="moderator@sentinel.ai"
+                  placeholder="name@example.com"
                   className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-[#FBFBFE] border border-[#E9EAF1] text-[#20212B] placeholder-[#858795] focus:outline-none focus:border-[#6C5CE7]"
                 />
               </div>
@@ -749,16 +789,18 @@ export default function LandingPage() {
       )}
 
       {/* Footer with Scroll Reveal */}
-      <footer className="relative z-10 border-t border-[#E9EAF1] py-10 px-6 max-w-6xl mx-auto text-center text-xs text-[#858795]">
+      <footer className="relative z-10 border-t border-[#E9EAF1] py-8 sm:py-10 px-4 sm:px-6 max-w-6xl mx-auto text-center text-xs text-[#858795]">
         <ScrollReveal delay={50} duration={500}>
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Shield className="w-4 h-4 text-[#6C5CE7]" />
-            <span className="font-bold text-[#20212B]">CyberTech AI Intelligence Platform</span>
-            <span>•</span>
-            <span className="font-medium">Multi-Platform Social Media Moderation &amp; Local Inference</span>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 mb-2.5">
+            <div className="flex items-center gap-1.5">
+              <Shield className="w-4 h-4 text-[#6C5CE7] shrink-0" />
+              <span className="font-bold text-[#20212B]">CyberTech AI Intelligence Platform</span>
+            </div>
+            <span className="hidden sm:inline">•</span>
+            <span className="font-medium text-[11px] sm:text-xs">Multi-Platform Social Media Moderation &amp; Real-Time Inference</span>
           </div>
-          <p>
-            Offline Machine Learning &amp; Cultural Context Moderation. Zero external cloud LLM dependencies.
+          <p className="text-[11px] sm:text-xs leading-relaxed">
+            Context-Aware Machine Learning &amp; Cultural Nuance Moderation across Indian &amp; Global Languages.
           </p>
         </ScrollReveal>
       </footer>

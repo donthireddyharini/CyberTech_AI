@@ -465,26 +465,34 @@ export default function ContextLab() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-5 h-[calc(100vh-6rem)] pb-3 page-enter">
+    <div className="flex flex-col lg:flex-row gap-5 min-h-[calc(100vh-6rem)] lg:h-[calc(100vh-6rem)] pb-3 page-enter">
       
       {/* ── Left Sidebar: Dedicated Conversation History ── */}
-      <aside className="w-full lg:w-72 bg-white rounded-2xl border border-[#E9EAF1] p-4 flex flex-col shadow-xs shrink-0 h-auto lg:h-full">
-        {/* + New Chat Action */}
-        <button
-          type="button"
-          onClick={async () => {
-            await newChat();
-            addToast('Started a new conversation session.', 'info');
-          }}
-          disabled={loadingSession}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-md shadow-[#6C5CE7]/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>New Chat Session</span>
-        </button>
+      <aside className="w-full lg:w-72 bg-white rounded-2xl border border-[#E9EAF1] p-3.5 sm:p-4 flex flex-col shadow-xs shrink-0 h-auto lg:h-full">
+        {/* Top Row on Mobile: + New Chat Action + Voice Lang Pill */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              await newChat();
+              addToast('Started a new conversation session.', 'info');
+            }}
+            disabled={loadingSession}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-md shadow-[#6C5CE7]/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+          >
+            <PlusCircle className="w-4 h-4 shrink-0" />
+            <span>New Chat Session</span>
+          </button>
+
+          {/* Compact Voice Lang indicator on mobile */}
+          <div className="lg:hidden px-2.5 py-2 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] text-[11px] text-[#858795] flex items-center gap-1.5 shrink-0">
+            <Radio className="w-3.5 h-3.5 text-[#6C5CE7] shrink-0" />
+            <span className="text-[#6C5CE7] font-bold">{currentVoiceConfig.nativeName}</span>
+          </div>
+        </div>
 
         {/* Previous Conversations Header */}
-        <div className="mt-4 mb-2 flex items-center justify-between text-[11px] font-bold text-[#858795] uppercase tracking-wider px-1">
+        <div className="mt-3 sm:mt-4 mb-2 flex items-center justify-between text-[11px] font-bold text-[#858795] uppercase tracking-wider px-1">
           <div className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-[#6C5CE7]" />
             <span>Chat Sessions ({sessions.length})</span>
@@ -492,11 +500,11 @@ export default function ContextLab() {
           {loadingSession && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6C5CE7]" />}
         </div>
 
-        {/* Scrollable Sessions List */}
-        <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 min-h-[140px] max-h-[300px] lg:max-h-none">
+        {/* Scrollable Sessions List — Compact height on mobile so Chat is immediately visible */}
+        <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-[115px] lg:max-h-none">
           {sessions.length === 0 ? (
-            <div className="p-4 text-center text-xs text-[#858795] bg-[#F8F9FE] rounded-xl border border-dashed border-[#E9EAF1] mt-2">
-              <MessageSquare className="w-5 h-5 mx-auto mb-1 text-[#858795]/50" />
+            <div className="p-3 sm:p-4 text-center text-xs text-[#858795] bg-[#F8F9FE] rounded-xl border border-dashed border-[#E9EAF1]">
+              <MessageSquare className="w-4 h-4 mx-auto mb-1 text-[#858795]/50" />
               <span>No saved chats yet. Start typing to begin.</span>
             </div>
           ) : (
@@ -506,7 +514,7 @@ export default function ContextLab() {
                 <div
                   key={s.id}
                   onClick={() => selectSession(s.id)}
-                  className={`group relative p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-start justify-between gap-2 ${
+                  className={`group relative p-2.5 sm:p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-start justify-between gap-2 ${
                     isActive
                       ? 'bg-[#EEEAFE] border-[#DDD6FE] text-[#6C5CE7] font-bold shadow-xs'
                       : 'bg-white hover:bg-[#F8F9FE] border-[#E9EAF1] text-[#20212B]'
@@ -516,7 +524,7 @@ export default function ContextLab() {
                     <div className="truncate font-semibold text-xs leading-snug">
                       {s.title || 'Untitled Conversation'}
                     </div>
-                    <div className="text-[10px] text-[#858795] mt-1 flex items-center gap-1.5">
+                    <div className="text-[10px] text-[#858795] mt-0.5 flex items-center gap-1.5">
                       <span>{s.message_count} {s.message_count === 1 ? 'msg' : 'msgs'}</span>
                       <span>•</span>
                       <span>
@@ -539,7 +547,7 @@ export default function ContextLab() {
                         addToast('Session removed.', 'info');
                       }
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-[#858795] hover:text-rose-600 transition-opacity rounded"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1 text-[#858795] hover:text-rose-600 transition-opacity rounded"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -549,8 +557,8 @@ export default function ContextLab() {
           )}
         </div>
 
-        {/* Multilingual Voice Indicator Pill in Sidebar */}
-        <div className="mt-3 p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] text-[11px] text-[#858795] flex items-center justify-between">
+        {/* Multilingual Voice Indicator Pill in Sidebar (Desktop) */}
+        <div className="hidden lg:flex mt-3 p-2.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] text-[11px] text-[#858795] items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Radio className="w-3.5 h-3.5 text-[#6C5CE7]" />
             <span className="font-semibold text-[#20212B]">Voice Lang:</span>
@@ -563,30 +571,30 @@ export default function ContextLab() {
       </aside>
 
       {/* ── Main Chat Area ── */}
-      <section className="flex-1 bg-white rounded-2xl border border-[#E9EAF1] shadow-xs flex flex-col overflow-hidden h-full">
+      <section className="flex-1 bg-white rounded-2xl border border-[#E9EAF1] shadow-xs flex flex-col overflow-hidden min-h-[520px] lg:h-full">
         {/* Chat Header */}
-        <header className="px-5 py-3.5 border-b border-[#E9EAF1] bg-[#FDFDFF] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#6C5CE7] text-white flex items-center justify-center shadow-xs">
+        <header className="px-3.5 sm:px-5 py-3 sm:py-3.5 border-b border-[#E9EAF1] bg-[#FDFDFF] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-[#6C5CE7] text-white flex items-center justify-center shadow-xs shrink-0">
               <Bot className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-[#20212B] flex items-center gap-2">
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-[#20212B] flex items-center gap-2 flex-wrap">
                 <span>Context Intelligence Lab</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                  Offline ML Ready
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 whitespace-nowrap">
+                  Multilingual ML Active
                 </span>
               </h2>
-              <p className="text-[11px] text-[#858795]">
+              <p className="text-[11px] text-[#858795] truncate">
                 {currentSession?.title || 'Interactive Multilingual Content Moderation Assistant'}
               </p>
             </div>
           </div>
 
           {/* Top Right Corner: Active Speech Recognition Voice Language */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 pl-2.5 sm:pl-3 rounded-xl bg-[#F8F9FE] border border-[#DDD6FE] shadow-xs">
-              <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+            <div className="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 p-1.5 pl-2.5 sm:pl-3 rounded-xl bg-[#F8F9FE] border border-[#DDD6FE] shadow-xs w-full sm:w-auto">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {isListening ? (
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -607,7 +615,7 @@ export default function ContextLab() {
                   const target = VOICE_LANGUAGES.find((v) => v.code === e.target.value);
                   switchVoiceLang(e.target.value, target?.defaultHint);
                 }}
-                className={`py-1 px-2 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none transition-colors ${
+                className={`py-1 px-2 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none transition-colors flex-1 sm:flex-initial min-w-0 max-w-[165px] sm:max-w-none truncate ${
                   isListening
                     ? 'bg-rose-50 text-rose-800 border-rose-300'
                     : 'bg-white text-[#6C5CE7] border-[#DDD6FE] hover:border-[#6C5CE7]'
@@ -626,7 +634,7 @@ export default function ContextLab() {
                 type="button"
                 onClick={() => toggleVoiceInput()}
                 title={isListening ? "Stop voice input" : `Start speaking in ${currentVoiceConfig.nativeName} (${currentVoiceConfig.code})`}
-                className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
                   isListening
                     ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse'
                     : 'bg-[#EEEAFE] hover:bg-[#DDD6FE] text-[#6C5CE7]'
@@ -651,7 +659,7 @@ export default function ContextLab() {
                   Welcome to CyberTech AI Context Intelligence Lab
                 </h3>
                 <p className="text-xs text-[#858795] max-w-md mx-auto">
-                  Inspect real-time toxicity, hate speech, cyberbullying, and severity nuances across English, Telugu, Hindi, and Kannada local models.
+                  Inspect real-time toxicity, hate speech, cyberbullying, and severity nuances across English, Telugu, Hindi, Hinglish, and Kannada models.
                 </p>
               </div>
 
@@ -919,12 +927,12 @@ export default function ContextLab() {
           )}
 
           {/* Input Controls Row */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {/* Language Hint Dropdown */}
             <select
               value={languageHint}
               onChange={(e) => handleLanguageHintChange(e.target.value)}
-              className="px-2.5 py-2.5 rounded-xl border border-[#E9EAF1] bg-[#F8F9FE] text-xs text-[#20212B] font-semibold focus:outline-none focus:border-[#6C5CE7] cursor-pointer shrink-0"
+              className="px-2.5 py-2.5 rounded-xl border border-[#E9EAF1] bg-[#F8F9FE] text-xs text-[#20212B] font-semibold focus:outline-none focus:border-[#6C5CE7] cursor-pointer shrink-0 max-w-[130px] sm:max-w-none"
               title="Override language model route"
             >
               <option value="">Auto-Detect</option>

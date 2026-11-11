@@ -58,7 +58,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           setClientId(resp.data.client_id.trim());
         }
       } catch {
-        // Backend offline or fallback to default client ID
+        // Fallback to default client ID
       }
     };
     fetchBackendConfig();

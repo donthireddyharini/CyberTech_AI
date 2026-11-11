@@ -28,13 +28,44 @@ const AuthContext = createContext<AuthContextType>({
   updateProfile: async () => { throw new Error('Not implemented'); },
 });
 
+function sanitizeUserProfile(u: User | null): User | null {
+  if (!u) return null;
+  const legacyRoleNames = [
+    'lead administrator',
+    'administrator',
+    'safety moderator',
+    'demo moderator',
+    'moderator',
+    'faculty evaluator',
+    'officer',
+    'admin',
+  ];
+  const rawName = (u.name || '').trim();
+  const isLegacyRoleName = !rawName || legacyRoleNames.includes(rawName.toLowerCase());
+  let cleanName = rawName;
+  if (isLegacyRoleName) {
+    const emailPrefix = (u.email || '').split('@')[0] || 'User';
+    if (emailPrefix.toLowerCase() === 'donthireddyharini' || emailPrefix.toLowerCase() === 'admin') {
+      cleanName = 'Donthireddy Harini';
+    } else {
+      cleanName = emailPrefix
+        .replace(/[._-]+/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+  }
+  return {
+    ...u,
+    name: cleanName,
+  };
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('sentinel_token'));
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('sentinel_user');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        return sanitizeUserProfile(JSON.parse(saved));
       } catch {
         return null;
       }
@@ -50,8 +81,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (storedToken) {
         try {
           const resp = await authApi.me();
-          setUser(resp.data);
-          localStorage.setItem('sentinel_user', JSON.stringify(resp.data));
+          const cleaned = sanitizeUserProfile(resp.data);
+          setUser(cleaned);
+          localStorage.setItem('sentinel_user', JSON.stringify(cleaned));
         } catch {
           // Token expired or invalid
           localStorage.removeItem('sentinel_token');
@@ -67,7 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback(async (data: LoginRequest): Promise<User> => {
     const resp = await authApi.login(data);
-    const { access_token, user: loggedInUser } = resp.data;
+    const { access_token, user: rawUser } = resp.data;
+    const loggedInUser = sanitizeUserProfile(rawUser) || rawUser;
     localStorage.setItem('sentinel_token', access_token);
     localStorage.setItem('sentinel_user', JSON.stringify(loggedInUser));
     setToken(access_token);
@@ -77,7 +110,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = useCallback(async (credential: string): Promise<User> => {
     const resp = await authApi.googleLogin(credential);
-    const { access_token, user: loggedInUser } = resp.data;
+    const { access_token, user: rawUser } = resp.data;
+    const loggedInUser = sanitizeUserProfile(rawUser) || rawUser;
     localStorage.setItem('sentinel_token', access_token);
     localStorage.setItem('sentinel_user', JSON.stringify(loggedInUser));
     setToken(access_token);
@@ -87,7 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogleDemo = useCallback(async (): Promise<User> => {
     const resp = await authApi.googleDemoLogin();
-    const { access_token, user: loggedInUser } = resp.data;
+    const { access_token, user: rawUser } = resp.data;
+    const loggedInUser = sanitizeUserProfile(rawUser) || rawUser;
     localStorage.setItem('sentinel_token', access_token);
     localStorage.setItem('sentinel_user', JSON.stringify(loggedInUser));
     setToken(access_token);
@@ -97,7 +132,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = useCallback(async (data: RegisterRequest): Promise<User> => {
     const resp = await authApi.register(data);
-    const { access_token, user: registeredUser } = resp.data;
+    const { access_token, user: rawUser } = resp.data;
+    const registeredUser = sanitizeUserProfile(rawUser) || rawUser;
     localStorage.setItem('sentinel_token', access_token);
     localStorage.setItem('sentinel_user', JSON.stringify(registeredUser));
     setToken(access_token);

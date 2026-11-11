@@ -79,7 +79,7 @@ export function ContextLabProvider({ children }: { children: React.ReactNode }) 
   const storageKeyActiveId = `cybertech_lab_active_id_${userKey}`;
   const storageKeyActiveDetail = `cybertech_lab_active_detail_${userKey}`;
 
-  // Helper to persist active session to local storage for instant offline recall
+  // Helper to persist active session to local storage for instant recall
   const saveLocalSnapshot = (sessDetail: ChatSessionDetail | null, sessId: string | null) => {
     try {
       if (sessDetail && sessId) {

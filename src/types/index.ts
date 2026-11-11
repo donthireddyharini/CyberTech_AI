@@ -174,6 +174,7 @@ export interface ModerationRecord {
   source_url?: string | null;
   author_name?: string | null;
   parent_comment_id?: string | null;
+  session_id?: string | null;
   is_demo: boolean;
   is_code_mixed: boolean;
   created_at: string;
@@ -425,19 +426,57 @@ export interface SocialConnectorStatus {
   rate_limit_info?: Record<string, unknown> | null;
 }
 
+export interface SocialIngestedCommentRecord {
+  id: string;
+  comment_id: string;
+  text: string;
+  author_name?: string | null;
+  source_url?: string | null;
+  parent_id?: string | null;
+  platform?: string;
+  severity: 'low' | 'medium' | 'high' | 'uncertain' | string;
+  severity_reason?: string;
+  decision: string;
+  recommended_action?: string;
+  confidence_level?: string;
+  detected_language: string;
+  is_code_mixed?: boolean;
+  toxicity_score: number | null;
+  hate_speech_score?: number;
+  harassment_score?: number;
+  cyberbullying_score?: number;
+  legitimate_score?: number;
+  labels?: LabelScore[];
+  is_flagged: boolean;
+  like_count?: number | string;
+  published_at: string;
+  processing_time_ms?: number;
+}
+
 export interface SocialSyncLog {
   id: string;
   platform: string;
   target_input: string;
+  channel_name?: string;
+  media_title?: string;
+  thumbnail_url?: string | null;
+  source_url?: string;
+  video_id?: string;
+  media_id?: string;
+  requested_count?: number;
   total_fetched: number;
   newly_ingested: number;
   duplicate_count: number;
   flagged_count: number;
   approved_count: number;
+  severity_breakdown?: Record<string, number>;
+  language_breakdown?: Record<string, number>;
   status: string;
   error_message?: string | null;
   processing_time_ms: number;
   created_at: string;
+  session_id?: string | null;
+  records?: SocialIngestedCommentRecord[];
 }
 
 export interface SocialStats {
@@ -449,6 +488,12 @@ export interface SocialIngestionResult {
   sync_id: string;
   platform: string;
   target_input: string;
+  channel_name?: string;
+  media_title?: string;
+  thumbnail_url?: string | null;
+  source_url?: string;
+  video_id?: string;
+  media_id?: string;
   requested_count?: number;
   total_fetched: number;
   newly_ingested: number;
@@ -456,20 +501,10 @@ export interface SocialIngestionResult {
   failed_count?: number;
   flagged_count: number;
   approved_count: number;
-  records: Array<{
-    id: string;
-    comment_id: string;
-    text: string;
-    author_name?: string | null;
-    source_url?: string | null;
-    parent_id?: string | null;
-    severity: string;
-    decision: string;
-    detected_language: string;
-    toxicity_score: number | null;
-    is_flagged: boolean;
-    published_at: string;
-  }>;
+  severity_breakdown?: Record<string, number>;
+  language_breakdown?: Record<string, number>;
+  records: SocialIngestedCommentRecord[];
   processing_time_ms: number;
   metadata?: Record<string, unknown>;
 }
+

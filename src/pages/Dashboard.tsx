@@ -592,45 +592,57 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 pb-12 font-sans page-enter">
       {/* ── Top Header Section (Courseu Style) ── */}
-      <div className="bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="bg-white border border-[#E9EAF1] rounded-2xl p-4 sm:p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive">
+        <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-black tracking-tight text-[#20212B]">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#20212B]">
                 Social Content Intelligence Dashboard
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EEEAFE] text-[#6C5CE7] border border-[#6C5CE7]/20">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EEEAFE] text-[#6C5CE7] border border-[#6C5CE7]/20 whitespace-nowrap shrink-0">
                 Live Multi-Platform Telemetry
               </span>
             </div>
             <p className="text-xs text-[#858795]">
-              Real-time comment monitoring across YouTube and Instagram powered by local multilingual ML models.
+              Real-time comment monitoring across YouTube and Instagram powered by multilingual ML models.
             </p>
           </div>
 
           {/* Right Header Controls: Platform Filter + Timeframe Filter + Refresh */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {/* Platform Filter Dropdown */}
-            <div className="flex items-center gap-1.5 bg-[#F5F6FA] p-1 rounded-xl border border-[#E9EAF1]">
-              <span className="text-[11px] font-semibold text-[#858795] pl-2 pr-1 flex items-center gap-1">
-                <Share2 className="w-3.5 h-3.5 text-[#6C5CE7]" />
-                <span>Platform:</span>
-              </span>
-              <select
-                value={selectedPlatform}
-                onChange={(e) => setSelectedPlatform(e.target.value)}
-                className="bg-white border-0 text-xs font-semibold text-[#20212B] rounded-lg px-2.5 py-1.5 shadow-xs focus:ring-1 focus:ring-[#6C5CE7] cursor-pointer"
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-wrap w-full 2xl:w-auto">
+            {/* Platform Filter Dropdown + Mobile Refresh Button Row */}
+            <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+              <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-[#F5F6FA] p-1 rounded-xl border border-[#E9EAF1] flex-1 sm:flex-initial">
+                <span className="text-[11px] font-semibold text-[#858795] pl-2 pr-1 flex items-center gap-1 whitespace-nowrap">
+                  <Share2 className="w-3.5 h-3.5 text-[#6C5CE7] shrink-0" />
+                  <span>Platform:</span>
+                </span>
+                <select
+                  value={selectedPlatform}
+                  onChange={(e) => setSelectedPlatform(e.target.value)}
+                  className="bg-white border-0 text-xs font-semibold text-[#20212B] rounded-lg px-2.5 py-1.5 shadow-xs focus:ring-1 focus:ring-[#6C5CE7] cursor-pointer flex-1 sm:flex-initial"
+                >
+                  <option value="all">All Sources</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="manual">Manual Direct</option>
+                  <option value="csv_upload">CSV / Batch</option>
+                </select>
+              </div>
+
+              {/* Refresh Button (Mobile position right beside Platform selector) */}
+              <button
+                onClick={() => fetchData(timeframe, true, undefined, undefined, selectedPlatform)}
+                disabled={loading || refreshing}
+                title={t('action.refresh', 'Refresh')}
+                className="sm:hidden p-2.5 rounded-xl bg-white hover:bg-[#F5F6FA] border border-[#E9EAF1] text-[#858795] hover:text-[#20212B] transition-colors shadow-xs shrink-0"
               >
-                <option value="all">All Sources</option>
-                <option value="youtube">YouTube</option>
-                <option value="instagram">Instagram</option>
-                <option value="manual">Manual Direct</option>
-                <option value="csv_upload">CSV / Batch</option>
-              </select>
+                <RefreshCw className={`w-4 h-4 ${refreshing || loading ? 'animate-spin text-[#6C5CE7]' : ''}`} />
+              </button>
             </div>
 
-            {/* Timeframe Presets */}
-            <div className="flex items-center gap-1 bg-[#F5F6FA] p-1 rounded-xl border border-[#E9EAF1]">
+            {/* Timeframe Presets — Clean 3x2 grid on mobile, inline flex on desktop */}
+            <div className="grid grid-cols-3 sm:flex items-center gap-1 bg-[#F5F6FA] p-1 rounded-xl border border-[#E9EAF1] w-full sm:w-auto">
               {(
                 [
                   { key: 'today', label: t('dashboard.filter.today', 'Today') },
@@ -644,7 +656,7 @@ export default function Dashboard() {
                   key={f.key}
                   type="button"
                   onClick={() => handleSelectPreset(f.key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all whitespace-nowrap text-center ${
                     timeframe === f.key
                       ? 'bg-[#6C5CE7] text-white shadow-sm'
                       : 'text-[#858795] hover:text-[#20212B] hover:bg-white'
@@ -667,23 +679,23 @@ export default function Dashboard() {
                     setCustomStartDate(weekAgo.toISOString().split('T')[0]);
                   }
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all whitespace-nowrap ${
                   timeframe === 'custom' || showCustomPicker
                     ? 'bg-[#6C5CE7] text-white shadow-sm'
                     : 'text-[#858795] hover:text-[#20212B] hover:bg-white'
                 }`}
               >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Custom Range</span>
+                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                <span>Custom</span>
               </button>
             </div>
 
-            {/* Refresh Button */}
+            {/* Refresh Button (Desktop position) */}
             <button
               onClick={() => fetchData(timeframe, true, undefined, undefined, selectedPlatform)}
               disabled={loading || refreshing}
               title={t('action.refresh', 'Refresh')}
-              className="p-2.5 rounded-xl bg-white hover:bg-[#F5F6FA] border border-[#E9EAF1] text-[#858795] hover:text-[#20212B] transition-colors shadow-xs"
+              className="hidden sm:inline-flex p-2.5 rounded-xl bg-white hover:bg-[#F5F6FA] border border-[#E9EAF1] text-[#858795] hover:text-[#20212B] transition-colors shadow-xs shrink-0"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing || loading ? 'animate-spin text-[#6C5CE7]' : ''}`} />
             </button>
@@ -736,108 +748,108 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* ── Key Metrics Cards (Courseu Stat Cards) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* ── Key Metrics Cards (2x2 on Mobile, 4 cols on Desktop) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {/* Card 1: Total Comments Analyzed */}
-        <div className="bg-white border border-[#E9EAF1] rounded-2xl p-5 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#858795]">
+        <div className="bg-white border border-[#E9EAF1] rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex items-center justify-between gap-2 sm:gap-3">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <span className="text-[10px] sm:text-[11px] xl:text-xs font-bold uppercase tracking-wider text-[#858795] block truncate">
               {t('dashboard.stats.total_analyzed', 'Total Monitored')}
             </span>
-            <div className="text-3xl font-black text-[#20212B] tracking-tight tabular-nums">
+            <div className="text-xl sm:text-3xl font-black text-[#20212B] tracking-tight tabular-nums">
               <AnimatedNumber value={summary?.total_analyzed || 0} />
             </div>
-            <div className="text-[11px] text-[#858795] flex items-center gap-1 font-medium">
+            <div className="text-[10px] sm:text-[11px] text-[#858795] flex items-center gap-1 font-medium truncate">
               <span className="text-emerald-600 font-bold">
                 +<AnimatedNumber value={summary?.today_analyzed || 0} />
               </span>
-              <span>analyzed today</span>
+              <span className="truncate">today</span>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-[#EEEAFE] flex items-center justify-center text-[#6C5CE7] shadow-xs">
-            <MessageSquare className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 xl:w-12 xl:h-12 rounded-xl sm:rounded-2xl bg-[#EEEAFE] flex items-center justify-center text-[#6C5CE7] shadow-xs shrink-0">
+            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6" />
           </div>
         </div>
 
         {/* Card 2: Flagged Violations */}
-        <div className="bg-white border border-[#E9EAF1] rounded-2xl p-5 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#858795]">
+        <div className="bg-white border border-[#E9EAF1] rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex items-center justify-between gap-2 sm:gap-3">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <span className="text-[10px] sm:text-[11px] xl:text-xs font-bold uppercase tracking-wider text-[#858795] block truncate">
               {t('dashboard.stats.flagged', 'Flagged Violations')}
             </span>
-            <div className="text-3xl font-black text-[#FF7675] tracking-tight tabular-nums">
+            <div className="text-xl sm:text-3xl font-black text-[#FF7675] tracking-tight tabular-nums">
               <AnimatedNumber value={summary?.flagged_comments || 0} />
             </div>
-            <div className="text-[11px] text-[#858795] flex items-center gap-1 font-medium">
+            <div className="text-[10px] sm:text-[11px] text-[#858795] flex items-center gap-1 font-medium truncate">
               <span className="font-bold text-[#FF7675]">
                 {summary?.violation_rate !== undefined ? summary.violation_rate : (summary?.total_analyzed ? ((summary.flagged_comments / summary.total_analyzed) * 100).toFixed(1) : 0)}%
               </span>
-              <span>violation rate</span>
+              <span className="truncate">violation rate</span>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-[#FFEAEA] flex items-center justify-center text-[#FF7675] shadow-xs">
-            <Flag className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 xl:w-12 xl:h-12 rounded-xl sm:rounded-2xl bg-[#FFEAEA] flex items-center justify-center text-[#FF7675] shadow-xs shrink-0">
+            <Flag className="w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6" />
           </div>
         </div>
 
         {/* Card 3: Pending Human Oversight */}
-        <div className="bg-white border border-[#E9EAF1] rounded-2xl p-5 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#858795]">
+        <div className="bg-white border border-[#E9EAF1] rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex items-center justify-between gap-2 sm:gap-3">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <span className="text-[10px] sm:text-[11px] xl:text-xs font-bold uppercase tracking-wider text-[#858795] block truncate">
               {t('dashboard.stats.pending', 'Pending Oversight')}
             </span>
-            <div className="text-3xl font-black text-[#FDCB6E] tracking-tight tabular-nums">
+            <div className="text-xl sm:text-3xl font-black text-[#FDCB6E] tracking-tight tabular-nums">
               <AnimatedNumber value={summary?.pending_review || 0} />
             </div>
-            <div className="text-[11px] text-[#858795] flex items-center gap-1 font-medium">
+            <div className="text-[10px] sm:text-[11px] text-[#858795] flex items-center gap-1 font-medium truncate">
               <span className="font-bold text-[#FF7675]">
                 <AnimatedNumber value={summary?.high_priority || 0} />
               </span>
-              <span>high-severity items</span>
+              <span className="truncate">high-severity</span>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-[#FFF6E5] flex items-center justify-center text-[#FDCB6E] shadow-xs">
-            <Clock className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 xl:w-12 xl:h-12 rounded-xl sm:rounded-2xl bg-[#FFF6E5] flex items-center justify-center text-[#FDCB6E] shadow-xs shrink-0">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6" />
           </div>
         </div>
 
         {/* Card 4: Approved Civil Content */}
-        <div className="bg-white border border-[#E9EAF1] rounded-2xl p-5 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#858795]">
+        <div className="bg-white border border-[#E9EAF1] rounded-2xl p-3.5 sm:p-5 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive flex items-center justify-between gap-2 sm:gap-3">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <span className="text-[10px] sm:text-[11px] xl:text-xs font-bold uppercase tracking-wider text-[#858795] block truncate">
               {t('dashboard.stats.approved', 'Approved Civil')}
             </span>
-            <div className="text-3xl font-black text-[#00B894] tracking-tight tabular-nums">
+            <div className="text-xl sm:text-3xl font-black text-[#00B894] tracking-tight tabular-nums">
               <AnimatedNumber value={summary?.non_flagged_comments || 0} />
             </div>
-            <div className="text-[11px] text-[#858795] flex items-center gap-1 font-medium">
+            <div className="text-[10px] sm:text-[11px] text-[#858795] flex items-center gap-1 font-medium truncate">
               <span className="font-bold text-[#00B894]">
                 {summary?.clean_rate !== undefined ? summary.clean_rate : (summary?.total_analyzed ? (((summary.non_flagged_comments || 0) / summary.total_analyzed) * 100).toFixed(1) : 0)}%
               </span>
-              <span>clean content score</span>
+              <span className="truncate">clean score</span>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-[#E6F9F4] flex items-center justify-center text-[#00B894] shadow-xs">
-            <CheckCircle className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 xl:w-12 xl:h-12 rounded-xl sm:rounded-2xl bg-[#E6F9F4] flex items-center justify-center text-[#00B894] shadow-xs shrink-0">
+            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6" />
           </div>
         </div>
       </div>
 
       {/* Quick Access to Dedicated Social Media Ingestion */}
-      <div className="bg-gradient-to-r from-[#F8F9FE] via-[#EEEAFE]/50 to-white border border-[#E9EAF1] rounded-2xl p-5 shadow-xs flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-[#6C5CE7] text-white flex items-center justify-center shadow-md shadow-[#6C5CE7]/20">
+      <div className="bg-gradient-to-r from-[#F8F9FE] via-[#EEEAFE]/50 to-white border border-[#E9EAF1] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
+        <div className="flex items-start sm:items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-2xl bg-[#6C5CE7] text-white flex items-center justify-center shadow-md shadow-[#6C5CE7]/20 shrink-0">
             <Activity className="w-5 h-5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-bold text-[#20212B]">Real-Time Comment Ingestion &amp; Social Feeds</h3>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Separate Hub Available
               </span>
             </div>
-            <p className="text-xs text-[#858795] mt-0.5">
+            <p className="text-xs text-[#858795] mt-0.5 leading-relaxed">
               Custom YouTube &amp; Instagram comment entry, batch CSV dataset ingestion, and live URL pipelines moved to dedicated tab.
             </p>
           </div>
@@ -845,10 +857,10 @@ export default function Dashboard() {
 
         <Link
           to="/social-ingestion"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all cursor-pointer"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-sm shadow-[#6C5CE7]/25 transition-all cursor-pointer shrink-0"
         >
           <span>Open Social Media Ingestion</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </Link>
       </div>
 
@@ -1048,95 +1060,6 @@ export default function Dashboard() {
           colors={CATEGORY_COLORS}
           loading={loading}
         />
-      </div>
-
-      {/* ── Row 3: Live Comment Telemetry Stream (Full Width!) ── */}
-      <div className="bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,43,0.03)] card-interactive">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B] flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#6C5CE7]" />
-              <span>Live Comment Telemetry Stream</span>
-            </h3>
-            <p className="text-[11px] text-[#858795] mt-0.5">
-              Streaming model decisions for recently ingested comments and social monitoring feeds.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-[#6C5CE7] bg-[#EEEAFE] border border-[#6C5CE7]/20 px-2.5 py-1 rounded-full font-semibold">
-              {recent.length} Active Records
-            </span>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto rounded-xl border border-[#E9EAF1]">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-[#F8F9FE] text-[#858795] border-b border-[#E9EAF1] uppercase font-semibold text-[10px]">
-              <tr>
-                <th className="py-2.5 px-3">Comment Text</th>
-                <th className="py-2.5 px-3">Platform</th>
-                <th className="py-2.5 px-3">Language</th>
-                <th className="py-2.5 px-3">Severity</th>
-                <th className="py-2.5 px-3">Decision</th>
-                <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-right">Time</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E9EAF1]">
-              {recent.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#858795]">
-                    No comments recorded yet. Use the Real-Time Ingestion Console above to analyze comments!
-                  </td>
-                </tr>
-              ) : (
-                recent.map((rec) => (
-                  <tr key={rec.id} className="hover:bg-[#F8F9FE] transition-colors">
-                    <td className="py-2.5 px-3 max-w-xs truncate font-medium text-[#20212B]">
-                      {rec.text_preview}
-                      {rec.author_name && (
-                        <span className="block text-[10px] text-[#858795] font-normal">by @{rec.author_name}</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <PlatformBadge platform={rec.platform} sourceUrl={rec.source_url} />
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className="capitalize px-2 py-0.5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] border border-[#6C5CE7]/20 text-[10px] font-semibold">
-                        {rec.detected_language}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                        rec.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                        rec.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                        rec.severity === 'low' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        'bg-slate-100 text-slate-700 border-slate-200'
-                      }`}>
-                        {rec.severity}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 font-semibold capitalize text-[#20212B]">
-                      {rec.decision.replace(/_/g, ' ')}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                        rec.status === 'reviewed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        rec.status === 'escalated' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                        'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}>
-                        {rec.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-right text-[#858795] tabular-nums text-[10px]">
-                      {new Date(rec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   );

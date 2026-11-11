@@ -54,7 +54,7 @@ export default function LoginPage() {
             {mode === 'login' ? 'Sign in to Command Center' : 'Create Moderator Account'}
           </h1>
           <p className="text-xs text-[#858795] mt-1">
-            Multilingual comment intelligence &amp; offline ML moderation
+            Multilingual comment intelligence &amp; real-time ML moderation
           </p>
         </div>
 

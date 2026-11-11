@@ -213,21 +213,21 @@ export default function CompareContext() {
   };
 
   return (
-    <div className="space-y-6 page-enter pb-12">
+    <div className="space-y-5 sm:space-y-6 page-enter pb-12 max-w-full overflow-x-hidden">
       {/* ── Page Header ── */}
-      <div className="bg-white border border-[#E9EAF1] rounded-2xl p-6 shadow-xs flex items-center justify-between flex-wrap gap-4">
-        <div>
+      <div className="bg-white border border-[#E9EAF1] rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#6C5CE7] animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#6C5CE7] animate-pulse shrink-0" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#6C5CE7] bg-[#EEEAFE] px-2.5 py-0.5 rounded-full border border-[#DDD6FE]">
               Comparative Counterfactual NLP
             </span>
           </div>
-          <h1 className="text-xl font-black text-[#20212B] tracking-tight mt-1.5 flex items-center gap-2.5">
-            <ArrowLeftRight className="w-6 h-6 text-[#6C5CE7]" />
+          <h1 className="text-base sm:text-xl font-black text-[#20212B] tracking-tight mt-1.5 flex items-center gap-2 break-words">
+            <ArrowLeftRight className="w-5 h-5 sm:w-6 sm:h-6 text-[#6C5CE7] shrink-0" />
             <span>Compare Context &amp; Counterfactual Analysis</span>
           </h1>
-          <p className="text-xs text-[#858795] mt-1 max-w-3xl leading-relaxed">
+          <p className="text-xs text-[#858795] mt-1 max-w-3xl leading-relaxed break-words">
             Side-by-side comparative analysis of two texts to evaluate nuance, sentiment shifts, lexical modifications, and relative severity across regional languages.
           </p>
         </div>
@@ -238,23 +238,23 @@ export default function CompareContext() {
             clearCompare();
             addToast('Comparison workspace reset.', 'info');
           }}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#E9EAF1] bg-[#F8F9FE] hover:bg-[#F0F1F5] text-[#858795] hover:text-[#20212B] text-xs font-semibold transition-all shadow-xs cursor-pointer"
+          className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#E9EAF1] bg-[#F8F9FE] hover:bg-[#F0F1F5] text-[#858795] hover:text-[#20212B] text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <RotateCcw className="w-3.5 h-3.5 shrink-0" />
           <span>Reset Inputs</span>
         </button>
       </div>
 
       {/* ── Two Input Panels (Side-by-Side) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Panel 1: Input Text 1 */}
-        <div className="bg-white rounded-2xl border border-[#E9EAF1] p-5 shadow-xs space-y-3 relative">
-          <div className="flex items-center justify-between border-b border-[#E9EAF1] pb-2.5">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] font-bold text-xs flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-[#E9EAF1] p-4 sm:p-5 shadow-xs space-y-3 relative">
+          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-[#E9EAF1] pb-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-5 h-5 rounded-full bg-[#EEEAFE] text-[#6C5CE7] font-bold text-xs flex items-center justify-center shrink-0">
                 1
               </span>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#20212B]">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#20212B] truncate">
                 Input Text 1 (Baseline Context)
               </h2>
             </div>
@@ -275,9 +275,9 @@ export default function CompareContext() {
           <textarea
             value={compareText1}
             onChange={(e) => setCompareText1(e.target.value)}
-            rows={5}
+            rows={4}
             placeholder="Enter baseline comment text..."
-            className="w-full p-3.5 rounded-xl border border-[#E9EAF1] bg-[#FBFBFE] text-xs text-[#20212B] placeholder-[#858795] focus:outline-none focus:border-[#6C5CE7] focus:bg-white transition-all resize-y"
+            className="w-full p-3 sm:p-3.5 rounded-xl border border-[#E9EAF1] bg-[#FBFBFE] text-xs text-[#20212B] placeholder-[#858795] focus:outline-none focus:border-[#6C5CE7] focus:bg-white transition-all resize-y"
           />
 
           <div className="flex items-center justify-between text-[11px] text-[#858795] pt-1">
@@ -293,14 +293,14 @@ export default function CompareContext() {
         </div>
 
         {/* Panel 2: Input Text 2 */}
-        <div className="bg-white rounded-2xl border border-[#E9EAF1] p-5 shadow-xs space-y-3 relative">
-          <div className="flex items-center justify-between border-b border-[#E9EAF1] pb-2.5">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-rose-50 text-rose-600 font-bold text-xs flex items-center justify-center border border-rose-200">
+        <div className="bg-white rounded-2xl border border-[#E9EAF1] p-4 sm:p-5 shadow-xs space-y-3 relative">
+          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-[#E9EAF1] pb-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-5 h-5 rounded-full bg-rose-50 text-rose-600 font-bold text-xs flex items-center justify-center border border-rose-200 shrink-0">
                 2
               </span>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#20212B]">
-                Input Text 2 (Perturbation / Comparison)
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#20212B] truncate">
+                Input Text 2 (Comparison)
               </h2>
             </div>
             <select
@@ -320,9 +320,9 @@ export default function CompareContext() {
           <textarea
             value={compareText2}
             onChange={(e) => setCompareText2(e.target.value)}
-            rows={5}
+            rows={4}
             placeholder="Enter counterfactual or modified comment text..."
-            className="w-full p-3.5 rounded-xl border border-[#E9EAF1] bg-[#FBFBFE] text-xs text-[#20212B] placeholder-[#858795] focus:outline-none focus:border-[#6C5CE7] focus:bg-white transition-all resize-y"
+            className="w-full p-3 sm:p-3.5 rounded-xl border border-[#E9EAF1] bg-[#FBFBFE] text-xs text-[#20212B] placeholder-[#858795] focus:outline-none focus:border-[#6C5CE7] focus:bg-white transition-all resize-y"
           />
 
           <div className="flex items-center justify-between text-[11px] text-[#858795] pt-1">
@@ -344,7 +344,7 @@ export default function CompareContext() {
           type="button"
           onClick={handleCompare}
           disabled={loading || !compareText1.trim() || !compareText2.trim()}
-          className="flex items-center gap-2.5 px-8 py-3 rounded-2xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-lg shadow-[#6C5CE7]/30 transition-all disabled:opacity-50 cursor-pointer active:scale-95"
+          className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-3 rounded-2xl bg-[#6C5CE7] hover:bg-[#5B4CD9] text-white text-xs font-bold shadow-lg shadow-[#6C5CE7]/30 transition-all disabled:opacity-50 cursor-pointer active:scale-95"
         >
           {loading ? (
             <>
@@ -362,10 +362,10 @@ export default function CompareContext() {
 
       {/* ── Active Inference Comparison Results View ── */}
       {compareResult && (
-        <div className="bg-white rounded-2xl border border-[#E9EAF1] p-6 shadow-xs space-y-6 page-enter">
+        <div className="bg-white rounded-2xl border border-[#E9EAF1] p-4 sm:p-6 shadow-xs space-y-5 sm:space-y-6 page-enter">
           <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#E9EAF1]">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#6C5CE7]" />
+              <Sparkles className="w-4 h-4 text-[#6C5CE7] shrink-0" />
               <h2 className="text-sm font-bold text-[#20212B]">Comparative Inference Results</h2>
             </div>
             <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
@@ -378,19 +378,19 @@ export default function CompareContext() {
           </div>
 
           {/* Side-by-Side Model Prediction Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Result for Text 1 */}
-            <div className="p-4 rounded-xl border border-[#E9EAF1] bg-[#FBFBFE] space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="p-3.5 sm:p-4 rounded-xl border border-[#E9EAF1] bg-[#FBFBFE] space-y-3">
+              <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-bold text-[#20212B]">Text 1 Evaluation</span>
                 <span className="text-[10px] font-semibold uppercase text-[#6C5CE7] bg-[#EEEAFE] px-2 py-0.5 rounded-full">
                   {compareResult.text1_analysis.detected_language}
                 </span>
               </div>
-              <p className="text-xs text-[#20212B] italic bg-white p-2.5 rounded-lg border border-[#E9EAF1]">
+              <p className="text-xs text-[#20212B] italic bg-white p-2.5 rounded-lg border border-[#E9EAF1] break-words">
                 "{compareResult.text1_analysis.original_text}"
               </p>
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center flex-wrap gap-2 text-xs">
                 <span className={`px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] border ${
                   compareResult.text1_analysis.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
                   compareResult.text1_analysis.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
@@ -421,17 +421,17 @@ export default function CompareContext() {
             </div>
 
             {/* Result for Text 2 */}
-            <div className="p-4 rounded-xl border border-[#E9EAF1] bg-[#FBFBFE] space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="p-3.5 sm:p-4 rounded-xl border border-[#E9EAF1] bg-[#FBFBFE] space-y-3">
+              <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-bold text-[#20212B]">Text 2 Evaluation</span>
                 <span className="text-[10px] font-semibold uppercase text-[#6C5CE7] bg-[#EEEAFE] px-2 py-0.5 rounded-full">
                   {compareResult.text2_analysis.detected_language}
                 </span>
               </div>
-              <p className="text-xs text-[#20212B] italic bg-white p-2.5 rounded-lg border border-[#E9EAF1]">
+              <p className="text-xs text-[#20212B] italic bg-white p-2.5 rounded-lg border border-[#E9EAF1] break-words">
                 "{compareResult.text2_analysis.original_text}"
               </p>
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center flex-wrap gap-2 text-xs">
                 <span className={`px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] border ${
                   compareResult.text2_analysis.severity === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' :
                   compareResult.text2_analysis.severity === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
@@ -462,12 +462,69 @@ export default function CompareContext() {
             </div>
           </div>
 
-          {/* Score Differences Table (Delta) */}
+          {/* Score Differences (Mobile Cards + Desktop Table) */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#20212B]">
               Category Score Differences &amp; Deltas (Text 2 vs Text 1)
             </h3>
-            <div className="overflow-x-auto rounded-xl border border-[#E9EAF1]">
+
+            {/* Mobile Delta Cards */}
+            <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {Object.entries(compareResult.score_differences || {}).map(([dim, diffObj]: [string, any]) => {
+                const isSupported = diffObj.supported !== false;
+                const delta = diffObj.diff ?? (diffObj.text2 - diffObj.text1);
+                const isPositive = delta > 0.001;
+                const isNegative = delta < -0.001;
+                return (
+                  <div key={dim} className="p-3 rounded-xl border border-[#E9EAF1] bg-[#F8F9FE] space-y-2 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold capitalize text-[#20212B]">{dim.replace(/_/g, ' ')}</span>
+                      {isSupported ? (
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isPositive ? 'bg-rose-50 text-rose-700' : isNegative ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {isPositive ? <TrendingUp className="w-3 h-3" /> : isNegative ? <TrendingDown className="w-3 h-3" /> : null}
+                          <span>{isPositive ? 'Escalated' : isNegative ? 'Attenuated' : 'Neutral'}</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-[#858795] italic">Unrated</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 pt-1.5 border-t border-[#E9EAF1] text-[11px] font-mono">
+                      <div>
+                        <span className="block text-[9px] text-[#858795] uppercase font-sans">Text 1</span>
+                        <span className="font-semibold text-[#20212B]">
+                          {isSupported ? `${(diffObj.text1 * 100).toFixed(1)}%` : 'N/A'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-[9px] text-[#858795] uppercase font-sans">Text 2</span>
+                        <span className="font-semibold text-[#20212B]">
+                          {isSupported ? `${(diffObj.text2 * 100).toFixed(1)}%` : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-[9px] text-[#858795] uppercase font-sans">Delta (&Delta;)</span>
+                        {isSupported ? (
+                          <span className={`font-bold ${
+                            dim === 'legitimate'
+                              ? isPositive ? 'text-emerald-600' : 'text-rose-600'
+                              : isPositive ? 'text-rose-600' : 'text-emerald-600'
+                          }`}>
+                            {delta > 0 ? `+${(delta * 100).toFixed(1)}%` : `${(delta * 100).toFixed(1)}%`}
+                          </span>
+                        ) : (
+                          <span>N/A</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-[#E9EAF1]">
               <table className="w-full text-xs text-left">
                 <thead className="bg-[#F8F9FE] text-[#858795] border-b border-[#E9EAF1] text-[10px] font-semibold uppercase">
                   <tr>
@@ -526,7 +583,7 @@ export default function CompareContext() {
             </div>
 
             {compareResult.relative_harm_assessment && (
-              <div className="p-3.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] text-xs text-[#20212B]">
+              <div className="p-3.5 rounded-xl bg-[#F8F9FE] border border-[#E9EAF1] text-xs text-[#20212B] break-words">
                 <span className="font-bold text-[#6C5CE7]">Harm Assessment: </span>
                 <span>{compareResult.relative_harm_assessment}</span>
               </div>
@@ -536,10 +593,10 @@ export default function CompareContext() {
       )}
 
       {/* ── Persistent Comparison History Section ── */}
-      <div className="bg-white rounded-2xl border border-[#E9EAF1] p-6 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl border border-[#E9EAF1] p-4 sm:p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#E9EAF1]">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#6C5CE7]" />
+            <Clock className="w-4 h-4 text-[#6C5CE7] shrink-0" />
             <h2 className="text-sm font-bold text-[#20212B]">Comparison History &amp; Benchmark Audit Log</h2>
           </div>
           {history.length > 0 && (
@@ -555,7 +612,7 @@ export default function CompareContext() {
         </div>
 
         {history.length === 0 ? (
-          <div className="p-8 text-center text-[#858795] text-xs">
+          <div className="p-6 sm:p-8 text-center text-[#858795] text-xs">
             No completed comparisons yet. Enter two texts above and click "Compare &amp; Analyze".
           </div>
         ) : (
@@ -566,9 +623,9 @@ export default function CompareContext() {
               const toxDiff = item.result.toxicity_difference?.diff ?? 0;
 
               return (
-                <div key={item.id} className="py-4 flex items-start justify-between gap-4 flex-wrap hover:bg-[#FBFBFE] px-2 rounded-xl transition-colors">
-                  <div className="space-y-1.5 flex-1 min-w-[280px]">
-                    <div className="flex items-center gap-2 text-[10px] text-[#858795]">
+                <div key={item.id} className="py-3.5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 hover:bg-[#FBFBFE] px-1 sm:px-2 rounded-xl transition-colors">
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex items-center flex-wrap gap-2 text-[10px] text-[#858795]">
                       <span className="font-mono text-[#6C5CE7]">{new Date(item.timestamp).toLocaleString()}</span>
                       <span>•</span>
                       <span className={`font-bold uppercase px-1.5 py-0.5 rounded ${
@@ -579,25 +636,25 @@ export default function CompareContext() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div className="p-2 rounded-lg bg-[#F8F9FE] border border-[#E9EAF1]">
+                      <div className="p-2.5 rounded-lg bg-[#F8F9FE] border border-[#E9EAF1] min-w-0">
                         <span className="text-[10px] text-[#858795] font-semibold block">Text 1 ({r1.severity}):</span>
-                        <p className="text-[#20212B] truncate font-medium">"{item.text1}"</p>
+                        <p className="text-[#20212B] truncate font-medium mt-0.5">"{item.text1}"</p>
                       </div>
-                      <div className="p-2 rounded-lg bg-[#F8F9FE] border border-[#E9EAF1]">
+                      <div className="p-2.5 rounded-lg bg-[#F8F9FE] border border-[#E9EAF1] min-w-0">
                         <span className="text-[10px] text-[#858795] font-semibold block">Text 2 ({r2.severity}):</span>
-                        <p className="text-[#20212B] truncate font-medium">"{item.text2}"</p>
+                        <p className="text-[#20212B] truncate font-medium mt-0.5">"{item.text2}"</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0 self-center">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0">
                     <span className={`text-xs font-mono font-bold ${toxDiff > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                       {toxDiff > 0 ? `+${(toxDiff * 100).toFixed(0)}% tox` : `${(toxDiff * 100).toFixed(0)}% tox`}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleRestore(item)}
-                      className="px-3 py-1.5 rounded-xl bg-[#EEEAFE] hover:bg-[#DDD6FE] text-[#6C5CE7] text-xs font-bold transition-all cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-xl bg-[#EEEAFE] hover:bg-[#DDD6FE] text-[#6C5CE7] text-xs font-bold transition-all cursor-pointer"
                     >
                       Restore
                     </button>

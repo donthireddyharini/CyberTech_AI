@@ -124,8 +124,12 @@ export const socialApi = {
     max_comments?: number;
     include_replies?: boolean;
   }) => api.post<SocialIngestionResult>('/social/instagram/fetch', data),
-  getSyncHistory: (platform?: string, limit = 20) =>
+  getSyncHistory: (platform?: string, limit = 50) =>
     api.get<SocialSyncLog[]>('/social/sync-history', { params: { platform, limit } }),
+  getSyncDetail: (id: string) =>
+    api.get<SocialSyncLog>(`/social/sync-history/${id}`),
+  deleteSyncLog: (id: string) =>
+    api.delete<{ status: string; id: string }>(`/social/sync-history/${id}`),
   getStats: () => api.get<SocialStats>('/social/stats'),
 };
 
@@ -144,11 +148,11 @@ export const feedbackApi = {
   exportUrl: (format: 'csv' | 'jsonl' = 'csv') => `/api/feedback/export?format=${format}`,
 };
 
-// ─── Real-Time Comment Monitoring (Zero API Keys) ─────────────────────────────
+// ─── Real-Time Comment Monitoring ───────────────────────────────────────────
 export const monitoringApi = {
   status: () => api.get<{
     monitoring_status: string;
-    offline_local_inference: boolean;
+    real_time_inference: boolean;
     api_keys_required: boolean;
     external_network_calls: boolean;
     active_model_name: string;
