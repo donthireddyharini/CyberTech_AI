@@ -7,7 +7,7 @@ import {
   runNLPAnalysis,
   extractYouTubeVideoId,
   extractInstagramMediaId,
-} from './src/utils/nlpEngine';
+} from './src/utils/nlpEngine.ts';
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
